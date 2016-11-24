@@ -20,6 +20,7 @@ To compile and install it in your /usr/lib and /usr/include
 ##References
 This library is based on the following publication :
 
-	Chu, King-Wai, Yuefan Deng, and John Reinitz. "Parallel simulated annealing by mixing of states." Journal of Computational Physics 148.2 (1999): 646-662.
+	Chu, King-Wai, Yuefan Deng, and John Reinitz. "Parallel simulated annealing by mixing of states.",
+	Journal of Computational Physics 148.2 (1999): 646-662.
 
 Thanks to John Reinitz for sending me the original code.
