@@ -3,7 +3,6 @@ SRCDIR = src
 CC = gcc
 MPICC = mpicc
 
-#TODO : -pedantic doesn't work
 FLAGS = -Wall -Werror -fpic -pedantic
 LIBS = -lm
 
