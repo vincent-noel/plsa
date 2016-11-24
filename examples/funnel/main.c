@@ -15,7 +15,7 @@
  *****************************************************************************
  *                                                                           *
  *   Copyright (C) 2016 Vincent Noel                                         *
- *   the full GPL copyright notice can be found in lsa.c                     *
+ *   the full GPL copyright notice can be found in src/lsa.c                 *
  *                                                                           *
  *****************************************************************************/
 
