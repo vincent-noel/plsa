@@ -1,8 +1,8 @@
-##COMPILING
+##Compiling
 	make all
 
-##RUNNING THE SERIAL VERSION
+##Running the serial version
 	./run-serial
 
-##RUNNING THE PARALLEL VERSION
+##Running the parallel version
 	mpirun -np 2 ./run-parallel
