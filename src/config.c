@@ -21,6 +21,8 @@
  *                                                                           *
  *****************************************************************************/
 
+ #include <sys/stat.h>
+  #include <sys/types.h>
 
 #include "config.h"
 
@@ -35,4 +37,14 @@ char *      getLogDir()
 void      setLogDir(char * dir)
 {
     log_dir = dir;
+    mkdir(dir, 0777);
+
+    char res[250];
+    sprintf(res, "%s/res", dir);
+    mkdir(res, 0777);
+
+    char score[200];
+    sprintf(score, "%s/score", dir);
+    mkdir(score, 0777);
+
 }
