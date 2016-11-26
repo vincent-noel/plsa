@@ -115,10 +115,7 @@ double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl)
     ap.interval = t_plsa_params->interval;
     ap.log_params = t_plsa_params->log_params;
 
-    if ( equil == 1 )   /* read equilibration params and put them into lsa.c */
-      InitEquilibrate();
-
-
+  
     /* initialze the random number generator, now erand48() */
 #ifdef MPI
     seedval  = ap.seed + myid;       /* each processor gets a different seed */

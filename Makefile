@@ -7,8 +7,8 @@ FLAGS = -Wall -Werror -fpic -pedantic
 LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
-SOBJ = fly_sa.o lsa.o moves.o savestate.o score.o
-POBJ = fly_sa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o
+SOBJ = plsa.o lsa.o moves.o savestate.o score.o
+POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o
 
 
 all: libplsa-serial.so libplsa-parallel.so
@@ -35,8 +35,8 @@ libplsa-parallel.so: $(OBJ) $(POBJ)
 
 # Objects
 # parallel ones
-fly_sa_p.o: $(SRCDIR)/fly_sa.c
-	$(MPICC) $(FLAGS) -DMPI -o fly_sa_p.o -c $(SRCDIR)/fly_sa.c
+plsa_p.o: $(SRCDIR)/plsa.c
+	$(MPICC) $(FLAGS) -DMPI -o plsa_p.o -c $(SRCDIR)/plsa.c
 
 lsa_p.o: $(SRCDIR)/lsa.c
 	$(MPICC) $(FLAGS) -DMPI -o lsa_p.o -c $(SRCDIR)/lsa.c
@@ -53,8 +53,8 @@ score_p.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 
 
 # serial ones
-fly_sa.o: $(SRCDIR)/fly_sa.c
-	$(CC) $(FLAGS) -c $(SRCDIR)/fly_sa.c
+plsa.o: $(SRCDIR)/plsa.c
+	$(CC) $(FLAGS) -c $(SRCDIR)/plsa.c
 
 lsa.o: $(SRCDIR)/lsa.c
 	$(CC) $(FLAGS) -c $(SRCDIR)/lsa.c

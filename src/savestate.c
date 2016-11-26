@@ -15,7 +15,7 @@
  *   (for backup stepsize). The state file is very useful for the case			 *
  *   when long annealing runs have to be interrupted or crash for some			 *
  *   reason or another. The run can then be resumed by indicating the				 *
- *	 state file as an additional argument to fly_sa.                         *
+ *	 state file as an additional argument to plsa.                         *
  *                                                              						 *
  *****************************************************************************
  *                                                              						 *

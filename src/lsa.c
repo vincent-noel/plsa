@@ -254,22 +254,7 @@ static int    counter;                           /* counter used by Frozen */
 
 static int    skip = -1;
 
-/* flag used by Landscape generation ****************************************/
-/*      Set by InitLandscape called from xxx_sa.c****************************/
-// static int    landscape = 0;
-
-/* vars used for equilibration runs ****************************************/
-/* note: these need to be static to be passed on to the file that writes   */
-/*       them to wherever they need to be written to (see GetEquil())      */
-
-static ChuParam equil_param;             /* equilibration parameter struct */
-
-static double fix_T_avg   = 0.0;   /* overall energy average at fixed temp */
-static double fix_T_var   = 0.0;   /* energy variance at fixed temperature */
-
 #ifdef MPI
-static double pfix_T_avg  = 0.0;    /* global energy average at fixed temp */
-static double pfix_T_var  = 0.0;   /* global energy variance at fixed temp */
 
 /* vars used for tuning runs ***********************************************/
 
@@ -341,8 +326,6 @@ int run(plsa_parameters * settings, PArrPtr * params)
 #ifdef MPI
 
     /* MPI initialization steps */
-
-    // int rc = MPI_Init(&argc, &argv);     /* initializes the MPI execution environment */
     int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
     if (rc != MPI_SUCCESS)
         printf (" > Error starting MPI program. \n");
@@ -376,17 +359,8 @@ int run(plsa_parameters * settings, PArrPtr * params)
     /* the following is for non-equlibration runs and equilibration runs that  */
     /* have not yet settled to their equilibrium temperature                   */
 
-    if ( (bench != 1) && ((equil != 1) || (1.0/S > equil_param.end_T)) )
-    {
-         Loop();
-    }
+    Loop();
 
-    /* there's an alternative Loop for equilibration runs at stable temperature */
-
-    if ( equil == 1 )
-    {
-        FixTLoop();
-    }
     /* code for timing */
 
     if ( time_flag )
@@ -505,12 +479,12 @@ void Initialize(plsa_parameters * settings, PArrPtr * params)
     /* and we need to account for the case when tau isn't divisible by nnodes  */
 
     if ( (state->tune.tau % nnodes) != 0 )
-        error("fly_sa: the number of processors (%d) must be a divisor of tau",
+        error("plsa: the number of processors (%d) must be a divisor of tau",
               nnodes);
     proc_tau  = state->tune.tau / nnodes;               /* local copy of tau */
 
     if ( (state->tune.initial_moves % nnodes) != 0 )
-        error("fly_sa: number of init moves must be divisible by nnodes (%d)",
+        error("plsa: number of init moves must be divisible by nnodes (%d)",
               nnodes);
     proc_init = state->tune.initial_moves / nnodes;    /* # of initial moves */
 #else
@@ -974,10 +948,10 @@ void InitTuning(void)
     /* error check */
 
     if ( nnodes <= 1 )
-        error("fly_sa: tuning does not make sense on one processor");
+        error("plsa: tuning does not make sense on one processor");
 
     if ( covar_index > state->tune.mix_interval )
-        error("fly_sa: you can't sample over more than the whole mix interval");
+        error("plsa: you can't sample over more than the whole mix interval");
 
     /* set size of sample interval */
 
@@ -987,14 +961,14 @@ void InitTuning(void)
     /* by the way: sample_size corresponds to covar_index * proc_tau */
 
     if ( (covar_sample % nnodes) != 0 )
-        error("fly_sa: covar_sample (%d) not divisible by nnodes", covar_sample);
+        error("plsa: covar_sample (%d) not divisible by nnodes", covar_sample);
 
     sample_size = covar_sample / nnodes;
 
     /* tune_interval: how many covar_samples per mix_interval? */
 
     if ( (state->tune.mix_interval % covar_index) != 0 )
-        error("fly_sa: mix interval (%d) not divisible by covar_index",
+        error("plsa: mix interval (%d) not divisible by covar_index",
               state->tune.mix_interval);
 
     tune_interval = state->tune.mix_interval / covar_index;
@@ -1002,11 +976,11 @@ void InitTuning(void)
     /* size of every tune interval in between writing tuning stats */
 
     if ( write_tune_stat > tune_interval )
-        error("fly_sa: freq of writing tune stats (%d) must be smaller than %d",
+        error("plsa: freq of writing tune stats (%d) must be smaller than %d",
               write_tune_stat, tune_interval);
 
     if ( (tune_interval % write_tune_stat) != 0 )
-        error("fly_sa: tune_interval (%d) not divisible by write_tune_stat (%d)",
+        error("plsa: tune_interval (%d) not divisible by write_tune_stat (%d)",
               tune_interval, write_tune_stat);
 
     sub_tune_interval = tune_interval / write_tune_stat;
@@ -1207,18 +1181,9 @@ void Loop(void)
 
         }
 
-        if ( Frozen() && !equil )
+        if ( Frozen() )
         {
             FinalMove();
-            return;
-        }
-
-        /* equilibration: if we have reached equilibration temperature, we exit    *
-         * Loop() and continue the run at a fixed temperature with FixTLoop()      */
-
-        if ( (equil == 1) && (1.0/S <= equil_param.end_T) )
-        {
-            S = 1./equil_param.end_T;
             return;
         }
 
@@ -2340,494 +2305,7 @@ int StopTuning(void)
 
 
 
-/*** FUNCTIONS REQUIRED FOR EQUILIBRATION RUNS ONLY ************************/
 
-/*** FixTLoop: loops (making moves, updating stats etc.) keeping the temp- *
- *             erature fixed for an equilibration run                      *
- ***************************************************************************/
-
-void FixTLoop(void)
-{
-    int    i;                                               /* loop counters */
-#ifndef MPI
-    int    j;
-#endif
-
-    char   *varfile;                            /* global variance file name */
-    FILE   *varptr;                          /* global variance file pointer */
-
-#ifdef MPI
-    char   *lvarfile;                            /* local variance file name */
-    FILE   *lvarptr;                          /* local variance file pointer */
-#else
-    char   *acfile;                             /* autocorrelation file name */
-    FILE   *acptr;                           /* autocorrelation file pointer */
-#endif
-
-    double energy_change;                                   /* local Delta E */
-
-    /* array(s) to store energies */
-
-    double *energy_storage;     /* array used to store intermediate energies */
-#ifdef MPI
-    double *tot_energy;      /* array for total energy pooled from all nodes */
-#endif
-
-    /* below are vars that are used to calculate statistics at equilibrium */
-
-    /* first some variables to calculate average energy and variances */
-
-    double tmp1        = 0.0;                   /* three temporary variables */
-    double tmp2        = 0.0;                   /* for calculating variances */
-    double var_sum     = 0.0;
-
-    double instant_avg;     /* used for calculating the inst. average energy */
-
-    /* below some variables used to calculate autocorrelation */
-
-#ifndef MPI                /* autocorrelation is only calculated in serial */
-
-    double *gamma;                                  /* array for covariances */
-    double *rho;                                /* array of autocorrelations */
-
-    /* array of intervals for calculating autocorrelations */
-    int    h[56] = {  0,
-                      1,      2,      3,      4,      5,      6,      7,      8,      9,
-                      10,     20,     30,     40,     50,     60,     70,     80,     90,
-                      100,    200,    300,    400,    500,    600,    700,    800,    900,
-                      1000,   2000,   3000,   4000,   5000,   6000,   7000,   8000,   9000,
-                      10000,  20000,  30000,  40000,  50000,  60000,  70000,  80000,  90000,
-                      100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000,
-                      1000000
-                   };
-
-    int    num_of_h = 56;                   /* number of elements in h array */
-    int    ntemp;                     /* temporary var for max. step minus h */
-
-#endif
-
-#ifdef MPI
-    /* allocate parallel-specific file names */
-
-    varfile        = (char *)calloc(MAX_RECORD, sizeof(char));
-    lvarfile       = (char *)calloc(MAX_RECORD, sizeof(char));
-
-    /* allocate the energy arrays: we need as many elements as there are mix-  *
-     * ing events during the sampling loop                                     */
-
-    energy_storage =
-        (double *)calloc(equil_param.fix_T_step/
-                         (state->tune.mix_interval*proc_tau)+1,
-                         sizeof(double));
-    tot_energy =
-        (double *)calloc(equil_param.fix_T_step/
-                         (state->tune.mix_interval*proc_tau)+1,
-                         sizeof(double));
-
-#else
-
-    /* allocate serial-specific file names */
-
-    varfile        = (char *)calloc(MAX_RECORD, sizeof(char));
-    acfile         = (char *)calloc(MAX_RECORD, sizeof(char));
-
-    /* allocate the energy array */
-
-    energy_storage = (double *)calloc(equil_param.fix_T_step+1,
-                                      sizeof(double));
-
-    /* allocate autocorrelation arrays */
-
-    gamma          = (double *)calloc(num_of_h, sizeof(double));
-    rho            = (double *)calloc(num_of_h, sizeof(double));
-
-#endif
-
-#ifdef MPI
-
-    if ( myid == 0 )
-        sprintf(varfile, "plsa_%d.var", state->tune.mix_interval);
-
-    sprintf(lvarfile, "plsa_%d_%d.lvar", myid,
-            state->tune.mix_interval);
-
-#else
-
-    sprintf(varfile, "plsa.var");
-    sprintf(acfile,  "plsa.ac" );
-
-#endif
-
-#ifdef MPI
-
-    count_mix = 0; /* we need to reset this counter, since it's needed below */
-
-#endif
-
-    /* Equilibrate and throw away statistics */
-
-    for (i=0; i < equil_param.fix_T_skip; i++)
-    {
-
-        /* randomize initial state; throw out results; DO NOT PARALLELIZE! */
-
-        energy_change = GenerateMove();
-
-        /* Metropolis stuff here; we usually want FORBIDDEN_MOVE to be very large  *
-         * that's why we want to prevent overflows here (hence the 'if')           */
-
-        if ( energy_change != FORBIDDEN_MOVE )
-            exp_arg = -S * energy_change;
-
-        /* MIN_DELTA provides a min. probability with which any move is accepted */
-
-        if( exp_arg <= MIN_DELTA )
-            exp_arg = MIN_DELTA;
-
-        /* below, we apply the Metropolis criterion to accept or reject a move */
-
-        if ( energy_change == FORBIDDEN_MOVE )
-        {
-            RejectMove();
-        }
-        else if ((energy_change <= 0.0) || (exp(exp_arg) > RandomReal()) )
-        {
-            energy = GetNewEnergy();
-            AcceptMove();
-        }
-        else
-        {
-            RejectMove();
-        }
-
-    }
-
-    /* Equilibrate and gather statistics */
-
-    for (i=0; i <= equil_param.fix_T_step; i++)
-    {
-
-        /* make a move: will either return the energy change or FORBIDDEN_MOVE */
-
-        energy_change = GenerateMove();
-
-        /* Metropolis stuff here; we usually want FORBIDDEN_MOVE to be very large  *
-         * that's why we want to prevent overflows here (hence the 'if')           */
-
-        if ( energy_change != FORBIDDEN_MOVE )
-            exp_arg = -S * energy_change;
-
-        /* MIN_DELTA provides a min. probability with which any move is accepted */
-
-        if(exp_arg <= MIN_DELTA )
-            exp_arg = MIN_DELTA;
-
-        /* below, we apply the Metropolis criterion to accept or reject a move */
-
-        if (energy_change == FORBIDDEN_MOVE)
-            RejectMove();
-        else if ((energy_change <= 0.0) || (exp(exp_arg) > RandomReal()))
-        {
-            energy = GetNewEnergy();
-
-            AcceptMove();
-            // if (landscape)
-            // {
-            //     WriteLandscape(landscapefile,i,energy_change);
-            // }
-        }
-        else
-            RejectMove();
-
-#ifdef MPI
-
-        /* parallel code: we only collect energies every mix_interval; we mix at   *
-         * exactly the same interval as if we would be doing a normal annealing    *
-         * run, therefore we need to multiply by proc_tau below                    */
-
-        if ( i % (state->tune.mix_interval*proc_tau) == 0 )
-        {
-
-            energy_storage[count_mix] = energy;
-            count_mix++;
-
-            /* here we mix; since temperature does not change, we don't need to mix    *
-             * Lam stats but only current energies and move state                      */
-
-            DoMix();
-
-        }
-
-#else
-
-        /* serial code: collect energies at every step */
-
-        energy_storage[i] = energy;
-
-#endif
-
-    }                                    /* end of loop to gather statistics */
-
-
-
-#ifdef MPI
-    /* parallel code: pool all energies from all nodes into tot_energy array   *
-     * and average them                                                        */
-
-    MPI_Allreduce(energy_storage, tot_energy, (count_mix-1), MPI_DOUBLE,
-                  MPI_SUM, MPI_COMM_WORLD);
-
-    for ( i=0; i<(count_mix-1); i++ )
-        tot_energy[i] /= nnodes;
-
-    /* ... then calculate statistics and write them to files */
-
-    if ( myid == 0 )                         /* this is the global .var file */
-    {
-        varptr = fopen(varfile, "w");
-        if ( !varptr )
-            file_error("FixTLoop");
-    }
-
-    lvarptr = fopen(lvarfile, "w");          /* this is the local .lvar file */
-    if ( !lvarptr )
-        file_error("FixTLoop");
-
-#else
-
-    /* open files to write into */
-
-    varptr = fopen(varfile, "w");                   /* this is the .var file */
-    if ( !varptr )
-        file_error("FixTLoop");
-
-    acptr = fopen(acfile, "w");                      /* this is the .ac file */
-    if ( !acptr )
-        file_error("FixTLoop");
-
-#endif
-
-    /* first calculate local average and variances */
-
-    /* calculate overall energy average */
-
-#ifdef MPI
-    for (i=0; i < (count_mix-1); i++)
-#else
-    for (i=0; i <= equil_param.fix_T_step; i++)
-#endif
-        fix_T_avg += energy_storage[i];
-    fix_T_avg /= equil_param.fix_T_step;
-
-    /* initialize variables */
-
-    tmp1 = (energy_storage[0]-fix_T_avg)*(energy_storage[0]-fix_T_avg);
-    tmp2 = energy_storage[0]-fix_T_avg;
-    instant_avg = energy_storage[0];
-
-    /* print captions */
-#ifdef MPI
-    fprintf(lvarptr, "# nmixes     variance     ");
-    fprintf(lvarptr, "inst. avg.   overall avg.\n\n");
-#else
-    fprintf(varptr, "# nsteps     variance     ");
-    fprintf(varptr, "inst. avg.   overall avg.\n\n");
-#endif
-
-    /* calculate and print local variances here */
-
-#ifdef MPI
-    for(i=1; i < (count_mix-1); i++)
-    {
-#else
-    for(i=1; i <= equil_param.fix_T_step; i++)
-    {
-#endif
-
-        instant_avg += energy_storage[i];
-
-        tmp1    += (energy_storage[i]-fix_T_avg)*(energy_storage[i]-fix_T_avg);
-        tmp2    += (energy_storage[i]-fix_T_avg);
-        var_sum += (tmp1 - tmp2*tmp2/(i+1)) / i;
-
-        fix_T_var = var_sum / (i+1);
-
-        /* print variances and averages every 1000 steps or when finished */
-
-#ifdef MPI
-        if ( !(i % 10) )
-        {
-            fprintf(lvarptr,"%8d %12.5E   %12.5E   %12.5E\n",
-                    i, fix_T_var, instant_avg/(i+1), fix_T_avg);
-            fflush(lvarptr);
-        }
-#else
-        if ( !(i % 1000) || (i == equil_param.fix_T_step) )
-        {
-            fprintf(varptr,"%8d %12.5E   %12.5E   %12.5E\n",
-                    i, fix_T_var, instant_avg/(i+1), fix_T_avg);
-            fflush(varptr);
-        }
-#endif
-
-    }
-
-#ifdef MPI
-    /* then calculate global average and variances here */
-
-    /* calculate global overall energy average */
-
-    var_sum = 0.0;
-    for (i=0; i < (count_mix-1); i++)
-        pfix_T_avg += tot_energy[i];
-    pfix_T_avg /= (count_mix-1);
-
-    /* initialize variables */
-
-    tmp1 = (tot_energy[0]-pfix_T_avg)*(tot_energy[0]-pfix_T_avg);
-    tmp2 = tot_energy[0]-pfix_T_avg;
-    instant_avg = tot_energy[0];
-
-    /* print captions */
-
-    if ( myid == 0 )
-    {
-        fprintf(varptr, "# nmixes     variance     ");
-        fprintf(varptr, "inst. avg.   overall avg.\n\n");
-
-
-    }
-
-    /* calculate and print global variances here */
-
-    for (i=1; i<(count_mix-1); i++)
-    {
-
-        instant_avg += tot_energy[i];
-
-        tmp1 += (tot_energy[i]-pfix_T_avg)*(tot_energy[i]-pfix_T_avg);
-        tmp2 += (tot_energy[i]-pfix_T_avg);
-        var_sum += (tmp1 - tmp2*tmp2/(i+1)) / i;
-
-        pfix_T_var = var_sum / (i+1);
-
-        if ( myid == 0 )
-        {
-            if( !(i % 10) && ( myid == 0) )
-            {
-                fprintf(varptr,"%8d %12.5E   %12.5E   %12.5E\n",
-                        i, pfix_T_var, instant_avg/(i+1), pfix_T_avg);
-                fflush(varptr);
-            }
-        }
-    }
-
-#else
-
-    /* calculate auto-correlation below: this is important for evaluating the  */
-    /* appropriate number of initial steps for a problem (see Kingwai's thesis */
-    /* section 2.5.3 (pp. 23 - 24)                                             */
-    /* gamma is the covariance for a certain interval (taken from the h array) */
-    /* rho is the auto-correlation for the same interval                       */
-
-    fprintf(acptr, "#      h           rho          gamma\n\n");
-
-    for(i=0; i<num_of_h; i++)       /* calculate autocorrelation for all h's */
-    {
-
-        ntemp = equil_param.fix_T_step - h[i];
-
-        /* note: if h[i] is bigger than fix_T_step, gamma and rho will simply be 0 */
-
-        gamma[i] = 0.0;
-        for (j=0; j<=ntemp; j++)
-            gamma[i] +=
-                (energy_storage[j+h[i]]-fix_T_avg)*(energy_storage[j]-fix_T_avg);
-        gamma[i] /= equil_param.fix_T_step;
-
-        rho[i] = gamma[i] / gamma[0];
-        fprintf(acptr, "%8d   % 10.8f   %12.5E\n", h[i], rho[i], gamma[i]);
-
-    }
-
-#endif
-
-    /* clean up and go home ... */
-
-#ifdef MPI
-    if ( myid == 0 )
-#endif
-        fclose(varptr);
-    free(varfile);
-#ifdef MPI
-    fclose(lvarptr);
-    free(lvarfile);
-#else
-    fclose(acptr);
-    free(energy_storage);
-    free(acfile);
-    free(gamma);
-    free(rho);
-#endif
-
-    FinalMove();
-    return;
-
-}
-
-
-
-/*** SetEquilibrate: simply makes the equil_param struct static to lsa.c ***
- ***************************************************************************/
-
-void SetEquilibrate(ChuParam ep)
-{
-    equil_param = ep;
-}
-
-/*** GetEquil: returns the results of an equilibration run *****************
- ***************************************************************************/
-
-void GetEquil(double *equil_var)
-{
-#ifdef MPI
-    equil_var[0] = pfix_T_var;
-    equil_var[1] = pfix_T_avg;
-#else
-    equil_var[0] = fix_T_var;
-    equil_var[1] = fix_T_avg;
-#endif
-}
-
-
-
-
-
-
-/*** FUNCTIONS USED TO COMMUNICATE WITH OTHER FILES  ***********************/
-
-/****************************************************************************
- *** InitLandscape: sets flag for printing landscape output and acceptance****
- *                 landscape and initializes the landscape file names      ***
- *                 called from xxx_sa.c to make filenames static and       ***
- *                 set landscape flag                                      ***
- ****************************************************************************/
-//
-// void InitLandscape(int value)
-// {
-//
-//     const char *suffix = "plsa.landscape"; /* landscape file in equilibrate */
-//
-//     /* sets the landscape and acceptance landscape file names static to lsa.c */
-//
-//     landscapefile = (char *)calloc(MAX_RECORD, sizeof(char));
-//     // landscapefile = strcpy(landscapefile, file);
-//     landscapefile = strcpy(landscapefile, suffix);
-//
-//     landscape = value;
-//
-//
-// }
 /*** GetLamstats: returns Lam statistics in an array of doubles; used to ***
  *                store Lam statistics in a state file                     *
  ***************************************************************************/

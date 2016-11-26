@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- *   fly_sa.c                                                                *
+ *   plsa.c                                                                *
  *                                                                           *
  *****************************************************************************
  *                                                                           *
@@ -13,13 +13,13 @@
  *****************************************************************************
  *                                                                           *
  *   Although main() is in lsa.c, this is the file that 'defines'            *
- *   the fly_sa program, since it contains most of its problem-              *
+ *   the plsa program, since it contains most of its problem-              *
  *   specific code (except for move generation -> moves.c, saving            *
  *   of intermediate state files -> savestate.c and communication            *
  *   with the specific cost function that is used -> translate.c).           *
  *                                                                           *
  *   After I've told you all that's NOT in this file, here's what            *
- *   the funcs below actually do: parsing fly_sa command line opts           *
+ *   the funcs below actually do: parsing plsa command line opts           *
  *   is one of its jobs; there are funcs that make the first and             *
  *   last moves and funcs that read and write Lam and Lam-indepen-           *
  *   dent annealing parameters to the problem-specific data file.            *
@@ -58,10 +58,7 @@ static char version[MAX_RECORD];                 /* version gets set below */
 
 /* other static variables */
 
-// static char   *inname;                           /* filename of input file */
-// static char   *outname;                         /* filename of output file */
-static int    precision   = 10;                    /* precision for eqparms */
-// static int    landscape_flag = 0;        /* generate energy landscape data */
+static int    precision   = 8;                    /* precision for eqparms */
 
 
 /*** FUNCTIONS *************************************************************/
@@ -78,9 +75,9 @@ void ParseCommandLine()
     /* set the version string */
 
 #ifdef MPI
-    sprintf(version, "fly_sa version %f parallel", VERS);
+    sprintf(version, "plsa version %f parallel", VERS);
 #else
-    sprintf(version, "fly_sa version %f serial", VERS);
+    sprintf(version, "plsa version %f serial", VERS);
 #endif
 
     /* following part sets default values for command line options */
@@ -131,15 +128,15 @@ void InitDistribution(plsa_parameters * t_plsa_params)
 
     if ((DistP.distribution > 11) || (DistP.distribution < 1))
     {
-        error ("fly_sa: distribution must be int from 1 to 11 \n");
+        error ("plsa: distribution must be int from 1 to 11 \n");
     }
     else if  ((DistP.distribution == 4)||(DistP.distribution == 3))
     {
-        error ("fly_sa: PLEASE use 5 for Lorentz or 10 for normal distribution \n");
+        error ("plsa: PLEASE use 5 for Lorentz or 10 for normal distribution \n");
     }
     else if ((DistP.distribution == 6)||(DistP.distribution == 9))
     {
-        error ("fly_sa: 6=poisson or 9=pareto distribution returns positive values--do not use for fly \n");
+        error ("plsa: 6=poisson or 9=pareto distribution returns positive values--do not use for fly \n");
     }
     else if (DistP.distribution == 7 )
     {
@@ -152,7 +149,7 @@ void InitDistribution(plsa_parameters * t_plsa_params)
         {
             DistP.distribution = 5;
             /* fly needs lorentz, tsp use abs lorentz(4)*/
-            printf ("fly_sa: q=2 is lorentz--setting distribution to 5\n");
+            printf ("plsa: q=2 is lorentz--setting distribution to 5\n");
         }
         else if (DistP.q > 2.0)
         {
@@ -270,7 +267,7 @@ void RestoreState(char *statefile, NucStatePtr state_ptr, double *p_chisq,
 
     StateRead(statefile, options, move_ptr, stats, rand, delta);
 
-    /* restore options in fly_sa.c (and some in lsa.c) */
+    /* restore options in plsa.c (and some in lsa.c) */
 
     RestoreOptions(options);
 
@@ -331,8 +328,6 @@ void FinalMove(void)
 
     AParms   ap;
 
-    double   equil_var[2];         /* array for results of equilibration run */
-
 #ifdef MPI
     int      winner = 0;                           /* id of the winning node */
     double   minyet = DBL_MAX;         /* minimum score, used to find winner */
@@ -346,8 +341,6 @@ void FinalMove(void)
 
     ap   = GetFinalInfo();              /* reads final energy and move count */
 
-    if ( equil )
-        GetEquil(equil_var);            /* get the final equilibration results */
 
 #ifdef MPI
 
@@ -407,166 +400,6 @@ void FinalMove(void)
 
 
 
-
-/*** FILE FUNCTIONS FOR READING AND WRITING MISCELLANEOUS STUFF ************/
-
-/*** InitEquilibrate: reads the equilibrate section of the data file, ******
- *                    which is needed for equilibration runs; then puts    *
- *                    the parameters into a static struct in lsa.c         *
- ***************************************************************************/
-
- void InitEquilibrate()
-{
-    ChuParam   l_equil_param;                    /* local equil_param struct */
-
-    // fp = FindSection(fp, "equilibrate");                /* find tune section */
-    // if( !fp )
-    //     error("ReadEquilibrate: could not locate equilibrate section");
-    //
-    // fscanf(fp,"%*s\n");                         /* advance past title line 1 */
-    //
-    // if ( 1 != fscanf(fp, "%lf\n", &(l_equil_param.end_T)) )
-    //     error("ReadEquilibrate: error reading equilibration temperature");
-    //
-    // fscanf(fp,"%*s\n");                         /* advance past title line 2 */
-    //
-    // if ( 1 != fscanf(fp, "%d\n", &(l_equil_param.fix_T_skip)) )
-    //     error("ReadEquilibrate: error reading fixed temperature skip");
-    //
-    // fscanf(fp,"%*s\n");                         /* advance past title line 3 */
-    //
-    // if ( 1 != fscanf(fp, "%d\n", &(l_equil_param.fix_T_step)) )
-    //     error("ReadEquilibrate: error reading fixed temperature step");
-
-    SetEquilibrate(l_equil_param);
-}
-
-
-/*** WriteEquil: writes the equilibrate_variance section to the data file **
- *               right after the $equilibrate section                      *
- ***************************************************************************/
-
-void WriteEquil(char *filename, double *equil_var)
-{
-    // char   *temp;                                     /* temporary file name */
-    // char   *record;                         /* record to be read and written */
-    // char   *record_ptr;        /* pointer used to remember record for 'free' */
-    // char   *saverec;                 /* used to save following section title */
-    // char   *shell_cmd;                             /* used by 'system' below */
-    //
-    // FILE   *outfile;                                  /* name of output file */
-    // FILE   *tmpfile;                               /* name of temporary file */
-    //
-    //
-    // temp      = (char *)calloc(MAX_RECORD, sizeof(char));
-    // record    = (char *)calloc(MAX_RECORD, sizeof(char));
-    // saverec   = (char *)calloc(MAX_RECORD, sizeof(char));
-    // shell_cmd = (char *)calloc(MAX_RECORD, sizeof(char));
-    //
-    // record_ptr = record;            /* this is to remember record for 'free' */
-    //
-    // /* open output and temporary file */
-    //
-    // outfile = fopen(filename, "r");              /* open outfile for reading */
-    // if ( !outfile )                              /* sorry for the confusion! */
-    //     error("WriteEquil: error opening %s", filename);
-    //
-    // temp = strcpy(temp,"equilXXXXXX");              /* required by mkstemp() */
-    // if ( mkstemp(temp) == -1 )              /* get unique name for temp file */
-    //     error("WriteEquil: error creating temporary file name");
-    //
-    // tmpfile = fopen(temp, "w");               /* ... and open it for writing */
-    // if ( !tmpfile )
-    //     error("WriteEquil: error opening temporary file %s", temp);
-    //
-    // if ( FindSection(outfile, "equilibrate_variance") )
-    // {
-    //     fclose(outfile);                   /* erase section if already present */
-    //     KillSection(filename, "equilibrate_variance");
-    //     outfile = fopen(filename, "r");
-    // }
-    // rewind(outfile);
-    //
-    // /* the follwoing three loops look for the appropriate file position to     */
-    // /* write the equilibrate_variance section                                  */
-    //
-    // while ( strncmp(record=fgets(record, MAX_RECORD, outfile),
-    //                 "$equilibrate", 12) )
-    //     fputs(record, tmpfile);
-    // fputs(record, tmpfile);
-    //
-    // while ( strncmp(record=fgets(record, MAX_RECORD, outfile), "$$", 2) )
-    //     fputs(record, tmpfile);
-    // fputs(record, tmpfile);
-    //
-    // do
-    // {
-    //     record = fgets(record, MAX_RECORD, outfile);
-    //     if ( !record ) break;
-    // }
-    // while ( strncmp(record, "$", 1) );
-    //
-    // fputs("\n", tmpfile);
-    //
-    // if ( record )
-    //     saverec = strcpy(saverec, record);
-    //
-    // /* now we write the eqparms section into the tmpfile */
-    //
-    // PrintEquil(tmpfile, equil_var, "equilibrate_variance");
-    //
-    // fprintf(tmpfile, "\n");
-    //
-    // /* ... and then write all the rest, if there is any */
-    //
-    // if ( record )
-    //     fputs(saverec, tmpfile);
-    //
-    // while ( (record=fgets(record, MAX_RECORD, outfile)) )
-    //     fputs(record, tmpfile);
-    //
-    // fclose(outfile);
-    // fclose(tmpfile);
-    //
-    // /* rename tmpfile into new file */
-    //
-    // sprintf(shell_cmd, "cp -f %s %s", temp, filename);
-    //
-    // if ( -1 == system(shell_cmd) )
-    //     error("WriteEquil: error renaming temp file %s", temp);
-    //
-    // if ( remove(temp) )
-    //     warning("WriteEquil: temp file %s could not be deleted",
-    //             temp);
-    //
-    // /* clean up */
-    //
-    // free(record_ptr);
-    // free(saverec);
-    // free(temp);
-    // free(shell_cmd);
-}
-
-
-//
-// /*** PrintEquil: writes an 'equilibrate_variance' section with 'title' *****
-//  *               to the stream specified by fp                             *
-//  ***************************************************************************/
-//
-// void PrintEquil(FILE *fp, double *equil_var, char *title)
-// {
-//     fprintf(fp, "$%s\n", title);
-//     fprintf(fp, "variance:\n");
-//     fprintf(fp, "%g\n", equil_var[0]);
-//     fprintf(fp, "equilibrate_final_energy:\n");
-//     fprintf(fp, "%g\n", equil_var[1]);
-//     fprintf(fp, "$$\n");
-// }
-//
-//
-//
-
-
 /*** WriteTimes: writes the time-structure to a .times file ****************
  ***************************************************************************/
 
@@ -617,12 +450,7 @@ Opts *GetOptions(void)
     Opts       *options;
 
     options = (Opts *)malloc(sizeof(Opts));
-
-    // options->inname  = inname;
-    // options->outname = outname;
-
     options->stop_flag   = stop_flag;
-    // options->landscape_flag = landscape_flag;
     options->log_flag    = log_flag;
     options->time_flag   = time_flag;
     options->state_write = state_write;
@@ -630,10 +458,8 @@ Opts *GetOptions(void)
     options->captions    = captions;
     options->precision   = precision;
     options->quenchit    = quenchit;
-    options->equil       = equil;
 
 #ifdef MPI
-    options->tuning          = tuning;
     options->covar_index     = covar_index;
     options->write_tune_stat = write_tune_stat;
     options->auto_stop_tune  = auto_stop_tune;
@@ -651,21 +477,8 @@ Opts *GetOptions(void)
 void RestoreOptions(Opts *options)
 {
 
-    /* restore input/output file names and the full command line string; note  *
-     * that the output file name needs to be communicated to lsa.c, since we   *
-     * need it there for setting up log and tuning file names                  */
-
-    // inname  = options->inname;
-    // outname = options->outname;
-    // SetOutname(outname);
-
     /* all the other options */
     stop_flag   = options->stop_flag;
-
-    // landscape_flag = options->landscape_flag;
-    // if ( landscape_flag )
-    //     error("RestoreOptions: cannot restore an equilibration (lanDscape) run");
-
     log_flag    = options->log_flag;
     time_flag   = options->time_flag;
     state_write = options->state_write;
@@ -673,14 +486,8 @@ void RestoreOptions(Opts *options)
     captions    = options->captions;
     precision   = options->precision;
     quenchit    = options->quenchit;
-    equil       = options->equil;
-    if ( equil )
-        error("RestoreOptions: cannot restore an equilibration run");
 
 #ifdef MPI
-    tuning          = options->tuning;
-    if ( tuning )
-        error("RestoreOptions: cannot restore a tuning run");
     covar_index     = options->covar_index;
     write_tune_stat = options->write_tune_stat;
     auto_stop_tune  = options->auto_stop_tune;

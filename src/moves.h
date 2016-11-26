@@ -64,7 +64,7 @@
 /*** TONS OF STRUCTS *******************************************************/
 
 /* The following are annealing parameters that are not specific to the Lam *
- * algorithm. In general they should be used in moves.c or fly_sa.c but    *
+ * algorithm. In general they should be used in moves.c or plsa.c but    *
  * *not* in lsa.c. In the data file, the members of the struct labeled RO  *
  * are read from the $annealing_input section. They are used for initial   *
  * conditions of the annealer and do not change during a run. Members      *
@@ -134,14 +134,7 @@ typedef struct {
 /* Opts struct is for saving command line options in savestate.c */
 
 typedef struct {
-  // char      *inname;                             /* filename of input file */
-  // char      *outname;                           /* filename of output file */
-  // char      *argv;                                /* original command line */
-  // char      *derivfunc;                             /* derivative function */
-  // char      *solver;                                    /* solver function */
   StopStyle stop_flag;                                   /* stop criterion */
-  // int       prolix_flag;                                    /* prolix flag */
-  // int       landscape_flag;                              /* landscape flag */
   int       time_flag;                             /* flag for timing code */
   int       log_flag;                                  /* log display flag */
   long      state_write;              /* frequency for writing state files */
@@ -163,28 +156,7 @@ typedef struct {
 
 /*** FUNCTION PROTOTYPES ***************************************************/
 
-/* fly_sa.c: I/O functions for miscellaneous stuff */
-
-/*** InitEquilibrate: reads the equilibrate section of the data file, ******
- *                    which is needed for equilibration runs               *
- ***************************************************************************/
-
-void InitEquilibrate();
-
-// /*** WriteEquil: writes the equilibrate_variance section to the data file **
-//  *               right after the $equilibrate section                      *
-//  ***************************************************************************/
-
-void WriteEquil(char *filename, double *equil_var);
-
-/*** PrintEquil: writes an 'equilibrate_variance' section with 'title' *****
- *               to the stream specified by fp                             *
- ***************************************************************************/
-
-void PrintEquil(FILE *fp, double *equil_var, char *title);
-
-/*** PrintTimes: writes two (parallel: three) times sections ***************
- ***************************************************************************/
+/* plsa.c: I/O functions for miscellaneous stuff */
 
 void PrintTimes(FILE *fp, double *delta);
 
@@ -262,12 +234,6 @@ void UpdateControl(void);
 
 
 /* functions that communicate with other source files */
-
-// /*** SetProlix: sets flag for printing prolix output on acceptance stats ***
-//  *              and initializes the prolix file if required                *
-//  ***************************************************************************/
-//
-// void SetProlix(int value, char *file, int init_flag);
 
 /*** MoveSave: returns a MoveState struct in which the current state of ****
  *             moves is saved; use for writing state file                  *

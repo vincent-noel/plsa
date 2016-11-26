@@ -236,7 +236,6 @@ typedef struct {
 typedef struct {
   int       size;                           /* size of the ParamList array */
   ParamList *array;            /* points to 1st element of ParamList array */
-  // double    *pen_vec;   /* penalty vector: see score.h, struct SearchSpace */
 } PArrPtr;
 
 
@@ -351,27 +350,6 @@ void UpdateParameter(void);
 int Frozen(void);
 
 
-
-/* Functions that are needed for equilibration runs only */
-
-/*** FixTLoop: loops (making moves, updating stats etc.) keeping the temp- *
- *             erature fixed for an equilibration run                      *
- ***************************************************************************/
-
-void FixTLoop(void);
-
-/*** SetEquilibrate: simply makes the equil_param struct static to lsa.c ***
- ***************************************************************************/
-
-void SetEquilibrate(ChuParam ep);
-
-/*** GetEquil: returns the results of an equilibration run *****************
- ***************************************************************************/
-
-void GetEquil(double *equil_var);
-
-
-
 /* functions which communicate with other source files, these are needed  *
  * for reading/writing .state files                                       */
 
@@ -386,15 +364,6 @@ double *GetLamstats(void);
  ***************************************************************************/
 
 double *GetTimes(void);
-
-/*** SetOutname: sets the output filename in lsa.c; this is necessary to ***
- *               have the diverse .log and .ac and .mb etc files have the  *
- *               name of the output file if -w is chosen                   *
- ***************************************************************************/
-
-void SetOutname(char *outname);
-
-
 
 /* functions which restore things in lsa.c upon restart from state file */
 
@@ -420,28 +389,6 @@ void RestoreTimes(double *delta);
 
 /* functions to write the .log */
 
-/*** WriteLandscape: write iterations, temperature, dS/S, energy,        **
- **                  delta_energy,  mean, std deviation, estimate_mean,  **
- *                   estimate_sd, acceptance ratio                       **
- *              to look at the landscape of the problem Will be either   **
- *              the entire landscape or only the accepted landscape      **
- ***************************************************************************/
-
-// void WriteLandscape(char *landfile, int iteration, double delta_energy);
-
-/***************************************************************************
- *** InitLandscape: sets flag for printing landscape output and acceptance**
- *                 landscape and initializes the landscape file names    ***
- *                 called from xxx_sa.c to make filenames static and     ***
- *                 set landscape flag                                    ***
- ***************************************************************************/
-
-// void InitLandscape(int value);
-
-/*** WriteLog: writes things like mean and variation, Lam estimators, dS, **
- *             alpha and acceptance ratio to the log files (parallel) or   *
- *             to stdout (serial).                                         *
- ***************************************************************************/
 
 void WriteLog(void);
 
@@ -477,7 +424,7 @@ void ParseCommandLine();
  *                then it returns the initial temperature to the caller    *
  ***************************************************************************/
 
-double InitialMove(NucStatePtr state_ptr, double *p_chisq,
+double InitialMove(NucStateType * state_ptr, double *p_chisq,
                       plsa_parameters * settings, PArrPtr * params);
 
 /*** RestoreState: called when an interrupted run is restored; does the ****
@@ -489,7 +436,7 @@ double InitialMove(NucStatePtr state_ptr, double *p_chisq,
  *                 - restores move state in move(s).c                      *
  ***************************************************************************/
 
-void RestoreState(char *statefile, NucStatePtr state_ptr, double *p_chisq,
+void RestoreState(char *statefile, NucStateType * state_ptr, double *p_chisq,
                       plsa_parameters * settings, PArrPtr * params);
 
 /*** FinalMove: determines the final energy and move count and then prints *
