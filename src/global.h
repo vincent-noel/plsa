@@ -54,7 +54,7 @@ int    debug;                                            /* debugging flag */
 /* score.                                                                  */
 
 #define FORBIDDEN_MOVE    DBL_MAX      /* the biggest possible score, ever */
-#define MAX_PARAM_PRECISION     8
+// #define MAX_PARAM_PRECISION     8
 #define SIZE_VARID           1000
 
 #endif

@@ -115,7 +115,7 @@ double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl)
     ap.interval = t_plsa_params->interval;
     ap.log_params = t_plsa_params->log_params;
 
-  
+
     /* initialze the random number generator, now erand48() */
 #ifdef MPI
     seedval  = ap.seed + myid;       /* each processor gets a different seed */
@@ -338,40 +338,13 @@ int Move(void)
             theta = -theta;
     }
 
-    if (theta > 20) theta = THETA_MAX;
-    if (theta < -20) theta = -THETA_MAX;
+    if (theta > THETA_MAX) theta = THETA_MAX;
+    if (theta < -THETA_MAX) theta = -THETA_MAX;
 
-    tweakee = tweakee * exp(theta);
+    tweakee += exp(theta);
 
     if (tweakee < ptab[idx].param_range.lower || tweakee > ptab[idx].param_range.upper)
         return -1;
-
-
-    int np = 0;
-
-    if (fabs(tweakee < (pow(10,(MAX_PARAM_PRECISION-1)))))
-    {
-        while(fabs(tweakee < (pow(10,(MAX_PARAM_PRECISION-1)))))
-        {
-            np++;
-            tweakee = tweakee*10;
-        }
-
-        tweakee = round(tweakee);
-        tweakee = tweakee/pow(10,np);
-    }
-
-    else
-    {
-        while(fabs(tweakee > (pow(10,(MAX_PARAM_PRECISION-1)))))
-        {
-            np++;
-            tweakee = tweakee/10;
-        }
-
-        tweakee = round(tweakee);
-        tweakee = tweakee*pow(10,np);
-    }
 
     if (tweakee <= 0)
         return -1;

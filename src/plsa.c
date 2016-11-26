@@ -58,7 +58,7 @@ static char version[MAX_RECORD];                 /* version gets set below */
 
 /* other static variables */
 
-static int    precision   = 8;                    /* precision for eqparms */
+static int    precision   = 4;                    /* precision for eqparms */
 
 
 /*** FUNCTIONS *************************************************************/

@@ -330,9 +330,6 @@ int run(plsa_parameters * settings, PArrPtr * params)
     if (rc != MPI_SUCCESS)
         printf (" > Error starting MPI program. \n");
 
-
-
-
     MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
 

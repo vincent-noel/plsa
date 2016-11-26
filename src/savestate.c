@@ -75,22 +75,13 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   if( !infile )
     file_error("StateRead");
 
-  // options->argv = fgets(options->argv, MAX_RECORD, infile);
-
-  // fscanf(infile, "%s\n",    options->inname);
-  // fscanf(infile, "%s\n",    options->outname);
- // fscanf(infile, "%s\n",    options->derivfunc);
-//  fscanf(infile, "%s\n",    options->solver);
   fscanf(infile, "%d\n",  (int*) &(options->stop_flag));
-  // fscanf(infile, "%d\n",  &(options->prolix_flag));
-  // fscanf(infile, "%d\n",  &(options->landscape_flag));
   fscanf(infile, "%d\n",  &(options->log_flag));
   fscanf(infile, "%d\n",  &(options->time_flag));
   fscanf(infile, "%ld\n", &(options->state_write));
   fscanf(infile, "%ld\n", &(options->print_freq));
   fscanf(infile, "%ld\n", &(options->captions));
   fscanf(infile, "%d\n",  &(options->precision));
-  // fscanf(infile, "%lg\n", &(options->stepsize));
   fscanf(infile, "%d\n",  &(options->quenchit));
   fscanf(infile, "%d\n",  &(options->equil));
 #ifdef MPI
@@ -180,18 +171,13 @@ void StateWrite(char *statefile)
   if ( !outfile )
     file_error("StateWrite");
 
-  // fprintf(outfile, "%s\n",    options->inname);
-  // fprintf(outfile, "%s\n",    options->outname);
   fprintf(outfile, "%d\n",    options->stop_flag);
-  // fprintf(outfile, "%d\n",    options->prolix_flag);
-  // fprintf(outfile, "%d\n",    options->landscape_flag);
   fprintf(outfile, "%d\n",    options->log_flag);
   fprintf(outfile, "%d\n",    options->time_flag);
   fprintf(outfile, "%ld\n",   options->state_write);
   fprintf(outfile, "%ld\n",   options->print_freq);
   fprintf(outfile, "%ld\n",   options->captions);
-	fprintf(outfile, "%d\n",    options->precision);
-  // fprintf(outfile, "%.16g\n", options->stepsize);
+  fprintf(outfile, "%d\n",    options->precision);
   fprintf(outfile, "%d\n",    options->quenchit);
   fprintf(outfile, "%d\n",    options->equil);
 #ifdef MPI
