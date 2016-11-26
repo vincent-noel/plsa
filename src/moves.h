@@ -140,7 +140,6 @@ typedef struct {
   long      state_write;              /* frequency for writing state files */
   long      print_freq;         /* frequency for printing status to stdout */
   long      captions;                         /* opt for printing captions */
-  int       precision;                                 /* output precision */
   int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
   int       equil;              /* flag for equilibration mode (T = const) */
 #ifdef MPI
@@ -190,7 +189,7 @@ void RestoreOptions(Opts *options);
  *              it then returns the initial temperature to the caller      *
  ***************************************************************************/
 
-double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl);
+void InitMoves(SAType * state, PArrPtr * pl);
 
 /*** RestoreMoves: restores move generator from state file *****************
  *           NOTE: InitMoves will be called before this function during    *

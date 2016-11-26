@@ -63,10 +63,14 @@ char score_name[MAX_RECORD];
  *                           b) parameter ranges for the Score function.   *
  ***************************************************************************/
 
-void InitScoring(plsa_parameters * plsa_params)
+void InitScoring(SAType * tune)
 {
-    scoreFunction = plsa_params->scoreFunction;
-    printFunction = plsa_params->printFunction;
+    // scoreFunction = plsa_params->scoreFunction;
+    // printFunction = plsa_params->printFunction;
+
+	scoreFunction = tune->scoreFunction;
+    printFunction = tune->printFunction;
+
     best_score = FORBIDDEN_MOVE;
 }
 

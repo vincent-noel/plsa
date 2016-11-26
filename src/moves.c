@@ -92,7 +92,7 @@ static long      *tmp;             /* temp array for MPI_Allreduce sendbuf */
  ***************************************************************************/
 
 
-double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl)
+void InitMoves(SAType * state, PArrPtr * pl)
 {
     int            i;                                  /* local loop counter */
 
@@ -108,12 +108,13 @@ double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl)
     xsubj = (unsigned short *)calloc(3, sizeof(unsigned short));
 
     /* read annealing paramters and parameters-to-be-tweaked */
-    ap.max_count = 0;
-    ap.seed = t_plsa_params->seed;
-    ap.start_tempr = t_plsa_params->initial_temperature;
-    ap.gain = t_plsa_params->gain_for_jump_size_control;
-    ap.interval = t_plsa_params->interval;
-    ap.log_params = t_plsa_params->log_params;
+
+	ap.max_count = 0;
+    ap.seed = state->seed;
+    ap.start_tempr = state->initial_temp;
+    ap.gain = state->gain_for_jump_size_control;
+    ap.interval = state->interval;
+    ap.log_params = state->log_params;
 
 
     /* initialze the random number generator, now erand48() */
@@ -162,7 +163,7 @@ double InitMoves(plsa_parameters * t_plsa_params, PArrPtr * pl)
 #endif
 
     /* Finally, return the start temperature. */
-    return ap.start_tempr;
+    return;// ap.start_tempr;
 }
 
 
@@ -341,7 +342,7 @@ int Move(void)
     if (theta > THETA_MAX) theta = THETA_MAX;
     if (theta < -THETA_MAX) theta = -THETA_MAX;
 
-    tweakee += exp(theta);
+    tweakee = tweakee * exp(theta);
 
     if (tweakee < ptab[idx].param_range.lower || tweakee > ptab[idx].param_range.upper)
         return -1;
@@ -352,11 +353,6 @@ int Move(void)
     if (isinf(tweakee) || isnan(tweakee))
         return -1;
 
-    if (tweakee < 1e-50)
-        return -1;
-
-    if (tweakee > 1e50)
-        return -1;
 
     *(ptab[idx].param) = tweakee;   /* original eqparms in score.c tweaked */
 

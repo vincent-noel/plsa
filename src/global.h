@@ -52,9 +52,6 @@ int    debug;                                            /* debugging flag */
 /* the following constant as a score tells the annealer to reject a move,  */
 /* no matter what. It had better not be a number that could actually be a  */
 /* score.                                                                  */
-
 #define FORBIDDEN_MOVE    DBL_MAX      /* the biggest possible score, ever */
-// #define MAX_PARAM_PRECISION     8
-#define SIZE_VARID           1000
 
 #endif

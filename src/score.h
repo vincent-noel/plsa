@@ -42,7 +42,7 @@
 /*** InitScoring: sets the score function                             *******
  ***************************************************************************/
 
-void        InitScoring     (plsa_parameters * ) ;
+void        InitScoring     (SAType *) ;
 
 /* Actual Scoring Functions */
 

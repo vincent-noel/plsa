@@ -106,103 +106,60 @@
  *                                                                         *
  ***************************************************************************/
 
- typedef struct plsa_parameters
- {
-     long        seed;
-     double      initial_temperature;
-     double      gain_for_jump_size_control;
-     double      interval;
-
-     double      lambda;
-     double      lambda_mem_length_u;
-     double      lambda_mem_length_v;
-     double      control;
-
-     int         initial_moves;
-     int         tau;
-     int         freeze_count;
-     int         update_S_skip;
-
-     double      criterion;
-     int         mix_interval;
-
-     int         distribution;        /* move generation distribution type RO */
-                             /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
-                               /*  LG: 07-05-00 formerly dist_type in lj code */
-
-     double      q;                 /* gen visiting distribution parameter RO */
-                                              /* 1=guassian; 2=lor; but 1<q<3 */
-                           /*  LG: 03-02 need q and factors for GSA visit dist*/
-                            /*  1   <  q < 2   uses qlt2_visit       */
-                            /*  2   <  q < 2.6 uses qgt2_visit       */
-                            /*  2.6 <= q < 3   uses binom_qgt2_visit */
-
-     int         log_trace;
-     int         log_params;
-     double      (*scoreFunction)   ();
-     void        (*printFunction)   (char * path, int proc);
-
- } plsa_parameters;
-
 typedef struct
 {
-  double lambda;
-  double lambda_mem_length_u;
-  double lambda_mem_length_v;
-  int    initial_moves;
-  int    tau;
-  int    freeze_count;
-  int    update_S_skip;
-  double control;
-  double criterion;
+	long   seed;
+
+	double initial_temp;                 /* initial temperature for annealer */
+
+	double lambda;
+	double lambda_mem_length_u;
+	double lambda_mem_length_v;
+	int    initial_moves;
+	int    tau;
+	int    freeze_count;
+	int    update_S_skip;
+	double control;
+	double criterion;
 #ifdef MPI
-  int    mix_interval;
+	int    mix_interval;
 #endif
 
 /* These were marked "Application program must set these." in the code     */
 /* from Greening/Lam; only progname is used at the moment; we kept them    */
 /* mainly for historical reasons (and to write funny things into tunename) */
 
-  char   progname[128];                                 /* name of my prog */
-  int    debuglevel;                                          /* who cares */
-  char   tunename[128];                                         /* nothing */
-  FILE   *tunefile;                                                /* NULL */
+	char   progname[128];                                 /* name of my prog */
+	int    debuglevel;                                          /* who cares */
+	char   tunename[128];                                         /* nothing */
+	FILE   *tunefile;                                                /* NULL */
 
- /* Added some log options here */
-  int    log_trace;
-  int    log_params;
+	/* Added some log options here */
+	int    log_trace;
+	int    log_params;
 
+
+	double      gain_for_jump_size_control;
+	double      interval;
+
+
+
+	int         distribution;        /* move generation distribution type RO */
+							/* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
+							  /*  LG: 07-05-00 formerly dist_type in lj code */
+
+	double      q;                 /* gen visiting distribution parameter RO */
+											 /* 1=guassian; 2=lor; but 1<q<3 */
+						  /*  LG: 03-02 need q and factors for GSA visit dist*/
+						   /*  1   <  q < 2   uses qlt2_visit       */
+						   /*  2   <  q < 2.6 uses qgt2_visit       */
+						   /*  2.6 <= q < 3   uses binom_qgt2_visit */
+
+	double      (*scoreFunction)   ();
+	void        (*printFunction)   (char * path, int proc);
 
 } SAType;
 
-/* This dummy is provided to allow SA to incorporate any move space; it's  *
- * kinda obsolete now, but I'm too lazy to rewrite the parts of the code   *
- * that use it                                                             */
-
-typedef struct {
-  SAType  tune;
-} NucStateType, *NucStatePtr;
-
-/* this is the equilibration parameter struct for equilibration runs; it's *
- * dedicated to the legendary Chu, a rather nocturnal creature who creates *
- * bizarre code structures using arcane variable names in great redundancy;*
- * although rarely seen these days, the Chu had a considerable influence   *
- * on the evolution of this code; alas, most of his workings have been un- *
- * done, most of his beautifully intertwined loops have vanished and most  *
- * of the redundancy has been sacrificed to the gods of parallel computing *
- * on the great altar of the Emacs-Cmd-K; up to this day, some people still*
- * lament that although the code might be leaner and cleaner than in the   *
- * old days, some of its soul and charm was lost in those two months of the*
- * Great and Awful Cleaning that got rid of most of the traces the Chu had *
- * left around these files; Chu: may the goto be (gone) with you and may   *
- * you find a well-paid job that does not involve writing code that other  *
- * people ever, ever have to use!                                          */
-
-typedef struct {
-  double end_T;                               /* equilibration temperature */
-  int    fix_T_skip;           /* number of steps without collecting stats */
-  int    fix_T_step;               /* number of steps for collecting stats */
-} ChuParam;
 
 /* Flag for type of stopping criterion (added by JR) ***********************
  *                                                                         *
@@ -243,7 +200,8 @@ typedef struct {
 
 /*** GLOBALS ***************************************************************/
 
-NucStatePtr state;                    /* global annealing parameter struct */
+// NucStatePtr state;                    /* global annealing parameter struct */
+SAType		state;
 
 StopStyle   stop_flag;               /* type of stop criterion (see above) */
 
@@ -289,8 +247,12 @@ int         start_time_seconds;
  *               randomization and collecting Lam stats or restores state  *
  *               of the annealer as saved in the state file                *
  ***************************************************************************/
+SAType * InitPLSA();
+PArrPtr * InitPLSAParameters(int nb_dimensions);
+double runPLSA( PArrPtr * params);
 
-void Initialize();
+SAType * InitializePLSA(void);
+void StartPLSA(PArrPtr * params);
 
 /*** InitFilenames: initializes static file names needed in lsa.c **********
  ***************************************************************************/
@@ -325,7 +287,7 @@ void InitializeWeights(void);
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-void Loop(void);
+double Loop(void);
 
 /*** UpdateS: update inverse temperature S at every Sskip step *************
  ***************************************************************************/
@@ -421,11 +383,9 @@ void ParseCommandLine();
  *                - initializes move generation in move(s).c               *
  *                - sets initial energy by evaluating cost function for    *
  *                  the first time                                         *
- *                then it returns the initial temperature to the caller    *
  ***************************************************************************/
 
-double InitialMove(NucStateType * state_ptr, double *p_chisq,
-                      plsa_parameters * settings, PArrPtr * params);
+void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
 
 /*** RestoreState: called when an interrupted run is restored; does the ****
  *                 following (see InitialMove for arguments, also see co-  *
@@ -436,15 +396,15 @@ double InitialMove(NucStateType * state_ptr, double *p_chisq,
  *                 - restores move state in move(s).c                      *
  ***************************************************************************/
 
-void RestoreState(char *statefile, NucStateType * state_ptr, double *p_chisq,
-                      plsa_parameters * settings, PArrPtr * params);
+void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
+	                      PArrPtr * params);
 
 /*** FinalMove: determines the final energy and move count and then prints *
  *              those to wherever they need to be printed to; also should  *
  *              do the cleaning up, i.e freeing stuff and such after a run *
  ***************************************************************************/
 
-void FinalMove(void);
+double FinalMove(void);
 
 /*** WriteTimes: writes the timing information to wherever it needs to be **
  *               written to at the end of a run                            *
@@ -503,6 +463,6 @@ void StateWrite();
  *               the state file, which can then be used to restore the run *
  *               in case it gets interrupted                               *
  ***************************************************************************/
-int run(plsa_parameters * settings, PArrPtr * params);
+
 
 #endif

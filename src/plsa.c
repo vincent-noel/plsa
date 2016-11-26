@@ -58,7 +58,7 @@ static char version[MAX_RECORD];                 /* version gets set below */
 
 /* other static variables */
 
-static int    precision   = 4;                    /* precision for eqparms */
+// static int    precision   = 16;                    /* precision for eqparms */
 
 
 /*** FUNCTIONS *************************************************************/
@@ -119,11 +119,11 @@ void ParseCommandLine()
  * distribution by calling qgt2_init or qlt2_init from distributions.c*
  **********************************************************************/
 
-void InitDistribution(plsa_parameters * t_plsa_params)
+void InitDistribution(SAType * tune)
 {
 
-    DistP.distribution = t_plsa_params->distribution;
-    DistP.q = t_plsa_params->q;
+    DistP.distribution = tune->distribution;
+    DistP.q = tune->q;
 
 
     if ((DistP.distribution > 11) || (DistP.distribution < 1))
@@ -174,55 +174,34 @@ void InitDistribution(plsa_parameters * t_plsa_params)
  *                then it returns the initial temperature to the caller    *
  ***************************************************************************/
 
-double InitialMove(NucStatePtr state_ptr, double *p_chisq,
-                    plsa_parameters * settings, PArrPtr * params)
+void InitialMove(SAType * state, double *p_chisq, PArrPtr * params)
 {
 
     char    *p;
 
-    double  i_temp;
+    // double  i_temp;
     double  energy;
-
-    // if ( landscape_flag )                      /* 1 means gen landscape files */
-    //     InitLandscape(landscape_flag);                       /*lives in lsa.c */
 
     /* initialize some Lam/Greening structures */
 
-    p = state_ptr->tune.progname;     /* tune.progname contains program name */
+	p = state->progname;     /* tune.progname contains program name */
     p = strcpy(p, version);
 
-    state_ptr->tune.debuglevel = 0;          /* following stuff not used now */
-    p = state_ptr->tune.tunename;
+    state->debuglevel = 0;          /* following stuff not used now */
+    p = state->tunename;
     p = strcpy(p, "The Other One");        /* Grateful Dead tune, what else? */
-    state_ptr->tune.tunefile = NULL;
+    state->tunefile = NULL;
 
-    InitScoring(settings);                   /* initializes facts and limits */
-    i_temp  = InitMoves(settings, params);     /* set initial temperature and *
+    InitScoring(state);                   /* initializes facts and limits */
+    InitMoves(state, params);     /* set initial temperature and *
                                                *  initialize                 */
-    InitDistribution(settings);   /* initialize distribution stuff */
-
-    /* initialize Lam parameters (see sa.h for further detail) */
-
-    state_ptr->tune.lambda              = settings->lambda;
-    state_ptr->tune.lambda_mem_length_u = settings->lambda_mem_length_u;
-    state_ptr->tune.lambda_mem_length_v = settings->lambda_mem_length_v;
-    state_ptr->tune.control             = settings->control;
-    state_ptr->tune.initial_moves       = settings->initial_moves;
-    state_ptr->tune.tau                 = settings->tau;
-    state_ptr->tune.freeze_count        = settings->freeze_count;
-    state_ptr->tune.update_S_skip       = settings->update_S_skip;
-    state_ptr->tune.criterion           = settings->criterion;
-#ifdef MPI
-    state_ptr->tune.mix_interval        = settings->mix_interval;
-#endif
-    state_ptr->tune.log_trace           = settings->log_trace;
-    state_ptr->tune.log_params          = settings->log_params;
+    InitDistribution(state);   /* initialize distribution stuff */
 
     energy = -999;
 
     *p_chisq = energy;                                  /* set initial score */
 
-    return(i_temp);                                   /* initial temperature */
+    return;//(i_temp);                                   /* initial temperature */
 }
 
 
@@ -243,8 +222,8 @@ double InitialMove(NucStatePtr state_ptr, double *p_chisq,
  * just repeated here.                                                     *
  ***************************************************************************/
 
-void RestoreState(char *statefile, NucStatePtr state_ptr, double *p_chisq,
-                    plsa_parameters * settings, PArrPtr * params)
+void RestoreState(char *statefile, SAType * state, double *p_chisq,
+                    PArrPtr * params)
 {
     char           *p;                                   /* temporary string */
 
@@ -273,33 +252,18 @@ void RestoreState(char *statefile, NucStatePtr state_ptr, double *p_chisq,
 
     /* initialize some Lam/Greening structures */
 
-    p = state_ptr->tune.progname;     /* tune.progname contains program name */
-    p = strcpy(p, version);
+	p = state->progname;     /* tune.progname contains program name */
+	p = strcpy(p, version);
 
-    state_ptr->tune.debuglevel = 0;          /* following stuff not used now */
-    p = state_ptr->tune.tunename;
-    p = strcpy(p,"The Other One");         /* Grateful Dead tune, what else? */
-    state_ptr->tune.tunefile = NULL;
+	state->debuglevel = 0;          /* following stuff not used now */
+	p = state->tunename;
+	p = strcpy(p,"The Other One");         /* Grateful Dead tune, what else? */
+	state->tunefile = NULL;
 
     /* init initial cond., mutator and deriv */
-    InitScoring(settings);                            /* init facts and limits */
-    InitMoves(settings, params);   /* set initial temperature and initialize */
-    InitDistribution(settings);   /* initialize distribution stuff */
-
-    /* initialize Lam parameters (see sa.h for further detail) */
-
-    state_ptr->tune.lambda              = settings->lambda;
-    state_ptr->tune.lambda_mem_length_u = settings->lambda_mem_length_u;
-    state_ptr->tune.lambda_mem_length_v = settings->lambda_mem_length_v;
-    state_ptr->tune.control             = settings->control;
-    state_ptr->tune.initial_moves       = settings->initial_moves;
-    state_ptr->tune.tau                 = settings->tau;
-    state_ptr->tune.freeze_count        = settings->freeze_count;
-    state_ptr->tune.update_S_skip       = settings->update_S_skip;
-    state_ptr->tune.criterion           = settings->criterion;
-#ifdef MPI
-    state_ptr->tune.mix_interval        = settings->mix_interval;
-#endif
+    InitScoring(state);                            /* init facts and limits */
+    InitMoves(state, params);   /* set initial temperature and initialize */
+    InitDistribution(state);   /* initialize distribution stuff */
 
     RestoreMoves(move_ptr);
     RestoreLamstats(stats);
@@ -320,16 +284,16 @@ void RestoreState(char *statefile, NucStatePtr state_ptr, double *p_chisq,
  *              state file                                                 *
  ***************************************************************************/
 
-void FinalMove(void)
+double FinalMove(void)
 {
 #ifdef MPI
     int      i;                                              /* loop counter */
 #endif
 
     AParms   ap;
-
+	double 	 final_score = DBL_MAX;
 #ifdef MPI
-    int      winner = 0;                           /* id of the winning node */
+    // int      winner = 0;                           /* id of the winning node */
     double   minyet = DBL_MAX;         /* minimum score, used to find winner */
 
     double   *final_e;               /* array of final energies of all nodes */
@@ -357,33 +321,39 @@ void FinalMove(void)
         if ( final_e[i] <= minyet )
         {
             minyet = final_e[i];
-            winner = i;
+            // winner = i;
         }
     }
 
-    /* write the answer */
-
-    if ( myid == winner )
-    {
+	final_score = minyet;
+#else
+	final_score = ap.stop_energy;
 #endif
-
-        /* all the funcs below write a section at its appropriate position in the  */
-        /* data file; to achieve this, they create a temporary file which is then  */
-        /* renamed to the final output file name                                   */
-
-        FILE * score_final_f;
-        char score_final_name[MAX_RECORD];
-        sprintf(score_final_name,"%s/../final_score", getLogDir());
-        score_final_f = fopen(score_final_name,"w");
-        fprintf(score_final_f,"%g",ap.stop_energy);
-        fclose(score_final_f);
-
-
-        // ExportVariablesOptim(get_optim_parameters());
-
-#ifdef MPI
-    }
-#endif
+//
+// #ifdef MPI
+//     /* write the answer */
+//
+//     if ( myid == winner )
+//     {
+// #endif
+//
+//         /* all the funcs below write a section at its appropriate position in the  */
+//         /* data file; to achieve this, they create a temporary file which is then  */
+//         /* renamed to the final output file name                                   */
+//
+//         FILE * score_final_f;
+//         char score_final_name[MAX_RECORD];
+//         sprintf(score_final_name,"%s/../final_score", getLogDir());
+//         score_final_f = fopen(score_final_name,"w");
+//         fprintf(score_final_f,"%g",ap.stop_energy);
+//         fclose(score_final_f);
+//
+//
+//         // ExportVariablesOptim(get_optim_parameters());
+//
+// #ifdef MPI
+//     }
+// #endif
 
     /* clean up the state file and free memory */
 
@@ -393,7 +363,7 @@ void FinalMove(void)
 #endif
             StateRm();
 
-
+	return final_score;
 }
 
 
@@ -456,7 +426,7 @@ Opts *GetOptions(void)
     options->state_write = state_write;
     options->print_freq  = print_freq;
     options->captions    = captions;
-    options->precision   = precision;
+    // options->precision   = precision;
     options->quenchit    = quenchit;
 
 #ifdef MPI
@@ -484,7 +454,7 @@ void RestoreOptions(Opts *options)
     state_write = options->state_write;
     print_freq  = options->print_freq;
     captions    = options->captions;
-    precision   = options->precision;
+    // precision   = options->precision;
     quenchit    = options->quenchit;
 
 #ifdef MPI

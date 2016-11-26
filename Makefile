@@ -27,10 +27,10 @@ clean:
 
 # Shared objects
 libplsa-serial.so:	$(OBJ) $(SOBJ)
-	$(CC) -shared -o libplsa-serial.so $(OBJ) $(SOBJ)
+	$(CC) -shared -o libplsa-serial.so $(OBJ) $(SOBJ) $(LIBS)
 
 libplsa-parallel.so: $(OBJ) $(POBJ)
-	$(MPICC) -shared -o libplsa-parallel.so $(OBJ) $(POBJ)
+	$(MPICC) -shared -o libplsa-parallel.so $(OBJ) $(POBJ) $(LIBS) 
 
 
 # Objects

@@ -306,6 +306,7 @@ static struct tms *cpu_start;                      /* user time before run */
 static struct tms *cpu_finish;                      /* user time after run */
 
 //static int max_duration = -1;
+int    stateflag = 0;                              /* state file or not? */
 
 
 void PrintMyPid()
@@ -315,13 +316,21 @@ void PrintMyPid()
  fclose(t_file);
 }
 
-/* MAIN HERE ***************************************************************/
-/* This should be pretty self-explanatory.                                 */
-
-
-int run(plsa_parameters * settings, PArrPtr * params)
+PArrPtr * InitPLSAParameters(int nb_dimensions)
 {
-    double *delta;                            /* used to store elapsed times */
+	PArrPtr * params = (PArrPtr *) malloc(sizeof(PArrPtr));
+
+	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
+
+	params->size  = nb_dimensions;
+	params->array = p;
+
+	return params;
+}
+
+SAType * InitPLSA()
+{
+    // double *delta;                            /* used to store elapsed times */
     PrintMyPid();
 #ifdef MPI
 
@@ -330,11 +339,23 @@ int run(plsa_parameters * settings, PArrPtr * params)
     if (rc != MPI_SUCCESS)
         printf (" > Error starting MPI program. \n");
 
+
+
+
     MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
 
 #endif
 
+    return InitializePLSA();
+}
+
+
+
+double runPLSA(PArrPtr * params)
+{
+    double *delta;                            /* used to store elapsed times */
+	double final_score;
     /* code for timing: wallclock and user times */
 
     cpu_start  = (struct tms *)malloc(sizeof(struct tms));      /* user time */
@@ -351,12 +372,12 @@ int run(plsa_parameters * settings, PArrPtr * params)
     /* initialize cost function and move state, do initial moves (or restore   */
     /* annealing state if restart                                              */
 
-    Initialize(settings, params);
+    StartPLSA(params);
 
     /* the following is for non-equlibration runs and equilibration runs that  */
     /* have not yet settled to their equilibrium temperature                   */
 
-    Loop();
+    final_score = Loop();
 
     /* code for timing */
 
@@ -379,7 +400,7 @@ int run(plsa_parameters * settings, PArrPtr * params)
     free(cpu_start);
     free(cpu_finish);
 
-    return 0;
+    return final_score;
 
 }
 
@@ -390,149 +411,185 @@ int run(plsa_parameters * settings, PArrPtr * params)
  *               of the annealer as saved in the state file.               *
  ***************************************************************************/
 
-void Initialize(plsa_parameters * settings, PArrPtr * params)
+ SAType * InitializePLSA(void)
+ {
+     // int    opt_index;         /* pointer to current argument of command line */
+     stateflag = 0;                              /* state file or not? */
+ #ifdef MPI
+     int    flagsum;                       /* used for state file check below */
+ #endif
+     // double initial_temp;                 /* initial temperature for annealer */
+
+     /* allocate memory for static file names */
+     statefile = (char *)calloc(MAX_RECORD, sizeof(char));
+
+     /* allocate memory for static Lam parameters and dance partners */
+	//  state = malloc(sizeof(SAType));
+ #ifdef MPI
+     dance_partner = (int *)calloc(nnodes, sizeof(int));
+ #endif
+
+     /* parse the command line and return index to input file name; then we     *
+      * initialize the static file names for inputfile and state file; these    *
+      * two are needed here, since they are required for reading the state file *
+      * whereas all other file names depend on the output file name and need to *
+      * be initialized after calling RestoreState() below                       */
+
+     ParseCommandLine();
+
+     /* state files: used for the case that a run terminates or crashes unex-   *
+      * pectedly; we can then restore the state of the run *precisely* as it    *
+      * was before the crash by restarting it from the state file               */
+ #ifdef MPI
+
+     if ( nnodes>1 )
+     {
+         if ( nnodes <= 10 )
+             sprintf(statefile,   "plsa_%d.state", myid);
+         else if ( (nnodes > 10) && (nnodes <= 100) )
+             sprintf(statefile, "plsa_%02d.state", myid);
+         else if ( (nnodes > 100) && (nnodes <= 1000) )
+             sprintf(statefile, "plsa_%03d.state", myid);
+         else if ( (nnodes > 1000) && (nnodes <= 10000) )
+             sprintf(statefile, "plsa_%04d.state", myid);
+         else if ( (nnodes > 10000) && (nnodes <= 100000) )
+             sprintf(statefile, "plsa_%05d.state", myid);
+         else
+             error("Initialize: can't open more than 100'000 state files");
+     }
+     else
+       sprintf(statefile, "plsa.state");
+
+ #else
+         sprintf(statefile, "plsa.state");
+ #endif
+
+     /* check if a state file exists (access() is in unistd.h) */
+
+     if ( 0 == access(statefile, F_OK) )
+         stateflag = 1;
+
+ #ifdef MPI
+     /* parallel code: make sure that all state files are present */
+
+     MPI_Allreduce(&stateflag, &flagsum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+     if ( (flagsum > 0) && (flagsum != nnodes) && (stateflag == 0) )
+         error("Initialize: state file for process %d is missing");
+ #endif
+
+	 state.seed = -6.60489e+08;
+	 state.initial_temp = 1000;
+
+	 state.lambda = 0.01;
+	 state.lambda_mem_length_u = 200;
+	 state.lambda_mem_length_v = 1000;
+
+	 state.initial_moves = 200;
+	 state.tau = 100;
+	 state.freeze_count = 100;
+
+	 state.update_S_skip = 1;
+	 state.control = 1;
+	 state.criterion = 0.01;
+#ifdef MPI
+	 state.mix_interval = 10;
+#endif
+	 state.gain_for_jump_size_control = 5;
+	 state.interval = 100;
+	 state.log_trace = 0;
+	 state.log_params = 0;
+
+
+	 state.distribution = 1;
+	 state.q = 1;
+	 state.scoreFunction = NULL;
+	 state.printFunction = NULL;
+
+
+
+	 return &state;
+}
+
+void StartPLSA(PArrPtr * params)
 {
-    // int    opt_index;         /* pointer to current argument of command line */
-    int    stateflag = 0;                              /* state file or not? */
-#ifdef MPI
-    int    flagsum;                       /* used for state file check below */
-#endif
-    double initial_temp;                 /* initial temperature for annealer */
+	/* first get Lam parameters, initial temp and energy and initialize S_0 */
+	/* if we restore a run from a state file: call RestoreState() */
 
-    /* allocate memory for static file names */
-    statefile = (char *)calloc(MAX_RECORD, sizeof(char));
+	if ( !stateflag )
+	{
+		InitialMove(&state, &energy, params);
+		S_0 = 1./state.initial_temp;
+	}
+	else
+	   RestoreState(statefile, &state, &energy, params);
 
-    /* allocate memory for static Lam parameters and dance partners */
-    state = (NucStateType *)malloc(sizeof(NucStateType));
-#ifdef MPI
-    dance_partner = (int *)calloc(nnodes, sizeof(int));
-#endif
+	/* initialize those static file names that depend on the output file name */
 
-    /* parse the command line and return index to input file name; then we     *
-     * initialize the static file names for inputfile and state file; these    *
-     * two are needed here, since they are required for reading the state file *
-     * whereas all other file names depend on the output file name and need to *
-     * be initialized after calling RestoreState() below                       */
+	InitFilenames();
 
-    ParseCommandLine();
+	#ifdef MPI
+	/* note that for parallel code both tau and init must be divided by nnodes */
+	/* and we need to account for the case when tau isn't divisible by nnodes  */
 
-    /* state files: used for the case that a run terminates or crashes unex-   *
-     * pectedly; we can then restore the state of the run *precisely* as it    *
-     * was before the crash by restarting it from the state file               */
-#ifdef MPI
+	if ( (state.tau % nnodes) != 0 )
+		error("plsa: the number of processors (%d) must be a divisor of tau",
+			  nnodes);
+	proc_tau  = state.tau / nnodes;               /* local copy of tau */
 
-    if ( nnodes>1 )
-    {
-        if ( nnodes <= 10 )
-            sprintf(statefile,   "plsa_%d.state", myid);
-        else if ( (nnodes > 10) && (nnodes <= 100) )
-            sprintf(statefile, "plsa_%02d.state", myid);
-        else if ( (nnodes > 100) && (nnodes <= 1000) )
-            sprintf(statefile, "plsa_%03d.state", myid);
-        else if ( (nnodes > 1000) && (nnodes <= 10000) )
-            sprintf(statefile, "plsa_%04d.state", myid);
-        else if ( (nnodes > 10000) && (nnodes <= 100000) )
-            sprintf(statefile, "plsa_%05d.state", myid);
-        else
-            error("Initialize: can't open more than 100'000 state files");
-    }
-    else
-      sprintf(statefile, "plsa.state");
+	if ( (state.initial_moves % nnodes) != 0 )
+		error("plsa: number of init moves must be divisible by nnodes (%d)",
+			  nnodes);
+	proc_init = state.initial_moves / nnodes;    /* # of initial moves */
+	#else
+	proc_tau  = state.tau;                       /* static copy to tau */
+	proc_init = state.initial_moves;             /* # of initial moves */
+	#endif
+	Tau = (double) state.tau;                  /* double version to tau */
+	/* for calculating estimators */
 
-#else
-        sprintf(statefile, "plsa.state");
-#endif
+	/* if we're not restarting: do the initial moves for randomizing and ga-   *
+	 * thering initial statistics                                              */
 
-    /* check if a state file exists (access() is in unistd.h) */
+	if ( !stateflag )
+	{
+		InitialLoop();
+	}
+	/* write first .log entry and write first statefile right after init; note *
+	 * that equilibration runs are short and therefore don't need state files  *
+	 * which would be rather complicated because of all the stats collected    *
+	 * during equilibration; for the exact same reasons we don't write state   *
+	 * files for tuning either; in case of a restart, we just restore the .log */
 
-    if ( 0 == access(statefile, F_OK) )
-        stateflag = 1;
-
-#ifdef MPI
-    /* parallel code: make sure that all state files are present */
-
-    MPI_Allreduce(&stateflag, &flagsum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    if ( (flagsum > 0) && (flagsum != nnodes) && (stateflag == 0) )
-        error("Initialize: state file for process %d is missing");
-#endif
-
-    /* first get Lam parameters, initial temp and energy and initialize S_0 */
-    /* if we restore a run from a state file: call RestoreState() */
-
-    if ( !stateflag )
-    {
-        initial_temp = InitialMove(state, &energy, settings, params);
-        S_0 = 1./initial_temp;
-    }
-    else
-       RestoreState(statefile, state, &energy, settings, params);
-
-    /* initialize those static file names that depend on the output file name */
-
-    InitFilenames();
-
-#ifdef MPI
-    /* note that for parallel code both tau and init must be divided by nnodes */
-    /* and we need to account for the case when tau isn't divisible by nnodes  */
-
-    if ( (state->tune.tau % nnodes) != 0 )
-        error("plsa: the number of processors (%d) must be a divisor of tau",
-              nnodes);
-    proc_tau  = state->tune.tau / nnodes;               /* local copy of tau */
-
-    if ( (state->tune.initial_moves % nnodes) != 0 )
-        error("plsa: number of init moves must be divisible by nnodes (%d)",
-              nnodes);
-    proc_init = state->tune.initial_moves / nnodes;    /* # of initial moves */
-#else
-    proc_tau  = state->tune.tau;                       /* static copy to tau */
-    proc_init = state->tune.initial_moves;             /* # of initial moves */
-#endif
-    Tau = (double)state->tune.tau;                  /* double version to tau */
-    /* for calculating estimators */
-
-    /* if we're not restarting: do the initial moves for randomizing and ga-   *
-     * thering initial statistics                                              */
-
-    if ( !stateflag )
-    {
-        InitialLoop();
-   }
-    /* write first .log entry and write first statefile right after init; note *
-     * that equilibration runs are short and therefore don't need state files  *
-     * which would be rather complicated because of all the stats collected    *
-     * during equilibration; for the exact same reasons we don't write state   *
-     * files for tuning either; in case of a restart, we just restore the .log */
-
-    if ( !equil && !bench && !nofile_flag )
-    {
-        if ( !stateflag )
-        {
-            WriteLog();
-#ifdef MPI
-            if ( !tuning )
-#endif
-            {
+	if ( !equil && !bench && !nofile_flag )
+	{
+		if ( !stateflag )
+		{
+			WriteLog();
+	#ifdef MPI
+			if ( !tuning )
+	#endif
+			{
 
 
-                StateWrite(statefile);
-            }
-        }
-        else
-            RestoreLog();
-    }
+				StateWrite(statefile);
+			}
+		}
+		else
+			RestoreLog();
+	}
 
 
-#ifdef MPI
-    /* if we are in tuning mode: initialize/restore tuning structs */
+	#ifdef MPI
+	/* if we are in tuning mode: initialize/restore tuning structs */
 
-    if ( tuning )
-    {
-        InitTuning();
-    }
-#endif
+	if ( tuning )
+	{
+		InitTuning();
+	}
+	#endif
 
 }
+
 
 
 
@@ -630,7 +687,7 @@ void InitialLoop(void)
 
     /* randomize initial state; throw out results; DO NOT PARALLELIZE! */
 
-    for (i=0; i<state->tune.initial_moves; i++)
+    for (i=0; i<state.initial_moves; i++)
     {
         /* make a move: will either return the energy change or FORBIDDEN_MOVE */
 
@@ -745,7 +802,7 @@ void InitialLoop(void)
 
     /* sanity check: have we done the correct number of initial moves? */
 
-    if ( nodesuccess[1] - state->tune.initial_moves )
+    if ( nodesuccess[1] - state.initial_moves )
         error("InitialLoop: initial moves was %d?!\n", nodesuccess[1]);
 
     /* mean and variance are now summed over all nodes */
@@ -766,9 +823,9 @@ void InitialLoop(void)
 
     /* global stats are calculated here */
 
-    mean     /= (double)state->tune.initial_moves;
-    vari      = vari / ((double)state->tune.initial_moves) - mean * mean;
-    acc_ratio = ((double)success) / ((double)state->tune.initial_moves);
+    mean     /= (double)state.initial_moves;
+    vari      = vari / ((double)state.initial_moves) - mean * mean;
+    acc_ratio = ((double)success) / ((double)state.initial_moves);
 
     /* initialize Lam parameters used for calculating Lam estimators */
     InitializeParameter();
@@ -887,15 +944,15 @@ void InitializeWeights(void)
 
     /* w_a is the weight for the mean */
 
-    w_a = state->tune.lambda_mem_length_u / state->tune.lambda;
-    w_a = 1.0 - state->tune.tau / w_a;
+    w_a = state.lambda_mem_length_u / state.lambda;
+    w_a = 1.0 - state.tau / w_a;
     if (w_a < 0.0)
         w_a = 0.0;
 
     /* w_b is the weight for the standard deviation */
 
-    w_b = state->tune.lambda_mem_length_v / state->tune.lambda;
-    w_b = 1.0 - state->tune.tau / w_b;
+    w_b = state.lambda_mem_length_v / state.lambda;
+    w_b = 1.0 - state.tau / w_b;
     if (w_b < 0.0)
         w_b = 0.0;
 
@@ -947,7 +1004,7 @@ void InitTuning(void)
     if ( nnodes <= 1 )
         error("plsa: tuning does not make sense on one processor");
 
-    if ( covar_index > state->tune.mix_interval )
+    if ( covar_index > state.mix_interval )
         error("plsa: you can't sample over more than the whole mix interval");
 
     /* set size of sample interval */
@@ -964,11 +1021,11 @@ void InitTuning(void)
 
     /* tune_interval: how many covar_samples per mix_interval? */
 
-    if ( (state->tune.mix_interval % covar_index) != 0 )
+    if ( (state.mix_interval % covar_index) != 0 )
         error("plsa: mix interval (%d) not divisible by covar_index",
-              state->tune.mix_interval);
+              state.mix_interval);
 
-    tune_interval = state->tune.mix_interval / covar_index;
+    tune_interval = state.mix_interval / covar_index;
 
     /* size of every tune interval in between writing tuning stats */
 
@@ -1033,7 +1090,7 @@ void InitTuning(void)
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-void Loop(void)
+double Loop(void)
 {
     int    i;                                          /* local loop counter */
     double energy_change;                                   /* local Delta E */
@@ -1100,7 +1157,7 @@ void Loop(void)
                 RejectMove();
             }
 
-            if (state->tune.log_trace > 0)
+            if (state.log_trace > 0)
               WriteScoreTrace(GetNewEnergy(), acceptance_result);
 
             /* update statistics */
@@ -1160,8 +1217,8 @@ void Loop(void)
 
         if (max_iter > 0 && count_tau >= max_iter)
         {
-            FinalMove();
-            return;
+
+            return FinalMove();
         }
 
         if (max_seconds > 0)
@@ -1172,16 +1229,16 @@ void Loop(void)
 
             if (duration > max_seconds)
             {
-                FinalMove();
-                return;
+
+                return FinalMove();
             }
 
         }
 
         if ( Frozen() )
         {
-            FinalMove();
-            return;
+
+            return FinalMove();
         }
 
         /* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
@@ -1236,15 +1293,15 @@ void Loop(void)
                         free(cross_correl);
                         free(var_means);
                         free(midpoints);
-                        FinalMove();
-                        return;               /* exit the loop here if finished tuning */
+
+                        return FinalMove();             /* exit the loop here if finished tuning */
                     }
             }
         }
 
         /* at each mix_interval: do some mixing */
 
-        if ( count_tau % state->tune.mix_interval == 0 )
+        if ( count_tau % state.mix_interval == 0 )
         {    DoMix();}
 
 #endif
@@ -1322,8 +1379,8 @@ void UpdateS(void)
 
     /* following lines implement the main Lam schedule formula */
 
-    dS  = state->tune.lambda * alpha / (d*d * estimate_sd);
-    dS *= state->tune.update_S_skip;       /* ... we have to muliply by skip */
+    dS  = state.lambda * alpha / (d*d * estimate_sd);
+    dS *= state.update_S_skip;       /* ... we have to muliply by skip */
 
 #ifdef MPI
     dS *= Tau/((double)proc_tau);
@@ -1331,7 +1388,7 @@ void UpdateS(void)
 
     /* reset skip */
 
-    skip = state->tune.update_S_skip;
+    skip = state.update_S_skip;
 	//printf(" > UpdateS fini : skip = %d\n",skip);
 }
 
@@ -1377,7 +1434,7 @@ void UpdateStats(int i)
     success = (int)nodesuccess[0];         /* success is now global success! */
 
     /* sanity check: have we done the correct number of initial moves? */
-    if (nodesuccess[1] - state->tune.tau)
+    if (nodesuccess[1] - state.tau)
         error("Loop: total moves was %d ?!\n", nodesuccess[1]);
 
 
@@ -1630,7 +1687,7 @@ int Frozen(void)
     if (delta <= 0.)
         delta = -delta;
 
-    if (delta <= state->tune.criterion)
+    if (delta <= state.criterion)
     {
         counter++;
     }
@@ -1640,7 +1697,7 @@ int Frozen(void)
         old_mean = mean;
     }
 
-    return(counter >= state->tune.freeze_count);
+    return(counter >= state.freeze_count);
 }
 
 
@@ -2510,7 +2567,7 @@ void RestoreLog(void)
 
     /* this is the last line we've written into the .log file */
 
-    max_saved_count = state->tune.initial_moves+proc_init+count_tau*proc_tau;
+    max_saved_count = state.initial_moves+proc_init+count_tau*proc_tau;
 
     logline   = (char *)calloc(MAX_RECORD, sizeof(char));
     shell_cmd = (char *)calloc(MAX_RECORD, sizeof(char));
@@ -2744,7 +2801,7 @@ void PrintLog(FILE *outptr, int local_flag)
     if ( local_flag )
     {
         fprintf(outptr, format,
-                (state->tune.initial_moves+proc_init+count_tau*proc_tau),
+                (state.initial_moves+proc_init+count_tau*proc_tau),
                 1.0/S, dS/S,
                 l_mean, sqrt(l_vari), l_estimate_mean_u, l_estimate_sd,
                 l_acc_ratio, l_alpha,t_secs_since_epoc);
@@ -2754,7 +2811,7 @@ void PrintLog(FILE *outptr, int local_flag)
 #endif
 
         fprintf(outptr, format,
-                (state->tune.initial_moves+proc_init+count_tau*proc_tau),
+                (state.initial_moves+proc_init+count_tau*proc_tau),
                 1.0/S, dS/S,
                 mean, sqrt(vari), estimate_mean, estimate_sd,
                 acc_ratio, alpha,t_secs_since_epoc);

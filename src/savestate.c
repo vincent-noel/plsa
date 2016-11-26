@@ -81,11 +81,9 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   fscanf(infile, "%ld\n", &(options->state_write));
   fscanf(infile, "%ld\n", &(options->print_freq));
   fscanf(infile, "%ld\n", &(options->captions));
-  fscanf(infile, "%d\n",  &(options->precision));
+  // fscanf(infile, "%d\n",  &(options->precision));
   fscanf(infile, "%d\n",  &(options->quenchit));
-  fscanf(infile, "%d\n",  &(options->equil));
 #ifdef MPI
-  fscanf(infile, "%d\n",  &(options->tuning));
   fscanf(infile, "%d\n",  &(options->covar_index));
   fscanf(infile, "%d\n",  &(options->write_tune_stat));
   fscanf(infile, "%d\n",  &(options->auto_stop_tune));
@@ -177,11 +175,9 @@ void StateWrite(char *statefile)
   fprintf(outfile, "%ld\n",   options->state_write);
   fprintf(outfile, "%ld\n",   options->print_freq);
   fprintf(outfile, "%ld\n",   options->captions);
-  fprintf(outfile, "%d\n",    options->precision);
+  // fprintf(outfile, "%d\n",    options->precision);
   fprintf(outfile, "%d\n",    options->quenchit);
-  fprintf(outfile, "%d\n",    options->equil);
 #ifdef MPI
-  fprintf(outfile, "%d\n",    options->tuning);
   fprintf(outfile, "%d\n",    options->covar_index);
   fprintf(outfile, "%d\n",    options->write_tune_stat);
   fprintf(outfile, "%d\n",    options->auto_stop_tune);
