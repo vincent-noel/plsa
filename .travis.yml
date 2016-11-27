@@ -8,9 +8,6 @@ install:
   - make
   - sudo make install
 
-after_install:
-  - make clean
-
 
 before_script:
   - make examples
