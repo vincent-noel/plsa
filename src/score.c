@@ -65,8 +65,6 @@ void SaveBestScore(double score)
 
 void InitScoring(SAType * tune)
 {
-    // scoreFunction = plsa_params->scoreFunction;
-    // printFunction = plsa_params->printFunction;
 
 	scoreFunction = tune->scoreFunction;
     printFunction = tune->printFunction;
@@ -90,10 +88,8 @@ double Score(void)
 
     chisq = scoreFunction();
 
-    if (isnan(chisq)) {chisq = FORBIDDEN_MOVE;}
-    if (isinf(chisq)) {chisq = FORBIDDEN_MOVE;}
-    if (chisq < 0)
-        chisq = FORBIDDEN_MOVE;
+    if (isnan(chisq) || isinf(chisq) || (chisq < 0))
+	    chisq = FORBIDDEN_MOVE;
 
     if (chisq < best_score)
     {

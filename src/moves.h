@@ -23,9 +23,6 @@
  *****************************************************************************/
 
 
-#ifndef MOVES_INCLUDED
-#define MOVES_INCLUDED
-
 /* this def needed for func. defs that refer to (* FILE) */
 #ifndef _STDIO_INCLUDED
 #include <stdio.h>
@@ -79,7 +76,7 @@ typedef struct {
   int    max_count;                      /* total number of iterations OUT */
   int    interval;       /* number of sweeps between updating theta_bar RO */
 /*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
-  int    log_params;
+  // int    log_params;
 } AParms;
 
 /* Struct for acceptance statistics, which are used for keeping the accep- *
@@ -94,24 +91,6 @@ typedef struct {
 } AccStats;
 
 
-/* Some annealers need to know about the search space to make the right    *
- * moves. For penalty type ranges, the penalty needs to be converted into  *
- * explicit range limits using Penalty2Limits (in score.c). Probably, this *
- * should be called from UpdateControl and give the ranges corresponding   *
- * to a defined penalty level                                              *
- * BUT: PASSING PARAM LIMITS TO THE ANNEALER IS CURRENTLY NOT SUPPORTED    */
-//
-// typedef struct {
-//   double    *param;                /* pointers to parameters to be tweaked */
-//   Range     *param_range;        /* pointers to corresponding range limits */
-// } ParamList;
-//
-//
-// typedef struct {
-//   int       size;                           /* size of the ParamList array */
-//   ParamList *array;            /* points to 1st element of ParamList array */
-//   // double    *pen_vec;   /* penalty vector: see score.h, struct SearchSpace */
-// } PArrPtr;
 
 
 
@@ -264,4 +243,3 @@ void StateRm(void);
 
 void WriteParamsTrace(void);
 void randomModelParameters(void);
-#endif

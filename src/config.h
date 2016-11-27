@@ -14,15 +14,12 @@
  *                                                                           *
  *****************************************************************************/
 
-#ifndef CONFIG_INCLUDED
-#define CONFIG_INCLUDED
-
-/* this def needed for func. defs that refer to (* FILE) *******************/
+/* this def needed for func. defs that refer to (* FILE) *********************/
 #ifndef _STDIO_INCLUDED
 #include <stdio.h>
 #endif
 
-/* following for structures & consts used thruout **************************/
+/* following for structures & consts used thruout ****************************/
 
 #ifndef GLOBAL_INCLUDED
 #include "global.h"
@@ -31,16 +28,17 @@
 
 ///*** GLOBALS ** ************************************************************/
 
-
 typedef struct
 {
 	/* Added some log options here */
 	char * 	dir;
+
 	int    	trace;
 	int    	params;
 	int  	res;
 	int 	score;
 	int 	pid;
+
 } SALogs;
 
 /* Following are functions that are needed by many other reading funcs */
@@ -55,5 +53,3 @@ int 	logPid();
 
 void 	InitLogs();
 void 	BuildLogs();
-
-#endif

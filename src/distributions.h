@@ -17,7 +17,8 @@
 *   the full GPL copyright notice can be found in lsa.c                      *
 *                                                                            *
 ******************************************************************************/
-typedef struct my_distrib {
+typedef struct my_distrib
+{
   int distribution;      /* move generation distribution type RO */
                          /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
                          /*  LG: 07-05-00 formerly dist_type in lj code */
