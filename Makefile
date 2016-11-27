@@ -37,13 +37,13 @@ run-funnel-serial: main-funnel-serial.o
 	$(CC) main-funnel-serial.o -lplsa-serial -lm -o run-funnel-serial
 
 main-funnel-serial.o: examples/funnel/main.c
-	$(CC) -c examples/funnel/main.c -o main-funnel-serial.o
+	$(CC) $(FLAGS) -c examples/funnel/main.c -o main-funnel-serial.o
 
 run-funnel-parallel: main-funnel-parallel.o
 	$(MPICC) main-funnel-parallel.o -lplsa-parallel -lm -o run-funnel-parallel
 
 main-funnel-parallel.o:	examples/funnel/main.c
-	$(MPICC) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
+	$(MPICC) $(FLAGS) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
 
 
 # Shared objects

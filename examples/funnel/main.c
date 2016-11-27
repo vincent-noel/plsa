@@ -54,7 +54,7 @@ void 	print_function()
 //////////////////////////////////////////////////////////////////////////////
 // Now the optimization
 
-int 	main (char * argv, int argc)
+int 	main (int argc, char ** argv)
 {
 
 #ifdef MPI
