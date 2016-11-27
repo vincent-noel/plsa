@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 #include <plsa/sa.h>
-#include <plsa/config.h>
 #include <math.h>
 
 #ifdef MPI
