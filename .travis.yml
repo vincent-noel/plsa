@@ -5,7 +5,6 @@ before_install:
   - sudo apt-get install -y libopenmpi-dev openmpi-bin
 
 install:
-  - make
   - sudo make install
 
 

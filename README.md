@@ -13,9 +13,10 @@ You will need MPI libraries to execute C code in parallel
 ##Installation
 To compile the shared library:
 
-	make all
+	make
+	
 
-To compile and install it in your /usr/lib and /usr/include
+Or, to compile and install it in your /usr/lib and /usr/include
 
 	sudo make install
 
