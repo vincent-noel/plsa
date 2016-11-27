@@ -60,7 +60,6 @@ int 	main (char * argv, int argc)
 
 #ifdef MPI
 	// MPI initialization steps
-
 	int nnodes, myid;
 
 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
@@ -72,13 +71,6 @@ int 	main (char * argv, int argc)
 
 #endif
 
-	// something to improve one day
-	setLogDir("logs");
-
-	// define the optimization parameters
-	PArrPtr * params = InitPLSAParameters(1);
-	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}};
-
 
 	// define the optimization settings
 #ifdef MPI
@@ -88,6 +80,11 @@ int 	main (char * argv, int argc)
 #endif
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
+
+
+	// define the optimization parameters
+	PArrPtr * params = InitPLSAParameters(1);
+	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}};
 
 
 	// run the optimization

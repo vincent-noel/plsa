@@ -134,10 +134,6 @@ typedef struct
 	char   tunename[128];                                         /* nothing */
 	FILE   *tunefile;                                                /* NULL */
 
-	/* Added some log options here */
-	int    log_trace;
-	int    log_params;
-
 
 	double      gain_for_jump_size_control;
 	double      interval;

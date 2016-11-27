@@ -31,11 +31,29 @@
 
 ///*** GLOBALS ** ************************************************************/
 
-int    debug;                                            /* debugging flag */
+
+typedef struct
+{
+	/* Added some log options here */
+	char * 	dir;
+	int    	trace;
+	int    	params;
+	int  	res;
+	int 	score;
+	int 	pid;
+} SALogs;
 
 /* Following are functions that are needed by many other reading funcs */
 
-char *      getLogDir();
-void        setLogDir(char * dir);
+char *	getLogDir();
+
+int		logTrace();
+int 	logParams();
+int 	logRes();
+int 	logScore();
+int 	logPid();
+
+void 	InitLogs();
+void 	BuildLogs();
 
 #endif

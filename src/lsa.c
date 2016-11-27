@@ -332,8 +332,11 @@ SAType * InitPLSA(int nb_procs, int my_id)
 {
 	nnodes = nb_procs;
 	myid = my_id;
-    // double *delta;                            /* used to store elapsed times */
-    PrintMyPid();
+
+	InitLogs();
+
+	if (logPid() > 0)
+		PrintMyPid();
 
 
     return InitializePLSA();
@@ -342,24 +345,10 @@ SAType * InitPLSA(int nb_procs, int my_id)
 
 SAType * InitPLSA()
 {
-	// nnodes = nb_procs;
-	// myid = my_id;
-    // double *delta;                            /* used to store elapsed times */
-    PrintMyPid();
-// #ifdef MPI
-//
-//     /* MPI initialization steps */
-//     int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
-//     if (rc != MPI_SUCCESS)
-//         printf (" > Error starting MPI program. \n");
-//
-//
-//
-//
-//     MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
-//     MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
-//
-// #endif
+	InitLogs();
+
+	if (logPid() > 0)
+    	PrintMyPid();
 
     return InitializePLSA();
 }
@@ -369,6 +358,8 @@ double runPLSA(PArrPtr * params)
     double *delta;                            /* used to store elapsed times */
 	double final_score;
     /* code for timing: wallclock and user times */
+
+	BuildLogs();									/* build the log folders */
 
     cpu_start  = (struct tms *)malloc(sizeof(struct tms));      /* user time */
     cpu_finish = (struct tms *)malloc(sizeof(struct tms));
@@ -504,9 +495,6 @@ double runPLSA(PArrPtr * params)
 #endif
 	 state.gain_for_jump_size_control = 5;
 	 state.interval = 100;
-	 state.log_trace = 0;
-	 state.log_params = 0;
-
 
 	 state.distribution = 1;
 	 state.q = 1;
@@ -1165,7 +1153,7 @@ double Loop(void)
                 RejectMove();
             }
 
-            if (state.log_trace > 0)
+            if (logTrace() > 0)
               WriteScoreTrace(GetNewEnergy(), acceptance_result);
 
             /* update statistics */

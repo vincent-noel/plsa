@@ -114,7 +114,7 @@ void InitMoves(SAType * state, PArrPtr * pl)
     ap.start_tempr = state->initial_temp;
     ap.gain = state->gain_for_jump_size_control;
     ap.interval = state->interval;
-    ap.log_params = state->log_params;
+    // ap.log_params = state->log_params;
 
 
     /* initialze the random number generator, now erand48() */
@@ -241,7 +241,7 @@ double GenerateMove(void)
 
     new_energy = Score();
 
-    if (ap.log_params > 0)
+    if (logParams() > 0)
       WriteParamsTrace();
 
     if (new_energy == FORBIDDEN_MOVE)

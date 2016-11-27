@@ -41,7 +41,7 @@ void SaveBestScore(double score)
 {
 
 
-char score_name[MAX_RECORD];
+	char score_name[MAX_RECORD];
 #ifdef MPI
     sprintf(score_name,"%s/score/score_%d", getLogDir(), myid);
 #else
@@ -97,7 +97,8 @@ double Score(void)
 
     if (chisq < best_score)
     {
-        SaveBestScore(chisq);
+        if (logScore() > 0)
+			SaveBestScore(chisq);
 
 #ifdef MPI
         printFunction(getLogDir(), myid);
