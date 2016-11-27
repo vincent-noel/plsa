@@ -73,12 +73,12 @@ void BuildLogs()
 {
     mkdir(logs.dir, 0777);
 
-    // char res[250];
-    // sprintf(res, "%s/res", logs.dir);
-    // mkdir(res, 0777);
-	//
-    // char score[200];
-    // sprintf(score, "%s/score", logs.dir);
-    // mkdir(score, 0777);
+    /*char res[250];
+    sprintf(res, "%s/res", logs.dir);
+    mkdir(res, 0777);
+
+    char score[200];
+    sprintf(score, "%s/score", logs.dir);
+    mkdir(score, 0777);*/
 
 }
