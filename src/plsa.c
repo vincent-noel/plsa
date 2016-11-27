@@ -293,7 +293,7 @@ double FinalMove(void)
     AParms   ap;
 	double 	 final_score = DBL_MAX;
 #ifdef MPI
-    // int      winner = 0;                           /* id of the winning node */
+    int      winner = 0;                           /* id of the winning node */
     double   minyet = DBL_MAX;         /* minimum score, used to find winner */
 
     double   *final_e;               /* array of final energies of all nodes */
@@ -321,7 +321,7 @@ double FinalMove(void)
         if ( final_e[i] <= minyet )
         {
             minyet = final_e[i];
-            // winner = i;
+            winner = i;
         }
     }
 
@@ -329,31 +329,30 @@ double FinalMove(void)
 #else
 	final_score = ap.stop_energy;
 #endif
-//
-// #ifdef MPI
-//     /* write the answer */
-//
-//     if ( myid == winner )
-//     {
-// #endif
-//
-//         /* all the funcs below write a section at its appropriate position in the  */
-//         /* data file; to achieve this, they create a temporary file which is then  */
-//         /* renamed to the final output file name                                   */
-//
-//         FILE * score_final_f;
-//         char score_final_name[MAX_RECORD];
-//         sprintf(score_final_name,"%s/../final_score", getLogDir());
-//         score_final_f = fopen(score_final_name,"w");
-//         fprintf(score_final_f,"%g",ap.stop_energy);
-//         fclose(score_final_f);
-//
-//
-//         // ExportVariablesOptim(get_optim_parameters());
-//
-// #ifdef MPI
-//     }
-// #endif
+
+#ifdef MPI
+    /* write the answer */
+
+    if ( myid == winner )
+    {
+#endif
+
+        /* all the funcs below write a section at its appropriate position in the  */
+        /* data file; to achieve this, they create a temporary file which is then  */
+        /* renamed to the final output file name                                   */
+
+        FILE * score_final_f;
+        char score_final_name[MAX_RECORD];
+        sprintf(score_final_name,"%s/../final_score", getLogDir());
+        score_final_f = fopen(score_final_name,"w");
+        fprintf(score_final_f,"%g",ap.stop_energy);
+        fclose(score_final_f);
+
+
+
+#ifdef MPI
+    }
+#endif
 
     /* clean up the state file and free memory */
 
