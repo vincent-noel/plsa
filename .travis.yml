@@ -1,3 +1,6 @@
 language: C
-install: sudo apt-get update -qq && sudo apt-get install libopemnpi-dev openmpi-bin
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libopenmpi-dev openmpi-bin
+install: sudo make install
 script: make examples
