@@ -247,7 +247,12 @@ int         start_time_seconds;
  *               randomization and collecting Lam stats or restores state  *
  *               of the annealer as saved in the state file                *
  ***************************************************************************/
+#ifdef MPI
+SAType * InitPLSA(int nb_procs, int my_id);
+#else
 SAType * InitPLSA();
+#endif
+
 PArrPtr * InitPLSAParameters(int nb_dimensions);
 double runPLSA( PArrPtr * params);
 

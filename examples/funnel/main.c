@@ -25,6 +25,12 @@
 #include <plsa/config.h>
 #include <math.h>
 
+#ifdef MPI
+#include <mpi.h>
+
+int nnodes;
+int myid;
+#endif
 //////////////////////////////////////////////////////////////////////////////
 // Problem definition :
 
@@ -52,22 +58,54 @@ void 	print_function()
 int		main (char * argv, int argc)
 {
 
+#ifdef MPI
+
+    /* MPI initialization steps */
+    int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
+    if (rc != MPI_SUCCESS)
+        printf (" > Error starting MPI program. \n");
+
+    MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
+
+#endif
 
 	setLogDir("logs");
 
 	PArrPtr * params = InitPLSAParameters(1);
 	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}};
 
+
+#ifdef MPI
+	SAType * t_sa = InitPLSA(nnodes, myid);
+#else
 	SAType * t_sa = InitPLSA();
+#endif
+
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
 
 	double final_score;
 	final_score = runPLSA(params);
 
-	printf("final value : %10.7f\n", param);
-	printf("final score : %g\n", final_score);
+#ifdef MPI
+	if (myid == 0)
+	{
+#endif
 
+		printf("final value : %10.7f\n", param);
+		printf("final score : %g\n", final_score);
+
+#ifdef MPI
+	}
+#endif
+	/* clean up MPI and return */
+
+#ifdef MPI
+
+    MPI_Finalize();                  /* terminates MPI execution environment */
+
+#endif
 
 	return 0;
 }

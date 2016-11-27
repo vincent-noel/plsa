@@ -327,31 +327,43 @@ PArrPtr * InitPLSAParameters(int nb_dimensions)
 
 	return params;
 }
-
-SAType * InitPLSA()
+#ifdef MPI
+SAType * InitPLSA(int nb_procs, int my_id)
 {
+	nnodes = nb_procs;
+	myid = my_id;
     // double *delta;                            /* used to store elapsed times */
     PrintMyPid();
-#ifdef MPI
 
-    /* MPI initialization steps */
-    int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
-    if (rc != MPI_SUCCESS)
-        printf (" > Error starting MPI program. \n");
-
-
-
-
-    MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
-
-#endif
 
     return InitializePLSA();
 }
+#else
 
+SAType * InitPLSA()
+{
+	// nnodes = nb_procs;
+	// myid = my_id;
+    // double *delta;                            /* used to store elapsed times */
+    PrintMyPid();
+// #ifdef MPI
+//
+//     /* MPI initialization steps */
+//     int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
+//     if (rc != MPI_SUCCESS)
+//         printf (" > Error starting MPI program. \n");
+//
+//
+//
+//
+//     MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
+//
+// #endif
 
-
+    return InitializePLSA();
+}
+#endif
 double runPLSA(PArrPtr * params)
 {
     double *delta;                            /* used to store elapsed times */
@@ -391,11 +403,7 @@ double runPLSA(PArrPtr * params)
         free(delta);
     }
 
-    /* clean up MPI and return */
 
-#ifdef MPI
-    MPI_Finalize();                  /* terminates MPI execution environment */
-#endif
 
     free(cpu_start);
     free(cpu_finish);
