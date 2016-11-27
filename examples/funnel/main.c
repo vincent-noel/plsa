@@ -27,10 +27,9 @@
 
 #ifdef MPI
 #include <mpi.h>
-
-int nnodes;
-int myid;
 #endif
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Problem definition :
 
@@ -47,61 +46,68 @@ double 	score_function()
 // And we print it for each new best score
 void 	print_function()
 {
-	//printf("New best score : %10.7f\n", param);
+	// printf("New best score : %.5g (param = %10.7f)\n",
+	// 		score_function(),
+	// 		param
+	// );
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Now the optimization
-
 
 int 	main (char * argv, int argc)
 {
 
 #ifdef MPI
+	// MPI initialization steps
 
-	/* MPI initialization steps */
-	int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
+	int nnodes, myid;
+
+	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
 	if (rc != MPI_SUCCESS)
 	    printf (" > Error starting MPI program. \n");
 
-	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
+	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);        /* number of processors? */
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);         /* ID of local processor? */
 
 #endif
 
+	// something to improve one day
 	setLogDir("logs");
 
+	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(1);
 	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}};
 
 
+	// define the optimization settings
 #ifdef MPI
 	SAType * t_sa = InitPLSA(nnodes, myid);
 #else
 	SAType * t_sa = InitPLSA();
 #endif
-
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
 
+
+	// run the optimization
 	double final_score;
 	final_score = runPLSA(params);
 
+
+	// print final parameter value and score
 #ifdef MPI
 	if (myid == 0)
 	{
 #endif
-
 		printf("final value : %10.7f\n", param);
 		printf("final score : %g\n", final_score);
-
 #ifdef MPI
 	}
 
-	/* clean up MPI and return */
-	MPI_Finalize();                  /* terminates MPI execution environment */
 
+	// terminates MPI execution environment
+	MPI_Finalize();
 #endif
 
 	return 0;
