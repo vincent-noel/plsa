@@ -12,7 +12,6 @@ POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o
 
 
 all: libplsa-serial.so libplsa-parallel.so
-	rm -f *.o
 
 install: libplsa-serial.so libplsa-parallel.so $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h
 	cp libplsa-serial.so libplsa-parallel.so /usr/lib/
@@ -20,16 +19,19 @@ install: libplsa-serial.so libplsa-parallel.so $(SRCDIR)/config.h $(SRCDIR)/glob
 	cp $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h	/usr/include/plsa
 	rm -f *.so *.o
 
+uninstall:
+	rm -f /usr/lib/libplsa-serial.so /usr/lib/libplsa-parallel.so
+	rm -fr /usr/include/plsa
+
 clean:
 	rm -f *.o *.so
 
 examples: run-funnel-serial run-funnel-parallel
 	rm *.o
-	rm -fr
 
 clean_examples:
 	rm -f *.o *.so run-funnel-serial run-funnel-parallel
-	rm -fr logs/ final_score pid plsa.log
+	rm -fr logs/ final_score plsa.log
 
 run-funnel-serial: main-funnel-serial.o libplsa-serial.so
 	$(CC) main-funnel-serial.o libplsa-serial.so -lm -o run-funnel-serial
