@@ -44,7 +44,7 @@
 /* an array needed by erand48 */
 
 #ifdef USE_ERAND48
-static unsigned short xsubj[3];        /* array used to initialize erand48 */
+static unsigned short int xsubj[3];        /* array used to initialize erand48 */
 #endif
 
 
@@ -53,7 +53,7 @@ static unsigned short xsubj[3];        /* array used to initialize erand48 */
 /*** InitERand: initializes ERand by making xsubj static to random.c *******
  ***************************************************************************/
 
-void InitERand(unsigned short xsubi[3])
+void InitERand(unsigned short int xsubi[3])
 {
     int i;
     for(i=0; i<3; i++)
