@@ -1,17 +1,5 @@
 language: C
-# blocklist
-branches:
-    except:
-        - legacy
-        - experimental
 
-# safelist
-branches:
-    only:
-        - master
-        - stable
-
-        
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libopenmpi-dev openmpi-bin
