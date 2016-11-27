@@ -4,4 +4,4 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libopenmpi-dev openmpi-bin
 install: sudo make install
-script: make examples
+script: make examples; ./run-funnel-serial; mpirun -np 2 ./run-funnel-parallel
