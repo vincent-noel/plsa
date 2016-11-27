@@ -23,7 +23,35 @@ install: libplsa-serial.so libplsa-parallel.so $(SRCDIR)/config.h $(SRCDIR)/glob
 clean:
 	rm -f *.o *.so
 
+examples: run-funnel-serial run-funnel-parallel
+	rm *.o
+	rm -fr plsa/
 
+clean_examples:
+	rm -f *.o *.so run-funnel-serial run-funnel-parallel
+	rm -fr logs/ plsa/ final_score pid plsa.log
+
+run-funnel-serial: main-funnel-serial.o libplsa-serial.so
+	$(CC) main-funnel-serial.o libplsa-serial.so -lm -o run-funnel-serial
+
+main-funnel-serial.o:	examples/funnel/main.c
+	rm -fr plsa
+	mkdir plsa
+	cp -r src/* plsa/
+	$(CC) -I. -c examples/funnel/main.c -o main-funnel-serial.o
+	rm -fr plsa
+
+run-funnel-parallel: main-funnel-parallel.o libplsa-parallel.so
+	$(MPICC) main-funnel-parallel.o libplsa-parallel.so -lm -o run-funnel-parallel
+
+main-funnel-parallel.o:	examples/funnel/main.c
+	rm -fr plsa
+	mkdir plsa
+	cp -r src/* plsa/
+	$(MPICC) -I. -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
+	rm -fr plsa
+
+run-funnel-parallel:
 
 # Shared objects
 libplsa-serial.so:	$(OBJ) $(SOBJ)
