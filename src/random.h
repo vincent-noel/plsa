@@ -18,7 +18,9 @@
  *   the full GPL copyright notice can be found in lsa.c                     *
  *                                                                           *
  *****************************************************************************/
-
+ #ifndef _STDLIB_INCLUDED
+ #include <stdlib.h>
+ #endif
 /*** A CONSTANT **************************************************************/
 
 #define USE_ERAND48             1
