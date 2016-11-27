@@ -55,18 +55,18 @@ void 	print_function()
 // Now the optimization
 
 
-int		main (char * argv, int argc)
+int 	main (char * argv, int argc)
 {
 
 #ifdef MPI
 
-    /* MPI initialization steps */
-    int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
-    if (rc != MPI_SUCCESS)
-        printf (" > Error starting MPI program. \n");
+	/* MPI initialization steps */
+	int rc = MPI_Init(NULL, NULL);     /* initializes the MPI execution environment */
+	if (rc != MPI_SUCCESS)
+	    printf (" > Error starting MPI program. \n");
 
-    MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
+	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);         /* number of processors? */
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);          /* ID of local processor? */
 
 #endif
 
@@ -98,12 +98,9 @@ int		main (char * argv, int argc)
 
 #ifdef MPI
 	}
-#endif
+
 	/* clean up MPI and return */
-
-#ifdef MPI
-
-    MPI_Finalize();                  /* terminates MPI execution environment */
+	MPI_Finalize();                  /* terminates MPI execution environment */
 
 #endif
 
