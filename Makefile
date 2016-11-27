@@ -33,19 +33,18 @@ clean_examples:
 	rm -f *.o *.so run-funnel-serial run-funnel-parallel
 	rm -fr logs/ final_score plsa.log
 
-run-funnel-serial: main-funnel-serial.o libplsa-serial.so
-	$(CC) main-funnel-serial.o libplsa-serial.so -lm -o run-funnel-serial
+run-funnel-serial: main-funnel-serial.o
+	$(CC) main-funnel-serial.o -lplsa-serial -lm -o run-funnel-serial
 
-main-funnel-serial.o:	examples/funnel/main.c
+main-funnel-serial.o: examples/funnel/main.c
 	$(CC) -c examples/funnel/main.c -o main-funnel-serial.o
 
-run-funnel-parallel: main-funnel-parallel.o libplsa-parallel.so
-	$(MPICC) main-funnel-parallel.o libplsa-parallel.so -lm -o run-funnel-parallel
+run-funnel-parallel: main-funnel-parallel.o
+	$(MPICC) main-funnel-parallel.o -lplsa-parallel -lm -o run-funnel-parallel
 
 main-funnel-parallel.o:	examples/funnel/main.c
 	$(MPICC) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
 
-run-funnel-parallel:
 
 # Shared objects
 libplsa-serial.so:	$(OBJ) $(SOBJ)
