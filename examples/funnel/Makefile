@@ -13,4 +13,4 @@ main-parallel.o: main.c
 	mpicc -c main.c -DMPI -o main-parallel.o
 
 clean:
-	rm -fr  *.o run-serial run-parallel pid final_score plsa.log *.state logs/
+	rm -fr  *.o run-serial run-parallel final_score plsa.log *.state logs/

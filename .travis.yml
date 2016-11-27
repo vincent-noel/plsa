@@ -7,10 +7,17 @@ before_install:
 install:
   - make
   - sudo make install
+
+after_install:
   - make clean
 
-script:
+
+before_script:
   - make examples
+
+script:
   - ./run-funnel-serial
   - mpirun -np 2 ./run-funnel-parallel
+
+after_script:
   - make clean_examples
