@@ -3,7 +3,7 @@ SRCDIR = src
 CC = gcc
 MPICC = mpicc
 
-FLAGS = -Wall -Werror -fpic -pedantic
+FLAGS = -Wall -Werror -fpic -pedantic -std=c99
 LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
