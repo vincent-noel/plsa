@@ -16,7 +16,7 @@
 CC = gcc
 MPICC = mpicc
 
-FLAGS = -Wall -Werror -pedantic -std=gnu11
+FLAGS = -Wall -Werror -pedantic -std=gnu99
 LIBS = -lm
 
 all: run-serial run-parallel

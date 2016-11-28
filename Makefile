@@ -18,7 +18,7 @@ SRCDIR = src
 CC = gcc
 MPICC = mpicc
 
-FLAGS = -Wall -Werror -pedantic -std=gnu11
+FLAGS = -Wall -Werror -pedantic -std=gnu99
 LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
