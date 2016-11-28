@@ -1,35 +1,47 @@
-/*****************************************************************************
- *                                                                           *
- *   plsa.c                                                                *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   written by JR, modified by Yoginho                                      *
- *   modified by Vincent Noel                                                *
- *   -D landscape option by Lorraine Greenwald Oct 2002                      *
- *   -g option by Yousong Wang, Feb 2002                                     *
- *   -a option by Marcel Wolf, Apr 2002                                      *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   Although main() is in lsa.c, this is the file that 'defines'            *
- *   the plsa program, since it contains most of its problem-              *
- *   specific code (except for move generation -> moves.c, saving            *
- *   of intermediate state files -> savestate.c and communication            *
- *   with the specific cost function that is used -> translate.c).           *
- *                                                                           *
- *   After I've told you all that's NOT in this file, here's what            *
- *   the funcs below actually do: parsing plsa command line opts           *
- *   is one of its jobs; there are funcs that make the first and             *
- *   last moves and funcs that read and write Lam and Lam-indepen-           *
- *   dent annealing parameters to the problem-specific data file.            *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   Copyright (C) 2016 Vincent Noel                                         *
- *   the full GPL copyright notice can be found in lsa.c                     *
- *                                                                           *
- *****************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   plsa.c                                                                   *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   written by JR, modified by Yoginho                                       *
+ *   modified by Vincent Noel                                                 *
+ *   -D landscape option by Lorraine Greenwald Oct 2002                       *
+ *   -g option by Yousong Wang, Feb 2002                                      *
+ *   -a option by Marcel Wolf, Apr 2002                                       *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   Although main() is in lsa.c, this is the file that 'defines'             *
+ *   the plsa program, since it contains most of its problem-                 *
+ *   specific code (except for move generation -> moves.c, saving             *
+ *   of intermediate state files -> savestate.c and communication             *
+ *   with the specific cost function that is used -> translate.c).            *
+ *                                                                            *
+ *   After I've told you all that's NOT in this file, here's what             *
+ *   the funcs below actually do: parsing plsa command line opts              *
+ *   is one of its jobs; there are funcs that make the first and              *
+ *   last moves and funcs that read and write Lam and Lam-indepen-            *
+ *   dent annealing parameters to the problem-specific data file.             *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)           *
+ *                                                                            *
+ *   plsa is free software: you can redistribute it and/or modify             *
+ *   it under the terms of the GNU General Public License as published by     *
+ *   the Free Software Foundation, either version 3 of the License, or        *
+ *   (at your option) any later version.                                      *
+ *                                                                            *
+ *   plsa is distributed in the hope that it will be useful,                  *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *   GNU General Public License for more details.                             *
+ *                                                                            *
+ *   You should have received a copy of the GNU General Public License        *
+ *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
+ *                                                                            *
+ ******************************************************************************/
 
 #include <float.h>
 #include <limits.h>

@@ -1,57 +1,68 @@
-/*****************************************************************************
- *                                                               						 *
- *   MPI.h                                                      						 *
- *                                                              						 *
- *****************************************************************************
- *                                                              						 *
- *   written by John Reinitz                                    						 *
- *   modified by King-Wai Chu, Johannes Jaeger                  						 *
- *   modified by Vincent Noel                                                *
- *                                                              						 *
- *****************************************************************************
- *                                                              						 *
- *   IMPORTANT: IF YOU EVER CHANGE ANYTHING IN THIS FILE, LET ALL 					 *
- *            YOUR FELLOW PROGRAMMERS KNOW WELL IN ADVANCE AND  						 *
- *            CONSULT WITH THEM IF THEY AGREE ON YOUR CHANGES!! 						 *
- *                                                              						 *
- *****************************************************************************
- *                                                              						 *
- *   MPI.h contains structs and constants that are specific to    					 *
- *   parallel annealing code using MPI.                           					 *
- *                                                              						 *
- *   This includes prototypes for all the tuning functions below. 					 *
- *                                                              						 *
- *   There are two problem-specific functions declared below that 					 *
- *   need to be defined in move(s).c.                             					 *
- *                                                              						 *
- *****************************************************************************
- *                                                               					   *
- *   NOTE: this header only contains prototypes for functions used 					 *
- *       for parallel annealing code only; all prototypes of    						 *
- *       functions that include serial code need to go into sa.h						 *
- *                                                              						 *
- *****************************************************************************
- *                                                              						 *
- *   Copyright (C) 2016 Vincent Noel                            						 *
- *   the full GPL copyright notice can be found in lsa.c        						 *
- *                                                               						 *
- *****************************************************************************/
+/******************************************************************************
+ *                                  				    					  									*
+ *   MPI.h                                                      			  			*
+ *                                                              			  			*
+ ******************************************************************************
+ *                                                              			  			*
+ *   written by John Reinitz                                    			  			*
+ *   modified by King-Wai Chu, Johannes Jaeger                  			 				*
+ *   modified by Vincent Noel                                                 *
+ *                                                              			  			*
+ ******************************************************************************
+ *                                                              			  			*
+ *   IMPORTANT: IF YOU EVER CHANGE ANYTHING IN THIS FILE, LET ALL 			 			*
+ *            YOUR FELLOW PROGRAMMERS KNOW WELL IN ADVANCE AND  			  			*
+ *            CONSULT WITH THEM IF THEY AGREE ON YOUR CHANGES!! 			 				*
+ *                                                              			  			*
+ ******************************************************************************
+ *                                                              			  			*
+ *   MPI.h contains structs and constants that are specific to    			  		*
+ *   parallel annealing code using MPI.                           			  		*
+ *                                                              	          	*
+ *   This includes prototypes for all the tuning functions below. 	 		  		*
+ *                                                              			  			*
+ *   There are two problem-specific functions declared below that 			  		*
+ *   need to be defined in move(s).c.                             			  		*
+ *                                                              			  			*
+ ******************************************************************************                                                               			  *
+ *   NOTE: this header only contains prototypes for functions used 			  		*
+ *       for parallel annealing code only; all prototypes of    			  			*
+ *       functions that include serial code need to go into sa.h	  		  		*
+ *                                 											  										*
+ ******************************************************************************
+ *                                                                            *
+ *   Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)           *
+ *                                                                            *
+ *   plsa is free software: you can redistribute it and/or modify             *
+ *   it under the terms of the GNU General Public License as published by     *
+ *   the Free Software Foundation, either version 3 of the License, or        *
+ *   (at your option) any later version.                                      *
+ *                                                                            *
+ *   plsa is distributed in the hope that it will be useful,                  *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *   GNU General Public License for more details.                             *
+ *                                                                            *
+ *   You should have received a copy of the GNU General Public License        *
+ *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
+ *                                                                            *
+ ******************************************************************************/
 #ifndef MPI_INCLUDED
 #define MPI_INCLUDED
 
 
 
-/*** CONSTANTS *************************************************************/
+/*** CONSTANTS ****************************************************************/
 
-#define MAX_MIX         10000   /* max number of mixes during a tuning run */
-                    /* set this to a lower number if you run out of memory */
-#define GROUP_SIZE         10    /* group size for calculating upper bound */
+#define MAX_MIX         10000      /* max number of mixes during a tuning run */
+                       /* set this to a lower number if you run out of memory */
+#define GROUP_SIZE         10       /* group size for calculating upper bound */
 
-#define STOP_TUNE_CNT      20                           /* stop tune count */
-#define STOP_TUNE_CRIT   0.05                     /* tuning stop criterion */
+#define STOP_TUNE_CNT      20                              /* stop tune count */
+#define STOP_TUNE_CRIT   0.05                        /* tuning stop criterion */
 
-#define LSTAT_LENGTH        1    /* length of Lam msg array when annealing */
-#define LSTAT_LENGTH_TUNE  28       /* length of Lam msg array when tuning */
+#define LSTAT_LENGTH        1       /* length of Lam msg array when annealing */
+#define LSTAT_LENGTH_TUNE  28          /* length of Lam msg array when tuning */
 
 
 

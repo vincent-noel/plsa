@@ -1,24 +1,36 @@
-/*****************************************************************************
-*                                                                            *
-*   distributions.c                                                          *
-*                                                                            *
-******************************************************************************
-*                                                                            *
-*   Created 5-02 by: Lorraine Greenwald                                      *
-*   used with deviates.c to generate only deviates                           *
-*   used with the SA applications for move generation                        *
-*   uses RandomReal  which uses and modifies xsubj                           *
-*   elsewhere i.e. move.c or deviates.c                                      *
-*   takes distribution type q value theta_bar                                *
-*   and output file on command line                                          *
-*   modified by Vincent Noel                                                 *
-*                                                                            *
-******************************************************************************
-*                                                                            *
-*   Copyright (C) 2016 Vincent Noel                                          *
-*   the full GPL copyright notice can be found in lsa.c                      *
-*                                                                            *
-******************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   distributions.c                                                          *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   Created 5-02 by: Lorraine Greenwald                                      *
+ *   used with deviates.c to generate only deviates                           *
+ *   used with the SA applications for move generation                        *
+ *   uses RandomReal  which uses and modifies xsubj                           *
+ *   elsewhere i.e. move.c or deviates.c                                      *
+ *   takes distribution type q value theta_bar                                *
+ *   and output file on command line                                          *
+ *   modified by Vincent Noel                                                 *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)           *
+ *                                                                            *
+ *   plsa is free software: you can redistribute it and/or modify             *
+ *   it under the terms of the GNU General Public License as published by     *
+ *   the Free Software Foundation, either version 3 of the License, or        *
+ *   (at your option) any later version.                                      *
+ *                                                                            *
+ *   plsa is distributed in the hope that it will be useful,                  *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *   GNU General Public License for more details.                             *
+ *                                                                            *
+ *   You should have received a copy of the GNU General Public License        *
+ *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
+ *                                                                            *
+ ******************************************************************************/
 
 #ifdef ICC
 #include <mathimf.h>

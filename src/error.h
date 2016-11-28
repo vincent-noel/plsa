@@ -1,32 +1,44 @@
-/*****************************************************************************
- *                                                                           *
- *   error.h                                                                 *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   written by JR, modified by Yoginho                                      *
- *   modified by Vincent Noel                                                *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   contains error and warning functions                                    *
- *                                                                           *
- *****************************************************************************
- *                                                                           *
- *   Copyright (C) 2016 Vincent Noel                                         *
- *   the full GPL copyright notice can be found in lsa.c                     *
- *                                                                           *
- *****************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   error.h                                                                  *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   written by JR, modified by Yoginho                                       *
+ *   modified by Vincent Noel                                                 *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   contains error and warning functions                                     *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
+ *   Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)           *
+ *                                                                            *
+ *   plsa is free software: you can redistribute it and/or modify             *
+ *   it under the terms of the GNU General Public License as published by     *
+ *   the Free Software Foundation, either version 3 of the License, or        *
+ *   (at your option) any later version.                                      *
+ *                                                                            *
+ *   plsa is distributed in the hope that it will be useful,                  *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *   GNU General Public License for more details.                             *
+ *                                                                            *
+ *   You should have received a copy of the GNU General Public License        *
+ *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
+ *                                                                            *
+ ******************************************************************************/
 
-/* following for structures & consts used thruout ****************************/
+/* following for structures & consts used thruout *****************************/
 #ifndef GLOBAL_INCLUDED
 #include "global.h"
 #endif
 
 
-/*** A CONSTANT **************************************************************/
+/*** A CONSTANT ***************************************************************/
 
-#define MAX_ARGS     25   /* max number of error() and warning() arguments ***/
+#define MAX_ARGS     25   /* max number of error() and warning() arguments ****/
 
 
 
