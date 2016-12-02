@@ -46,7 +46,7 @@ examples: run-funnel-serial run-funnel-parallel
 
 clean_examples:
 	rm -f *.o *.so run-funnel-serial run-funnel-parallel
-	rm -fr logs/ final_score plsa.log *.state
+	rm -fr logs/ final_score plsa.log *.state input output
 
 run-funnel-serial: main-funnel-serial.o
 	$(CC) main-funnel-serial.o -lplsa-serial -lm -o run-funnel-serial

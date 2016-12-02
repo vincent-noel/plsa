@@ -75,7 +75,7 @@ int 	main (int argc, char ** argv)
 
 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
 	if (rc != MPI_SUCCESS)
-	    printf (" > Error starting MPI program. \n");
+		printf (" > Error starting MPI program. \n");
 
 	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);        /* number of processors? */
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);         /* ID of local processor? */
@@ -95,7 +95,7 @@ int 	main (int argc, char ** argv)
 
 	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(1);
-	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}};
+	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}, "k"};
 
 
 	// run the optimization

@@ -106,76 +106,76 @@ static long      *tmp;             /* temp array for MPI_Allreduce sendbuf */
 
 void InitMoves(SAType * state, PArrPtr * pl)
 {
-    int            i;                                  /* local loop counter */
+	int            i;                                  /* local loop counter */
 
-    /* following is used to initialize erand48() */
+	/* following is used to initialize erand48() */
 
-    long           seedval;         /* contains random number generator seed */
+	long           seedval;         /* contains random number generator seed */
 
-    int            left;
-    unsigned short left16;
-    unsigned short middle16;
-    unsigned short *xsubj;
+	int            left;
+	unsigned short left16;
+	unsigned short middle16;
+	unsigned short *xsubj;
 
-    xsubj = (unsigned short *)calloc(3, sizeof(unsigned short));
+	xsubj = (unsigned short *)calloc(3, sizeof(unsigned short));
 
-    /* read annealing paramters and parameters-to-be-tweaked */
+	/* read annealing paramters and parameters-to-be-tweaked */
 
 	ap.max_count = 0;
-    ap.seed = state->seed;
-    ap.start_tempr = state->initial_temp;
-    ap.gain = state->gain_for_jump_size_control;
-    ap.interval = state->interval;
-    // ap.log_params = state->log_params;
+	ap.seed = state->seed;
+	ap.start_tempr = state->initial_temp;
+	ap.gain = state->gain_for_jump_size_control;
+	ap.interval = state->interval;
+	// ap.log_params = state->log_params;
 
 
-    /* initialze the random number generator, now erand48() */
+	/* initialze the random number generator, now erand48() */
 #ifdef MPI
-    seedval  = ap.seed + myid;       /* each processor gets a different seed */
+	seedval  = ap.seed + myid;       /* each processor gets a different seed */
 #else
-    seedval  = ap.seed;
+	seedval  = ap.seed;
 #endif
 
-    xsubj[0] = LOWBITS;
+	xsubj[0] = LOWBITS;
 
-    middle16 = (unsigned short)seedval;
-    xsubj[1] = middle16;
+	middle16 = (unsigned short)seedval;
+	xsubj[1] = middle16;
 
-    left     = seedval >> (BYTESIZE * sizeof(unsigned short));
-    left16   = (unsigned short)left;
-    xsubj[2] = left16;
+	left     = seedval >> (BYTESIZE * sizeof(unsigned short));
+	left16   = (unsigned short)left;
+	xsubj[2] = left16;
 
-    InitERand(xsubj);               /* makes the xsubj array static to lsa.c */
+	InitERand(xsubj);               /* makes the xsubj array static to lsa.c */
 
-    /* Set up data structure for tweaking */
+	/* Set up data structure for tweaking */
 
-    nparams = pl->size;                       /* nparams is static to moves.c */
-    ptab    = pl->array;            /* make parameter array static to moves.c */
+	nparams = pl->size;                       /* nparams is static to moves.c */
+	ptab    = pl->array;            /* make parameter array static to moves.c */
 
-    /* acc_tab is for statistics like acceptance ratio etc. */
+	/* acc_tab is for statistics like acceptance ratio etc. */
 
-    acc_tab = (AccStats *)calloc(nparams, sizeof(AccStats));
+	acc_tab = (AccStats *)calloc(nparams, sizeof(AccStats));
 
-    for (i=0; i<nparams; i++)
-    {
-        acc_tab[i].acc_ratio = 0;
-        acc_tab[i].theta_bar = THETA_INIT;
-        acc_tab[i].hits      = 0;
-        acc_tab[i].success   = 0;
-    }
+	for (i=0; i<nparams; i++)
+	{
+		acc_tab[i].acc_ratio = 0;
+		acc_tab[i].theta_bar = THETA_INIT;
+		acc_tab[i].hits      = 0;
+		acc_tab[i].success   = 0;
+	}
 
 #ifdef MPI
 
-    /* allocate static arrays for parallel code */
+	/* allocate static arrays for parallel code */
 
-    hits    = (long *)calloc(nparams, sizeof(long));
-    success = (long *)calloc(nparams, sizeof(long));
-    tmp     = (long *)calloc(nparams, sizeof(long));
+	hits    = (long *)calloc(nparams, sizeof(long));
+	success = (long *)calloc(nparams, sizeof(long));
+	tmp     = (long *)calloc(nparams, sizeof(long));
 
 #endif
 
-    /* Finally, return the start temperature. */
-    return;// ap.start_tempr;
+	/* Finally, return the start temperature. */
+	return;// ap.start_tempr;
 }
 
 
@@ -187,23 +187,23 @@ void InitMoves(SAType * state, PArrPtr * pl)
 
 void RestoreMoves(MoveState *MovePtr)
 {
-    int       i;                                       /* local loop counter */
+	int       i;                                       /* local loop counter */
 
-    nparams    = MovePtr->nparams;                   /* restore static stuff */
-    idx        = MovePtr->index;
-    nhits      = MovePtr->nhits;
-    nsweeps    = MovePtr->nsweeps;
-    old_energy = MovePtr->old_energy;
+	nparams    = MovePtr->nparams;                   /* restore static stuff */
+	idx        = MovePtr->index;
+	nhits      = MovePtr->nhits;
+	nsweeps    = MovePtr->nsweeps;
+	old_energy = MovePtr->old_energy;
 
-    for(i=0; i < nparams; i++)                         /* restore parameters */
-        *(ptab[i].param) = MovePtr->newval[i];
+	for(i=0; i < nparams; i++)                         /* restore parameters */
+		*(ptab[i].param) = MovePtr->newval[i];
 
-    free(MovePtr->newval);
-    free(acc_tab);                     /* InitMoves has already been called. */
+	free(MovePtr->newval);
+	free(acc_tab);                     /* InitMoves has already been called. */
 
-    acc_tab = MovePtr->acc_tab_ptr;             /* restore acceptance stats  */
+	acc_tab = MovePtr->acc_tab_ptr;             /* restore acceptance stats  */
 
-    free(MovePtr);
+	free(MovePtr);
 }
 
 
@@ -215,10 +215,10 @@ void RestoreMoves(MoveState *MovePtr)
 
 AParms GetFinalInfo(void)
 {
-    ap.stop_energy = old_energy;
-    ap.max_count   = nhits;
+	ap.stop_energy = old_energy;
+	ap.max_count   = nhits;
 
-    return ap;
+	return ap;
 }
 
 /*** MOVE GENERATION *******************************************************/
@@ -230,36 +230,36 @@ AParms GetFinalInfo(void)
 double GenerateMove(void)
 {
 
-    // double     delta_e;           /* energy difference before and after move */
+	// double     delta_e;           /* energy difference before and after move */
 
-    /* for first call: check for valid parameters */
+	/* for first call: check for valid parameters */
 
-    if (old_energy == -999.)
-    {
-        old_energy = Score();
+	if (old_energy == -999.)
+	{
+		old_energy = Score();
 
-        if (old_energy == FORBIDDEN_MOVE)
-            error("GenerateMove: 1st call gave forbidden move");
-    }
+		if (old_energy == FORBIDDEN_MOVE)
+			error("GenerateMove: 1st call gave forbidden move");
+	}
 
-    /* make a move, score and return either FORBIDDEN_MOVE or delta_e */
-    int res;
-    res = Move();
+	/* make a move, score and return either FORBIDDEN_MOVE or delta_e */
+	int res;
+	res = Move();
 
-    if (res == -1)
-        return FORBIDDEN_MOVE;
+	if (res == -1)
+		return FORBIDDEN_MOVE;
 
-    acc_tab[idx].hits++;
+	acc_tab[idx].hits++;
 
-    new_energy = Score();
+	new_energy = Score();
 
-    if (logParams() > 0)
-      WriteParamsTrace();
+	if (logTrace() > 0)
+	  WriteParamsTrace();
 
-    if (new_energy == FORBIDDEN_MOVE)
-        return FORBIDDEN_MOVE;
+	if (new_energy == FORBIDDEN_MOVE)
+		return FORBIDDEN_MOVE;
 
-    else return (new_energy - old_energy);
+	else return (new_energy - old_energy);
 }
 
 
@@ -270,8 +270,8 @@ double GenerateMove(void)
 
 void AcceptMove(void)
 {
-    old_energy = new_energy;
-    acc_tab[idx].success++;
+	old_energy = new_energy;
+	acc_tab[idx].success++;
 }
 
 
@@ -281,7 +281,7 @@ void AcceptMove(void)
 
 void RejectMove(void)
 {
-    *(ptab[idx].param) = pretweak;
+	*(ptab[idx].param) = pretweak;
 }
 
 /*** GetEnergy: returned the last computed value of the scoring function   *
@@ -292,7 +292,7 @@ void RejectMove(void)
 
 double GetNewEnergy(void)
 {
-    return new_energy;
+	return new_energy;
 }
 
 /*** GetEnergy: returned the last accepted value of the scoring function   *
@@ -301,7 +301,7 @@ double GetNewEnergy(void)
 
 double GetOldEnergy(void)
 {
-    return old_energy;
+	return old_energy;
 }
 /*** MOVE GENERATION - PART 2: FUNCS NEEDED IN MOVES.C (BUT NOT LSA.C) *****/
 
@@ -311,84 +311,84 @@ double GetOldEnergy(void)
 
 int Move(void)
 {
-    double tweakee;
-    double theta;
-    double sign;
+	double tweakee;
+	double theta;
+	double sign;
 
-    /* update counters */
+	/* update counters */
 
-    idx++;
-    nhits++;
+	idx++;
+	nhits++;
 
-    idx     = idx % nparams;
+	idx     = idx % nparams;
 
 #ifdef MPI
-    nsweeps = (nhits / nparams) * nnodes;
+	nsweeps = (nhits / nparams) * nnodes;
 #else
-    nsweeps = (nhits / nparams);
+	nsweeps = (nhits / nparams);
 #endif
 
-    /* update statistics if interval passed & at least one sweep completed */
+	/* update statistics if interval passed & at least one sweep completed */
 
-    if ( !(nsweeps % ap.interval) && !(idx) && (nsweeps) )
-    {
+	if ( !(nsweeps % ap.interval) && !(idx) && (nsweeps) )
+	{
 
-        UpdateControl();                            /* see comments in moves.h */
+		UpdateControl();                            /* see comments in moves.h */
 
-    }
+	}
 
-    tweakee  = *(ptab[idx].param);
-    pretweak = tweakee;
+	tweakee  = *(ptab[idx].param);
+	pretweak = tweakee;
 
-    theta = generate_dev(acc_tab[idx].theta_bar, DistP.distribution, DistP.q);
+	theta = generate_dev(acc_tab[idx].theta_bar, DistP.distribution, DistP.q);
 
-    /* the sign stuff is needed for exponential distribution because always positive */
-    /* may (but not likely) need in future if wish to evaluate poisson or pareto distributions for fly  */
-    if (DistP.distribution == 1) /* need  positive + negative values for theta */
-    {
-        sign  = RandomReal() - 0.5;
-        if (sign <= 0)
-            theta = -theta;
-    }
+	/* the sign stuff is needed for exponential distribution because always positive */
+	/* may (but not likely) need in future if wish to evaluate poisson or pareto distributions for fly  */
+	if (DistP.distribution == 1) /* need  positive + negative values for theta */
+	{
+		sign  = RandomReal() - 0.5;
+		if (sign <= 0)
+			theta = -theta;
+	}
 
-    if (theta > THETA_MAX) theta = THETA_MAX;
-    if (theta < -THETA_MAX) theta = -THETA_MAX;
+	if (theta > THETA_MAX) theta = THETA_MAX;
+	if (theta < -THETA_MAX) theta = -THETA_MAX;
 
-    tweakee = tweakee * exp(theta);
+	tweakee = tweakee * exp(theta);
 
-    if (tweakee < ptab[idx].param_range.lower || tweakee > ptab[idx].param_range.upper)
-        return -1;
+	if (tweakee < ptab[idx].param_range.lower || tweakee > ptab[idx].param_range.upper)
+		return -1;
 
-    if (tweakee <= 0)
-        return -1;
+	if (tweakee <= 0)
+		return -1;
 
-    if (isinf(tweakee) || isnan(tweakee))
-        return -1;
+	if (isinf(tweakee) || isnan(tweakee))
+		return -1;
 
 
-    *(ptab[idx].param) = tweakee;   /* original eqparms in score.c tweaked */
+	*(ptab[idx].param) = tweakee;   /* original eqparms in score.c tweaked */
 
-    return 0;
+	return 0;
 
 }
 
 void WriteParamsTrace()
 {
-    FILE * trace_params;
-    char trace_name[MAX_RECORD];
+	FILE * trace_params;
+	char trace_name[MAX_RECORD];
   #ifdef MPI
-    sprintf(trace_name,"%s/trace/params_%d", getLogDir(), myid);
+	sprintf(trace_name,"%s/trace/params_%d", getLogDir(), myid);
   #else
-    sprintf(trace_name,"%s/trace/params_%d", getLogDir(), 0);
+	sprintf(trace_name,"%s/trace/params_%d", getLogDir(), 0);
   #endif
-    trace_params = fopen(trace_name, "a");
+	trace_params = fopen(trace_name, "a");
 
-    int i;
-    for (i=0; i < nparams; i++)
-        fprintf(trace_params, "%g\t", *(ptab[i].param));
+	int i;
+	for (i=0; i < nparams; i++)
+		fprintf(trace_params, "%g\t", *(ptab[i].param));
 
-    fprintf(trace_params, "%g\n", new_energy);
-    fclose(trace_params);
+	fprintf(trace_params, "%g\n", new_energy);
+	fclose(trace_params);
 }
 
 /*** UpdateControl: each interval number of steps, acceptance stats are ****
@@ -398,57 +398,57 @@ void WriteParamsTrace()
 
 void UpdateControl(void)
 {
-    int        i;                                      /* local loop counter */
-    double     x;                   /* temp variable to manipulate theta_bar */
+	int        i;                                      /* local loop counter */
+	double     x;                   /* temp variable to manipulate theta_bar */
 
 #ifdef MPI
 
-    for (i=0; i<nparams; i++)
-    {
-        hits[i]    = (long)acc_tab[i].hits;
-        success[i] = (long)acc_tab[i].success;
-    }
+	for (i=0; i<nparams; i++)
+	{
+		hits[i]    = (long)acc_tab[i].hits;
+		success[i] = (long)acc_tab[i].success;
+	}
 
-    for (i=0; i<nparams; i++)
-    {
-        tmp[i] = hits[i];
-    }
-    MPI_Allreduce(tmp, hits, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+	for (i=0; i<nparams; i++)
+	{
+		tmp[i] = hits[i];
+	}
+	MPI_Allreduce(tmp, hits, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-    for(i=0; i<nparams; i++)
-    {
-        tmp[i] = success[i];
-    }
-    MPI_Allreduce(tmp, success, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+	for(i=0; i<nparams; i++)
+	{
+		tmp[i] = success[i];
+	}
+	MPI_Allreduce(tmp, success, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-    for(i=0; i<nparams; i++)
-    {
-        acc_tab[i].hits    = (int)hits[i];
-        acc_tab[i].success = (int)success[i];
-    }
+	for(i=0; i<nparams; i++)
+	{
+		acc_tab[i].hits    = (int)hits[i];
+		acc_tab[i].success = (int)success[i];
+	}
 
 #endif
 
-    for(i=0; i<nparams; i++)
-    {
+	for(i=0; i<nparams; i++)
+	{
 
-        acc_tab[i].acc_ratio =
-            ((double)acc_tab[i].success)/((double)acc_tab[i].hits);
+		acc_tab[i].acc_ratio =
+			((double)acc_tab[i].success)/((double)acc_tab[i].hits);
 
-        x  = log(acc_tab[i].theta_bar);
-        x += ap.gain * (acc_tab[i].acc_ratio - 0.44);
-        acc_tab[i].theta_bar = exp(x);
+		x  = log(acc_tab[i].theta_bar);
+		x += ap.gain * (acc_tab[i].acc_ratio - 0.44);
+		acc_tab[i].theta_bar = exp(x);
 
 
-        if (acc_tab[i].theta_bar < THETA_MIN)
-            acc_tab[i].theta_bar = THETA_MIN;
-        if (acc_tab[i].theta_bar > THETA_MAX)
-            acc_tab[i].theta_bar = THETA_MAX;
+		if (acc_tab[i].theta_bar < THETA_MIN)
+			acc_tab[i].theta_bar = THETA_MIN;
+		if (acc_tab[i].theta_bar > THETA_MAX)
+			acc_tab[i].theta_bar = THETA_MAX;
 
-        acc_tab[i].hits    = 0;
-        acc_tab[i].success = 0;
+		acc_tab[i].hits    = 0;
+		acc_tab[i].success = 0;
 
-    }
+	}
 }
 
 
@@ -458,20 +458,20 @@ void UpdateControl(void)
 
 MoveState *MoveSave(void)
 {
-    MoveState    *move_stuff;
+	MoveState    *move_stuff;
 
-    move_stuff = (MoveState *)malloc(sizeof(MoveState));
+	move_stuff = (MoveState *)malloc(sizeof(MoveState));
 
-    move_stuff->old_energy  = old_energy;     /* pretty straightforward, no? */
-    move_stuff->pt          = ptab;
-    move_stuff->acc_tab_ptr = acc_tab;
-    move_stuff->newval      = NULL;
-    move_stuff->index       = idx;
-    move_stuff->nhits       = nhits;
-    move_stuff->nparams     = nparams;
-    move_stuff->nsweeps     = nsweeps;
+	move_stuff->old_energy  = old_energy;     /* pretty straightforward, no? */
+	move_stuff->pt          = ptab;
+	move_stuff->acc_tab_ptr = acc_tab;
+	move_stuff->newval      = NULL;
+	move_stuff->index       = idx;
+	move_stuff->nhits       = nhits;
+	move_stuff->nparams     = nparams;
+	move_stuff->nsweeps     = nsweeps;
 
-    return move_stuff;
+	return move_stuff;
 }
 
 
@@ -495,44 +495,44 @@ MoveState *MoveSave(void)
  ***************************************************************************/
 
 void MakeStateMsg(long **longbuf, int *lsize,
-                  double **doublebuf, int *dsize)
+				  double **doublebuf, int *dsize)
 {
-    int    i, n_l, n_d;
+	int    i, n_l, n_d;
 
 
 
-    /* calculate buffer size, compare with move parameters below */
+	/* calculate buffer size, compare with move parameters below */
 
-    *lsize = 2*nparams+3;
-    *dsize = 3*nparams+1;
+	*lsize = 2*nparams+3;
+	*dsize = 3*nparams+1;
 
-    /* allocate buffer */
+	/* allocate buffer */
 
-    *longbuf   =   (long *)calloc(*lsize, sizeof(long));
-    *doublebuf = (double *)calloc(*dsize, sizeof(double));
+	*longbuf   =   (long *)calloc(*lsize, sizeof(long));
+	*doublebuf = (double *)calloc(*dsize, sizeof(double));
 
-    /* pack longs into their buffer */
+	/* pack longs into their buffer */
 
-    (*doublebuf)[0]       = old_energy;
+	(*doublebuf)[0]       = old_energy;
 
-    (*longbuf)[0]         = (long)idx;
-    (*longbuf)[1]         = (long)nhits;
-    (*longbuf)[2]         = (long)nsweeps;
+	(*longbuf)[0]         = (long)idx;
+	(*longbuf)[1]         = (long)nhits;
+	(*longbuf)[2]         = (long)nsweeps;
 
-    for(i=0; i<nparams; i++)
-    {
+	for(i=0; i<nparams; i++)
+	{
 
-        n_l=i*2+3;
-        n_d=i*3+1;
+		n_l=i*2+3;
+		n_d=i*3+1;
 
-        (*longbuf)[n_l]     = (long)acc_tab[i].hits;
-        (*longbuf)[n_l+1]   = (long)acc_tab[i].success;
+		(*longbuf)[n_l]     = (long)acc_tab[i].hits;
+		(*longbuf)[n_l+1]   = (long)acc_tab[i].success;
 
-        (*doublebuf)[n_d]   = *(ptab[i].param);
-        (*doublebuf)[n_d+1] = acc_tab[i].acc_ratio;
-        (*doublebuf)[n_d+2] = acc_tab[i].theta_bar;
+		(*doublebuf)[n_d]   = *(ptab[i].param);
+		(*doublebuf)[n_d+1] = acc_tab[i].acc_ratio;
+		(*doublebuf)[n_d+2] = acc_tab[i].theta_bar;
 
-    }
+	}
 }
 
 
@@ -545,31 +545,31 @@ void MakeStateMsg(long **longbuf, int *lsize,
 
 void AcceptStateMsg(long *longbuf, double *doublebuf)
 {
-    int i, n_l, n_d;
+	int i, n_l, n_d;
 
-    idx        = (int)longbuf[0];
-    nhits      = (int)longbuf[1];
-    nsweeps    = (int)longbuf[2];
+	idx        = (int)longbuf[0];
+	nhits      = (int)longbuf[1];
+	nsweeps    = (int)longbuf[2];
 
-    old_energy = doublebuf[0];
+	old_energy = doublebuf[0];
 
-    for (i=0; i<nparams; i++)
-    {
+	for (i=0; i<nparams; i++)
+	{
 
-        n_l=i*2+3;
-        n_d=i*3+1;
+		n_l=i*2+3;
+		n_d=i*3+1;
 
-        acc_tab[i].hits      = (int)longbuf[n_l];
-        acc_tab[i].success   = (int)longbuf[n_l+1];
+		acc_tab[i].hits      = (int)longbuf[n_l];
+		acc_tab[i].success   = (int)longbuf[n_l+1];
 
-        *(ptab[i].param)     = doublebuf[n_d];
-        acc_tab[i].acc_ratio = doublebuf[n_d+1];
-        acc_tab[i].theta_bar = doublebuf[n_d+2];
+		*(ptab[i].param)     = doublebuf[n_d];
+		acc_tab[i].acc_ratio = doublebuf[n_d+1];
+		acc_tab[i].theta_bar = doublebuf[n_d+2];
 
-    }
+	}
 
-    free(longbuf);
-    free(doublebuf);
+	free(longbuf);
+	free(doublebuf);
 
 }
 #endif

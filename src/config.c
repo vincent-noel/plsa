@@ -39,11 +39,14 @@
 #include "config.h"
 
 SALogs logs;
-
+SALogs * getLogSettings()
+{
+	return &logs;
+}
 
 char *      getLogDir()
 {
-    return logs.dir;
+	return logs.dir;
 }
 
 int logTrace()
@@ -83,14 +86,14 @@ void InitLogs()
 
 void BuildLogs()
 {
-    mkdir(logs.dir, 0777);
+	mkdir(logs.dir, 0777);
 
-    /*char res[250];
-    sprintf(res, "%s/res", logs.dir);
-    mkdir(res, 0777);
+	/*char res[250];
+	sprintf(res, "%s/res", logs.dir);
+	mkdir(res, 0777);
 
-    char score[200];
-    sprintf(score, "%s/score", logs.dir);
-    mkdir(score, 0777);*/
+	char score[200];
+	sprintf(score, "%s/score", logs.dir);
+	mkdir(score, 0777);*/
 
 }

@@ -73,7 +73,7 @@
 /*** CONSTANTS *************************************************************/
 
 #define MIN_DELTA    -100.    /* minimum exponent for Metropolis criterion */
-                    /* provides a minimum probability for really bad moves */
+					/* provides a minimum probability for really bad moves */
 
 
 
@@ -195,6 +195,7 @@ typedef struct Range {
 typedef struct {
   double    *param;                /* pointers to parameters to be tweaked */
   Range     param_range;        /* pointers to corresponding range limits */
+  char *	name;
 } ParamList;
 
 
@@ -410,7 +411,7 @@ void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
  ***************************************************************************/
 
 void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
-	                      PArrPtr * params);
+						  PArrPtr * params);
 
 /*** FinalMove: determines the final energy and move count and then prints *
  *              those to wherever they need to be printed to; also should  *

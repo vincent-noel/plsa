@@ -34,4 +34,4 @@ main-parallel.o: main.c
 	$(MPICC) $(FLAGS) -c main.c -DMPI -o main-parallel.o
 
 clean:
-	rm -fr  *.o run-serial run-parallel final_score plsa.log *.state logs/
+	rm -fr  *.o run-serial run-parallel final_score plsa.log *.state logs/  input output

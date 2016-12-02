@@ -54,6 +54,7 @@ typedef struct
 } SALogs;
 
 /* Following are functions that are needed by many other reading funcs */
+SALogs * getLogSettings();
 
 char *	getLogDir();
 
@@ -62,6 +63,7 @@ int 	logParams();
 int 	logRes();
 int 	logScore();
 int 	logPid();
+
 
 void 	InitLogs();
 void 	BuildLogs();
