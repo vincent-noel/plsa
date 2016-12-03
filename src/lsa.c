@@ -52,6 +52,8 @@
 /*       ders below; lsa.c must remain truly problem independent           */
 
 #include "sa_shared.h"
+#include "sa.h"
+
 #include "error.h"
 #include "random.h"
 #include "config.h"

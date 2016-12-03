@@ -37,23 +37,9 @@
 #include "global.h"
 #endif
 
-
+#include "types.h"
 /***** GLOBALS ** *************************************************************/
 
-typedef struct
-{
-	/* Added some log options here */
-	char * 	dir;
-
-	int    	trace;
-	int    	params;
-	int  	res;
-	int 	score;
-	int 	pid;
-	int 	best_score;
-	int 	best_res;
-
-} SALogs;
 
 /* Following are functions that are needed by many other reading funcs */
 SALogs * getLogSettings();
