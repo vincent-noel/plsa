@@ -51,7 +51,7 @@
 /* NOTE: do not ever dare to include moves.h in here or in any of the hea- */
 /*       ders below; lsa.c must remain truly problem independent           */
 
-#include "sa.h"
+#include "sa_shared.h"
 #include "error.h"
 #include "random.h"
 #include "config.h"
@@ -360,7 +360,7 @@ SAType * InitPLSA()
 
 
 
-double runPLSA()
+PLSARes * runPLSA()
 {
 	double *delta;                            /* used to store elapsed times */
 	double final_score;
@@ -401,12 +401,20 @@ double runPLSA()
 		free(delta);
 	}
 
+	PLSARes * res = (PLSARes *) malloc(sizeof(PLSARes));
+	res->params = malloc(sizeof(double)*params_to_fit->size);
+
+	int ii;
+	for (ii=0; ii < params_to_fit->size; ii++)
+		res->params[ii] = *params_to_fit->array[ii].param;
+	res->flag = 0;
+	res->score = final_score;
 
 
 	free(cpu_start);
 	free(cpu_finish);
 	free(params_to_fit);
-	return final_score;
+	return res;
 
 }
 

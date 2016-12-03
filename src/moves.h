@@ -47,7 +47,7 @@
 
 /* following for StopStyle enum style */
 #ifndef SA_INCLUDED
-#include "sa.h"
+#include "sa_shared.h"
 #endif
 
 /* ... and this for the Range struct */
@@ -246,7 +246,7 @@ MoveState *MoveSave(void);
  ***************************************************************************/
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-	       double *stats, unsigned short *rand, double *times);
+		   double *stats, unsigned short *rand, double *times);
 
 /*** StateRm: removes the state file after the run has been completed ******
  ***************************************************************************/

@@ -55,7 +55,7 @@
 #include "config.h"                          /* for olddivstyle and such */
 #include "moves.h"                     /* problem-specific annealing funcs */
 #include "random.h"                                     /* for InitERand() */
-#include "sa.h"                     /* problem-independent annealing funcs */
+#include "sa_shared.h"                     /* problem-independent annealing funcs */
 #include "score.h"                             /* for init and Score funcs */
 
 #ifdef MPI                 /* this inludes parallel-specific stuff for MPI */
@@ -203,7 +203,6 @@ void InitialMove(SAType * state, double *p_chisq, PArrPtr * params)
 	state->debuglevel = 0;          /* following stuff not used now */
 	p = state->tunename;
 	p = strcpy(p, "The Other One");        /* Grateful Dead tune, what else? */
-	state->tunefile = NULL;
 
 	InitScoring(state);                   /* initializes facts and limits */
 	InitMoves(state, params);     /* set initial temperature and *
@@ -271,7 +270,6 @@ void RestoreState(char *statefile, SAType * state, double *p_chisq,
 	state->debuglevel = 0;          /* following stuff not used now */
 	p = state->tunename;
 	p = strcpy(p,"The Other One");         /* Grateful Dead tune, what else? */
-	state->tunefile = NULL;
 
 	/* init initial cond., mutator and deriv */
 	InitScoring(state);                            /* init facts and limits */
@@ -344,8 +342,8 @@ double FinalMove(SAType * tune)
 #endif
 
 #ifdef MPI
-	/* write the answer */
 
+	/* First we share the final parameters values */
 	double * res_params = malloc(sizeof(double)*plsa_params->size);
 	if ( myid == winner )
 	{
@@ -364,11 +362,12 @@ double FinalMove(SAType * tune)
 
 	}
 
+
+	/* Then we write result logs */
 	if (myid == winner)
 	{
 #endif
 
-		/* Writing result logs */
 		if (logScore() > 0)
 		{
 			char score_final_name[MAX_RECORD];
@@ -410,7 +409,6 @@ double FinalMove(SAType * tune)
 #endif
 
 	/* clean up the state file and free memory */
-
 	if ( !equil && !nofile_flag )
 #ifdef MPI
 		if ( ! tuning )
@@ -434,7 +432,6 @@ void WriteTimes(double *times)
 
 	/* create time file name by appending .times to input file name */
 	timefile = (char *)calloc(MAX_RECORD, sizeof(char));
-	// timefile = strcpy(timefile, outname);
 	timefile = strcpy(timefile, "plsa.times");
 
 	timeptr = fopen(timefile, "w");

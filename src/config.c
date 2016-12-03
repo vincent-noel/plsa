@@ -92,8 +92,8 @@ void InitLogs()
 	logs.res = 0;
 	logs.score = 0;
 	logs.pid = 0;
-	logs.best_score = 1;
-	logs.best_res = 1;
+	logs.best_score = 0;
+	logs.best_res = 0;
 }
 
 void BuildLogs()

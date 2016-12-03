@@ -45,7 +45,7 @@
 #include "error.h"
 #include "moves.h"
 #include "random.h"
-#include "sa.h"
+#include "sa_shared.h"
 
 #ifdef MPI
 #include "MPI.h"                                              /* for myid */
@@ -70,7 +70,7 @@ static char           *filename;                     /* name of state file */
  ***************************************************************************/
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-	       double *stats, unsigned short *rand, double *delta)
+		   double *stats, unsigned short *rand, double *delta)
 {
   int            i;                                  /* local loop counter */
   FILE           *infile;                         /* pointer to state file */
@@ -85,7 +85,7 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 
   infile = fopen(filename, "r");
   if( !infile )
-    file_error("StateRead");
+	file_error("StateRead");
 
   fscanf(infile, "%d\n",  (int*) &(options->stop_flag));
   fscanf(infile, "%d\n",  &(options->log_flag));
@@ -102,8 +102,8 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 #endif
 
   if ( options->time_flag ) {
-    fscanf(infile, "%lf\n", &(delta[0]));
-    fscanf(infile, "%lf\n", &(delta[1]));
+	fscanf(infile, "%lf\n", &(delta[0]));
+	fscanf(infile, "%lf\n", &(delta[1]));
   }
 
   fscanf(infile, "%d\n",  &(move_ptr->nparams));
@@ -112,28 +112,28 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   fscanf(infile, "%d\n",  &(move_ptr->nsweeps));
 
   move_ptr->newval      =
-    (double *)calloc(move_ptr->nparams, sizeof(double));
+	(double *)calloc(move_ptr->nparams, sizeof(double));
   move_ptr->pt          = NULL;
 
   move_ptr->acc_tab_ptr =
-    (AccStats *)calloc(move_ptr->nparams, sizeof(AccStats));
+	(AccStats *)calloc(move_ptr->nparams, sizeof(AccStats));
 
   for(i=0; i < move_ptr->nparams; i++)
-    fscanf(infile, "%lg\n", &(move_ptr->newval[i]));
+	fscanf(infile, "%lg\n", &(move_ptr->newval[i]));
   fscanf(infile,"%lg\n", &(move_ptr->old_energy));
 
   for(i=0; i < move_ptr->nparams; i++)
-    fscanf( infile, "%lg %lg %d %d\n",
+	fscanf( infile, "%lg %lg %d %d\n",
 	   &(move_ptr->acc_tab_ptr[i].acc_ratio),
 	   &(move_ptr->acc_tab_ptr[i].theta_bar),
 	   &(move_ptr->acc_tab_ptr[i].hits),
 	   &(move_ptr->acc_tab_ptr[i].success) );
 
   for(i=0; i<31; i++)
-    fscanf(infile, "%lg\n", &(stats[i]));
+	fscanf(infile, "%lg\n", &(stats[i]));
 
   for(i=0; i<3; i++)
-    fscanf(infile, "%hu\n", &(rand[i]));
+	fscanf(infile, "%hu\n", &(rand[i]));
 
   fclose(infile);
 
@@ -162,8 +162,8 @@ void StateWrite(char *statefile)
 /* if StateWrite() called for the first time: make filename static */
 
   if (filename == NULL) {
-    filename = (char *)calloc(MAX_RECORD, sizeof(char));
-    filename = strcpy(filename, statefile);
+	filename = (char *)calloc(MAX_RECORD, sizeof(char));
+	filename = strcpy(filename, statefile);
   }
 
 /* collect the state and the options */
@@ -173,13 +173,13 @@ void StateWrite(char *statefile)
   lamsave     = GetLamstats();
   prand       = GetERandState();
   if ( time_flag )
-    delta     = GetTimes();
+	delta     = GetTimes();
 
 /* write the answer; now *fully* portable, no binary!!! */
 
   outfile = fopen(filename, "w");
   if ( !outfile )
-    file_error("StateWrite");
+	file_error("StateWrite");
 
   fprintf(outfile, "%d\n",    options->stop_flag);
   fprintf(outfile, "%d\n",    options->log_flag);
@@ -196,8 +196,8 @@ void StateWrite(char *statefile)
 #endif
 
   if ( time_flag ) {
-    fprintf(outfile, "%.3f\n", delta[0]);
-    fprintf(outfile, "%.3f\n", delta[1]);
+	fprintf(outfile, "%.3f\n", delta[0]);
+	fprintf(outfile, "%.3f\n", delta[1]);
   }
 
   fprintf(outfile, "%d\n",    move_status->nparams);
@@ -206,22 +206,22 @@ void StateWrite(char *statefile)
   fprintf(outfile, "%d\n",    move_status->nsweeps);
 
   for(i=0; i < move_status->nparams; i++)
-    fprintf(outfile, "%.16g\n", *(move_status->pt[i].param));
+	fprintf(outfile, "%.16g\n", *(move_status->pt[i].param));
 
   fprintf(outfile, "%.16g\n", move_status->old_energy);
 
   for(i=0; i < move_status->nparams; i++)
-    fprintf(outfile, "%.16g %.16g %d %d\n",
-	    move_status->acc_tab_ptr[i].acc_ratio,
-	    move_status->acc_tab_ptr[i].theta_bar,
-	    move_status->acc_tab_ptr[i].hits,
-	    move_status->acc_tab_ptr[i].success);
+	fprintf(outfile, "%.16g %.16g %d %d\n",
+		move_status->acc_tab_ptr[i].acc_ratio,
+		move_status->acc_tab_ptr[i].theta_bar,
+		move_status->acc_tab_ptr[i].hits,
+		move_status->acc_tab_ptr[i].success);
 
   for(i=0; i < 31; i++)
-    fprintf(outfile,"%.16g\n", lamsave[i]);
+	fprintf(outfile,"%.16g\n", lamsave[i]);
 
   for(i=0; i < 3; i++)
-    fprintf(outfile,"%d\n", prand[i]);
+	fprintf(outfile,"%d\n", prand[i]);
 
   fclose(outfile);
 
@@ -229,7 +229,7 @@ void StateWrite(char *statefile)
   free(move_status);
   free(lamsave);
   if ( time_flag )
-    free(delta);
+	free(delta);
 
 }
 
@@ -243,7 +243,7 @@ void StateWrite(char *statefile)
 void StateRm(void)
 {
   if ( remove(filename) )
-    warning("StateRm: could not delete %s", filename);
+	warning("StateRm: could not delete %s", filename);
 
   free(filename);
 }

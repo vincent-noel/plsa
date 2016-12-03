@@ -50,7 +50,7 @@
 #include "random.h"
 #include "score.h"
 #include "distributions.h"               /* DistP.variables and prototypes */
-#include "sa.h"                /* *ONLY* for random number funcs and flags */
+#include "sa_shared.h"                /* *ONLY* for random number funcs and flags */
 #include "config.h"
 
 #ifdef MPI                      /* inludes parallel-specific stuff for MPI */

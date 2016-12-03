@@ -33,6 +33,8 @@
 
 
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "../../src/sa.h"
 #include <math.h>
 
@@ -99,8 +101,7 @@ int 	main (int argc, char ** argv)
 
 
 	// run the optimization
-	double final_score;
-	final_score = runPLSA();
+	PLSARes * res = runPLSA();
 
 
 	// print final parameter value and score
@@ -108,8 +109,8 @@ int 	main (int argc, char ** argv)
 	if (myid == 0)
 	{
 #endif
-		printf("final value : %10.7f\n", param);
-		printf("final score : %g\n", final_score);
+		printf("final value : %10.7f\n", res->params[0]);
+		printf("final score : %g\n", res->score);
 #ifdef MPI
 	}
 
@@ -117,6 +118,9 @@ int 	main (int argc, char ** argv)
 	// terminates MPI execution environment
 	MPI_Finalize();
 #endif
+
+	free(res->params);
+	free(res);
 
 	return 0;
 }

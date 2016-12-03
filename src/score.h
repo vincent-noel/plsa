@@ -45,7 +45,7 @@
 #include "global.h"
 #endif
 
-#include "sa.h"
+#include "sa_shared.h"
 
 /* FUNCTION PROTOTYPES *****************************************************/
 
