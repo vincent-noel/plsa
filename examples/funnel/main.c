@@ -33,7 +33,7 @@
 
 
 #include <stdlib.h>
-#include <plsa/sa.h>
+#include "../../src/sa.h"
 #include <math.h>
 
 #ifdef MPI
@@ -100,7 +100,7 @@ int 	main (int argc, char ** argv)
 
 	// run the optimization
 	double final_score;
-	final_score = runPLSA(params);
+	final_score = runPLSA();
 
 
 	// print final parameter value and score

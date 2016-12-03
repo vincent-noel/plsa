@@ -196,7 +196,7 @@ void InitialMove(SAType * state, double *p_chisq, PArrPtr * params)
 	/* initialize some Lam/Greening structures */
 	plsa_params = params;
 
-	
+
 	p = state->progname;     /* tune.progname contains program name */
 	p = strcpy(p, version);
 
@@ -297,7 +297,7 @@ void RestoreState(char *statefile, SAType * state, double *p_chisq,
  *              state file                                                 *
  ***************************************************************************/
 
-double FinalMove(void)
+double FinalMove(SAType * tune)
 {
 #ifdef MPI
 	int      i;                                              /* loop counter */
@@ -346,27 +346,45 @@ double FinalMove(void)
 #ifdef MPI
 	/* write the answer */
 
+	double * res_params = malloc(sizeof(double)*plsa_params->size);
 	if ( myid == winner )
+	{
+		int ii;
+		for (ii=0; ii < plsa_params->size; ii++)
+			res_params[ii] = *plsa_params->array[ii].param;
+	}
+
+	MPI_Bcast(res_params, plsa_params->size, MPI_DOUBLE, winner, MPI_COMM_WORLD);
+
+	if (myid != winner)
+	{
+		int ii;
+		for (ii=0; ii < plsa_params->size; ii++)
+			*plsa_params->array[ii].param = res_params[ii];
+
+	}
+
+	if (myid == winner)
 	{
 #endif
 
-		/* all the funcs below write a section at its appropriate position in the  */
-		/* data file; to achieve this, they create a temporary file which is then  */
-		/* renamed to the final output file name                                   */
-
-		FILE * score_final_f;
-		char score_final_name[MAX_RECORD];
-		sprintf(score_final_name,"final_score");
-		score_final_f = fopen(score_final_name,"w");
-		fprintf(score_final_f,"%g",ap.stop_energy);
-		fclose(score_final_f);
-
-		if (logParams() == 1)
+		/* Writing result logs */
+		if (logScore() > 0)
 		{
-			FILE * parameters;
+			char score_final_name[MAX_RECORD];
+			sprintf(score_final_name, "%s/score/score", getLogDir());
+
+			FILE * score_final_f = fopen(score_final_name,"w");
+			fprintf(score_final_f,"%g",ap.stop_energy);
+			fclose(score_final_f);
+		}
+
+		if (logParams()> 0)
+		{
 			char parameters_output[MAX_RECORD];
-			sprintf(parameters_output,"output");
-			parameters = fopen(parameters_output,"w");
+			sprintf(parameters_output, "%s/params/output", getLogDir());
+
+			FILE * parameters = fopen(parameters_output,"w");
 
 			int ii;
 			for (ii=0; ii < plsa_params->size; ii++)
@@ -375,10 +393,17 @@ double FinalMove(void)
 							plsa_params->array[ii].name,
 							*plsa_params->array[ii].param);
 			}
+
 			fclose(parameters);
 		}
 
+		if (logRes() > 0)
+		{
+			char res_dir[MAX_RECORD];
+			sprintf(res_dir, "%s/res/", getLogDir());
 
+			tune->printFunction(res_dir, 0);
+		}
 
 #ifdef MPI
 	}

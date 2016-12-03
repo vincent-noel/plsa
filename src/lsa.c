@@ -318,15 +318,16 @@ void PrintMyPid()
 
 PArrPtr * InitPLSAParameters(int nb_dimensions)
 {
-	PArrPtr * params = (PArrPtr *) malloc(sizeof(PArrPtr));
+	params_to_fit = (PArrPtr *) malloc(sizeof(PArrPtr));
 
 	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
 
-	params->size  = nb_dimensions;
-	params->array = p;
+	params_to_fit->size  = nb_dimensions;
+	params_to_fit->array = p;
 
-	return params;
+	return params_to_fit;
 }
+
 #ifdef MPI
 SAType * InitPLSA(int nb_procs, int my_id)
 {
@@ -341,8 +342,8 @@ SAType * InitPLSA(int nb_procs, int my_id)
 
 	return InitializePLSA();
 }
-#else
 
+#else
 SAType * InitPLSA()
 {
 	InitLogs();
@@ -352,8 +353,14 @@ SAType * InitPLSA()
 
 	return InitializePLSA();
 }
+
 #endif
-double runPLSA(PArrPtr * params)
+
+
+
+
+
+double runPLSA()
 {
 	double *delta;                            /* used to store elapsed times */
 	double final_score;
@@ -375,7 +382,7 @@ double runPLSA(PArrPtr * params)
 	/* initialize cost function and move state, do initial moves (or restore   */
 	/* annealing state if restart                                              */
 
-	StartPLSA(params);
+	StartPLSA();
 
 	/* the following is for non-equlibration runs and equilibration runs that  */
 	/* have not yet settled to their equilibrium temperature                   */
@@ -398,7 +405,7 @@ double runPLSA(PArrPtr * params)
 
 	free(cpu_start);
 	free(cpu_finish);
-
+	free(params_to_fit);
 	return final_score;
 
 }
@@ -506,7 +513,7 @@ double runPLSA(PArrPtr * params)
 	 return &state;
 }
 
-void StartPLSA(PArrPtr * params)
+void StartPLSA()
 {
 	/* first get Lam parameters, initial temp and energy and initialize S_0 */
 	/* if we restore a run from a state file: call RestoreState() */
@@ -514,19 +521,18 @@ void StartPLSA(PArrPtr * params)
 	if (myid == 0)
 	{
 #endif
-	if (logParams() == 1)
+	if (logParams() > 0)
 	{
-		FILE * parameters;
 		char parameters_input[MAX_RECORD];
-		sprintf(parameters_input,"input");
-		parameters = fopen(parameters_input,"w");
+		sprintf(parameters_input, "%s/params/input", getLogDir());
+		FILE * parameters = fopen(parameters_input,"w");
 
 		int ii;
-		for (ii=0; ii < params->size; ii++)
+		for (ii=0; ii < params_to_fit->size; ii++)
 		{
 			fprintf(parameters, "%s : %.16g\n",
-						params->array[ii].name,
-						*params->array[ii].param);
+						params_to_fit->array[ii].name,
+						*params_to_fit->array[ii].param);
 		}
 		fclose(parameters);
 	}
@@ -537,17 +543,17 @@ void StartPLSA(PArrPtr * params)
 
 	if ( !stateflag )
 	{
-		InitialMove(&state, &energy, params);
+		InitialMove(&state, &energy, params_to_fit);
 		S_0 = 1./state.initial_temp;
 	}
 	else
-	   RestoreState(statefile, &state, &energy, params);
+	   RestoreState(statefile, &state, &energy, params_to_fit);
 
 	/* initialize those static file names that depend on the output file name */
 
 	InitFilenames();
 
-	#ifdef MPI
+#ifdef MPI
 	/* note that for parallel code both tau and init must be divided by nnodes */
 	/* and we need to account for the case when tau isn't divisible by nnodes  */
 
@@ -560,10 +566,10 @@ void StartPLSA(PArrPtr * params)
 		error("plsa: number of init moves must be divisible by nnodes (%d)",
 			  nnodes);
 	proc_init = state.initial_moves / nnodes;    /* # of initial moves */
-	#else
+#else
 	proc_tau  = state.tau;                       /* static copy to tau */
 	proc_init = state.initial_moves;             /* # of initial moves */
-	#endif
+#endif
 	Tau = (double) state.tau;                  /* double version to tau */
 	/* for calculating estimators */
 
@@ -1238,7 +1244,7 @@ double Loop(void)
 		if (max_iter > 0 && count_tau >= max_iter)
 		{
 
-			return FinalMove();
+			return FinalMove(&state);
 		}
 
 		if (max_seconds > 0)
@@ -1250,7 +1256,7 @@ double Loop(void)
 			if (duration > max_seconds)
 			{
 
-				return FinalMove();
+				return FinalMove(&state);
 			}
 
 		}
@@ -1258,7 +1264,7 @@ double Loop(void)
 		if ( Frozen() )
 		{
 
-			return FinalMove();
+			return FinalMove(&state);
 		}
 
 		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
@@ -1314,7 +1320,7 @@ double Loop(void)
 						free(var_means);
 						free(midpoints);
 
-						return FinalMove();             /* exit the loop here if finished tuning */
+						return FinalMove(&state);             /* exit the loop here if finished tuning */
 					}
 			}
 		}

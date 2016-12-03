@@ -211,7 +211,7 @@ typedef struct {
 
 // NucStatePtr state;                    /* global annealing parameter struct */
 SAType		state;
-
+PArrPtr * 	params_to_fit;
 StopStyle   stop_flag;               /* type of stop criterion (see above) */
 
 int         time_flag;                         /* flag for timing the code */
@@ -263,10 +263,10 @@ SAType * InitPLSA();
 #endif
 
 PArrPtr * InitPLSAParameters(int nb_dimensions);
-double runPLSA( PArrPtr * params);
+double runPLSA();
 
 SAType * InitializePLSA(void);
-void StartPLSA(PArrPtr * params);
+void StartPLSA();
 
 /*** InitFilenames: initializes static file names needed in lsa.c **********
  ***************************************************************************/
@@ -418,7 +418,7 @@ void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
  *              do the cleaning up, i.e freeing stuff and such after a run *
  ***************************************************************************/
 
-double FinalMove(void);
+double FinalMove(SAType * state);
 
 /*** WriteTimes: writes the timing information to wherever it needs to be **
  *               written to at the end of a run                            *

@@ -112,6 +112,13 @@ void BuildLogs()
 		char res[250];
 		sprintf(res, "%s/res", logs.dir);
 		mkdir(res, 0777);
+	}
+
+	if (logParams() > 0)
+	{
+		char res[250];
+		sprintf(res, "%s/params", logs.dir);
+		mkdir(res, 0777);
 
 	}
 
