@@ -50,6 +50,8 @@ typedef struct
 	int  	res;
 	int 	score;
 	int 	pid;
+	int 	best_score;
+	int 	best_res;
 
 } SALogs;
 
@@ -64,6 +66,8 @@ int 	logRes();
 int 	logScore();
 int 	logPid();
 
+int 	logBestScore();
+int 	logBestRes();
 
 void 	InitLogs();
 void 	BuildLogs();

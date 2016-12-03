@@ -55,15 +55,15 @@ void SaveBestScore(double score)
 
 	char score_name[MAX_RECORD];
 #ifdef MPI
-    sprintf(score_name,"%s/score/score_%d", getLogDir(), myid);
+	sprintf(score_name,"%s/best_score/score_%d", getLogDir(), myid);
 #else
-    sprintf(score_name,"%s/score/score_0", getLogDir());
+	sprintf(score_name,"%s/best_score/score_0", getLogDir());
 #endif
 
 
-    FILE * f_score = fopen(score_name,"w");
-    fprintf(f_score, "%.5g\n", score);
-    fclose(f_score);
+	FILE * f_score = fopen(score_name,"w");
+	fprintf(f_score, "%.5g\n", score);
+	fclose(f_score);
 
 }
 
@@ -79,9 +79,9 @@ void InitScoring(SAType * tune)
 {
 
 	scoreFunction = tune->scoreFunction;
-    printFunction = tune->printFunction;
+	printFunction = tune->printFunction;
 
-    best_score = FORBIDDEN_MOVE;
+	best_score = FORBIDDEN_MOVE;
 }
 
 
@@ -96,24 +96,31 @@ void InitScoring(SAType * tune)
 double Score(void)
 {
 
-    double     chisq   = 0;                    // summed squared differences
+	double     chisq   = 0;                    // summed squared differences
 
-    chisq = scoreFunction();
+	chisq = scoreFunction();
 
-    if (isnan(chisq) || isinf(chisq) || (chisq < 0))
-	    chisq = FORBIDDEN_MOVE;
+	if (isnan(chisq) || isinf(chisq) || (chisq < 0))
+		chisq = FORBIDDEN_MOVE;
 
-    if (chisq < best_score)
-    {
-        if (logScore() > 0)
+	if (chisq < best_score)
+	{
+		if (logBestScore() > 0)
 			SaveBestScore(chisq);
 
-#ifdef MPI
-        printFunction(getLogDir(), myid);
-#else
-        printFunction(getLogDir(), 0);
-#endif
-    }
+		if (logBestRes() > 0)
+		{
+			char log_dir[MAX_RECORD];
+			sprintf(log_dir,"%s/best_res", getLogDir());
 
-    return chisq;
+			if (printFunction != NULL)
+#ifdef MPI
+				printFunction(log_dir, myid);
+#else
+				printFunction(log_dir, 0);
+#endif
+		}
+	}
+
+	return chisq;
 }

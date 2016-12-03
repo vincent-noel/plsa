@@ -74,6 +74,16 @@ int logPid()
 	return logs.pid;
 }
 
+int logBestScore()
+{
+	return logs.best_score;
+}
+
+int logBestRes()
+{
+	return logs.best_res;
+}
+
 void InitLogs()
 {
 	logs.dir = "logs";
@@ -82,18 +92,42 @@ void InitLogs()
 	logs.res = 0;
 	logs.score = 0;
 	logs.pid = 0;
+	logs.best_score = 1;
+	logs.best_res = 1;
 }
 
 void BuildLogs()
 {
 	mkdir(logs.dir, 0777);
 
-	/*char res[250];
-	sprintf(res, "%s/res", logs.dir);
-	mkdir(res, 0777);
+	if (logScore() > 0)
+	{
+		char score[200];
+		sprintf(score, "%s/score", logs.dir);
+		mkdir(score, 0777);
+	}
 
-	char score[200];
-	sprintf(score, "%s/score", logs.dir);
-	mkdir(score, 0777);*/
+	if (logRes() > 0)
+	{
+		char res[250];
+		sprintf(res, "%s/res", logs.dir);
+		mkdir(res, 0777);
+
+	}
+
+	if (logBestScore() > 0)
+	{
+		char score[200];
+		sprintf(score, "%s/best_score", logs.dir);
+		mkdir(score, 0777);
+	}
+
+	if (logBestRes() > 0)
+	{
+		char res[250];
+		sprintf(res, "%s/best_res", logs.dir);
+		mkdir(res, 0777);
+
+	}
 
 }
