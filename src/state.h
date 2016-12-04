@@ -36,7 +36,7 @@
  *                                                                            *
  ******************************************************************************/
 
- #include "moves.h"
+ #include "types.h"
 
  /* a function that writes the .state file (should live in state.c) */
 
@@ -46,13 +46,9 @@
   *               in case it gets interrupted                               *
   ***************************************************************************/
 
- void StateWrite(char * statefile, double energy);
+void StateWrite(char * statefile, double energy);
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 		   double *stats, unsigned short *rand, double *delta);
-
-
-void StateWrite(char *statefile, double energy);
-
 
 void StateRm(void);

@@ -29,20 +29,23 @@
  *                                                                            *
  ******************************************************************************/
 #include "types.h"
-void PrintMyPid();
-void StartPLSA(PArrPtr * plsa_params);
 
 
+/* functions that communicate with state.c */
 
-/* PROBLEM SPECIFIC FUNCTIONS THAT NEED TO BE DEFINED OUTSIDE LSA.C ********/
-
-/* miscellaneous functions that usually live in <problem>_sa.c */
-
-/*** ParseCommandLine: well, parses the command line and returns an index **
- *                     to the 1st argument after the command line options  *
+/*** GetOptions: returns command line options to state.c ***************
  ***************************************************************************/
 
-void ParseCommandLine();
+Opts *GetOptions(void);
+
+/*** RestoreOptions: restores the values of the command line opt variables *
+ ***************************************************************************/
+
+void RestoreOptions(Opts *options);
+
+
+
+
 
 /*** InitialMove: initializes the following stuff: *************************
  *                - reads in Lam and other annealing parameters (passed to *
@@ -56,7 +59,8 @@ void ParseCommandLine();
  *                  the first time                                         *
  ***************************************************************************/
 
-void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
+// void InitialMove(double *p_chisq);
+
 
 /*** RestoreState: called when an interrupted run is restored; does the ****
  *                 following (see InitialMove for arguments, also see co-  *
@@ -67,19 +71,19 @@ void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
  *                 - restores move state in move(s).c                      *
  ***************************************************************************/
 
-void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
-						  PArrPtr * params);
+// void RestoreState(char *statefile, double *p_chisq);
+
 
 /*** FinalMove: determines the final energy and move count and then prints *
  *              those to wherever they need to be printed to; also should  *
  *              do the cleaning up, i.e freeing stuff and such after a run *
  ***************************************************************************/
 
-double FinalMove(SAType * state);
+// double FinalMove();
 
 
 /*** WriteTimes: writes the timing information to wherever it needs to be **
  *               written to at the end of a run                            *
  ***************************************************************************/
 
-void WriteTimes(double *times);
+// void WriteTimes(double *times);

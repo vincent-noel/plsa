@@ -128,6 +128,21 @@ void BuildLogs()
 
 	}
 
+	if (logTraceScore() > 0)
+	{
+		char score[200];
+		sprintf(score, "%s/trace/score", logs.dir);
+		mkdir(score, 0777);
+	}
+
+	if (logBestRes() > 0)
+	{
+		char res[250];
+		sprintf(res, "%s/trace/res", logs.dir);
+		mkdir(res, 0777);
+
+	}
+
 	if (logBestScore() > 0)
 	{
 		char score[200];

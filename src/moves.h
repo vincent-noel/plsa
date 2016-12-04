@@ -52,7 +52,7 @@
 
 /* ... and this for the Range struct */
 #ifndef SCORE_INCLUDED
-#include "score.h"
+#include "types.h"
 #endif
 
 
@@ -71,98 +71,127 @@
 
 
 /*** TONS OF STRUCTS *******************************************************/
-
-/* The following are annealing parameters that are not specific to the Lam *
- * algorithm. In general they should be used in moves.c or plsa.c but    *
- * *not* in lsa.c. In the data file, the members of the struct labeled RO  *
- * are read from the $annealing_input section. They are used for initial   *
- * conditions of the annealer and do not change during a run. Members      *
- * labeled OUT are written to the $annealing_output section upon comple-   *
- * tion of a run.                                                          */
-
-typedef struct {
-  long   seed;                      /* seed for random number generator RO */
-  double start_tempr;          /* the initial equilibration temperature RO */
-  double gain;            /* gain for proportional control of move size RO */
-  double stop_energy;                /* the final energy of the answer OUT */
-  int    max_count;                      /* total number of iterations OUT */
-  int    interval;       /* number of sweeps between updating theta_bar RO */
-/*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
-  // int    log_params;
-} AParms;
+//
+// /* The following are annealing parameters that are not specific to the Lam *
+//  * algorithm. In general they should be used in moves.c or plsa.c but    *
+//  * *not* in lsa.c. In the data file, the members of the struct labeled RO  *
+//  * are read from the $annealing_input section. They are used for initial   *
+//  * conditions of the annealer and do not change during a run. Members      *
+//  * labeled OUT are written to the $annealing_output section upon comple-   *
+//  * tion of a run.                                                          */
+//
+// typedef struct {
+//   long   seed;                      /* seed for random number generator RO */
+//   double start_tempr;          /* the initial equilibration temperature RO */
+//   double gain;            /* gain for proportional control of move size RO */
+//   double stop_energy;                /* the final energy of the answer OUT */
+//   int    max_count;                      /* total number of iterations OUT */
+//   int    interval;       /* number of sweeps between updating theta_bar RO */
+// /*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
+//   // int    log_params;
+// } AParms;
 
 /* Struct for acceptance statistics, which are used for keeping the accep- *
  * tance ratio for each parameter as close as possible to .44; there's one *
  * such struct for each parameter to be tweaked                            */
 
-typedef struct {
-  double acc_ratio;                      /* acceptance ratio for parameter */
-  double theta_bar;              /* theta bar is proportional to move size */
-  int    hits;       /* number of moves since last call to UpdateControl() */
-  int    success;              /* number of these moves that were accepted */
-} AccStats;
+// typedef struct {
+//   double acc_ratio;                      /* acceptance ratio for parameter */
+//   double theta_bar;              /* theta bar is proportional to move size */
+//   int    hits;       /* number of moves since last call to UpdateControl() */
+//   int    success;              /* number of these moves that were accepted */
+// } AccStats;
 
 
 
 
-
-/* following struct contains copies of the static variables of moves.c     *
- * together with the values of parameters undergoing annealing             */
-
-typedef struct {
-  ParamList *pt;  /* Used during a save to point to annealed-on parameters */
-  AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
-  double    *newval; /* points to array of annealed-on doubles for restore */
-  double    old_energy;                     /* energy before the last move */
-  int       nparams;                      /* # of parameters to be tweaked */
-  int       index;      /* index of parameter to be tweaked during a sweep */
-  int       nhits;                         /* number of moves already made */
-  int       nsweeps;                         /* number of completed sweeps */
-} MoveState;
-
-
-
-/* Opts struct is for saving command line options in state.c */
-
-typedef struct {
-  StopStyle stop_flag;                                   /* stop criterion */
-  int       time_flag;                             /* flag for timing code */
-  int       log_flag;                                  /* log display flag */
-  long      state_write;              /* frequency for writing state files */
-  long      print_freq;         /* frequency for printing status to stdout */
-  long      captions;                         /* opt for printing captions */
-  int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
-  int       equil;              /* flag for equilibration mode (T = const) */
-#ifdef MPI
-  int       tuning;                                /* flag for tuning mode */
-  int       covar_index; /* index for sample interval (=covar_index * tau) */
-  int       write_tune_stat;    /* how many times to write tune statistics */
-  int       auto_stop_tune;                      /* auto-stop tuning runs? */
-#endif
-} Opts;
+//
+// /* following struct contains copies of the static variables of moves.c     *
+//  * together with the values of parameters undergoing annealing             */
+//
+// typedef struct {
+//   ParamList *pt;  /* Used during a save to point to annealed-on parameters */
+//   AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
+//   double    *newval; /* points to array of annealed-on doubles for restore */
+//   double    old_energy;                     /* energy before the last move */
+//   int       nparams;                      /* # of parameters to be tweaked */
+//   int       index;      /* index of parameter to be tweaked during a sweep */
+//   int       nhits;                         /* number of moves already made */
+//   int       nsweeps;                         /* number of completed sweeps */
+// } MoveState;
 
 
-
+//
+// /* Opts struct is for saving command line options in state.c */
+//
+// typedef struct {
+//   StopStyle stop_flag;                                   /* stop criterion */
+//   int       time_flag;                             /* flag for timing code */
+//   int       log_flag;                                  /* log display flag */
+//   long      state_write;              /* frequency for writing state files */
+//   long      print_freq;         /* frequency for printing status to stdout */
+//   long      captions;                         /* opt for printing captions */
+//   int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
+//   int       equil;              /* flag for equilibration mode (T = const) */
+// #ifdef MPI
+//   int       tuning;                                /* flag for tuning mode */
+//   int       covar_index; /* index for sample interval (=covar_index * tau) */
+//   int       write_tune_stat;    /* how many times to write tune statistics */
+//   int       auto_stop_tune;                      /* auto-stop tuning runs? */
+// #endif
+// } Opts;
+//
+//
+//
 
 /*** FUNCTION PROTOTYPES ***************************************************/
 
+
+/* move generation functions that are used in lsa.c (live in move(s).c) */
+
+/* GenerateMove: evaluates the old energy, changes a parameter, then eval- *
+ *               uates the new energy; returns the difference between old  *
+ *               and new energy to the caller                              *
+ ***************************************************************************/
+
+double GenerateMove(void);
+
+/*** AcceptMove: sets new energy as the old energy for the next step and ***
+ *               keeps track of the number of successful moves             *
+ ***************************************************************************/
+
+void AcceptMove(void);
+
+/*** RejectMove: simply resets the tweaked parameter to the pretweak value *
+ ***************************************************************************/
+
+void RejectMove(void);
+
+/*** GetEnergy: returned the last computed value of the scoring function   *
+ *    To avoid computing e = old_e + (new e - old e), and using directly   *
+ *    e = new_e
+ *    Avoid precision errors due floating number representation            *
+ **************************************************************************/
+
+double GetNewEnergy(void);
+double GetOldEnergy(void);
 /* plsa.c: I/O functions for miscellaneous stuff */
 
 void PrintTimes(FILE *fp, double *delta);
 
-
-/* functions that communicate with state.c */
-
-/*** GetOptions: returns command line options to state.c ***************
- ***************************************************************************/
-
-Opts *GetOptions(void);
-
-/*** RestoreOptions: restores the values of the command line opt variables *
- ***************************************************************************/
-
-void RestoreOptions(Opts *options);
-
+//
+// /* functions that communicate with state.c */
+//
+// /*** GetOptions: returns command line options to state.c ***************
+//  ***************************************************************************/
+//
+// Opts *GetOptions(void);
+//
+// /*** RestoreOptions: restores the values of the command line opt variables *
+//  ***************************************************************************/
+//
+// void RestoreOptions(Opts *options);
+//
 
 
 /* moves.c: functions for move generation */
@@ -192,7 +221,7 @@ void RestoreMoves(MoveState *MovePtr);
 /*** RestoreProlix: restores prolix file after a run has been interrupted **
  ***************************************************************************/
 
-void RestoreProlix(void);
+// void RestoreProlix(void);
 
 
 

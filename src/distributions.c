@@ -232,8 +232,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 	{
 		/* lorentzian distribution:(sigma) / [(x*x)+(sigma*sigma/4)]/pi */
 		/* tan of 0.5*pi is not good */
-		do
-			xi= RandomReal();
+		do xi= RandomReal();
 		while (xi == 0.5);
 
 		/* king's extra /2  theta = fabs (theta_bar/2 * tan(xi*pi) );  */
@@ -244,8 +243,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 	{
 		/* lorentz2 distribution   */
 		/* tan of 0.5*pi is not good */
-		do
-			xi= RandomReal();
+		do xi= RandomReal();
 		while (xi == 0.5);  /* do not want tan (0) */
 
 		/* true lorentzian not abs value or round robin index modulo */

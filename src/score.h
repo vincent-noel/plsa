@@ -45,7 +45,7 @@
 #include "global.h"
 #endif
 
-#include "sa_shared.h"
+#include "types.h"
 
 /* FUNCTION PROTOTYPES *****************************************************/
 
@@ -66,6 +66,6 @@ void        InitScoring     (SAType *) ;
 
 double      Score           (void);
 
-void        SaveBestScore   (double score);
+// void        SaveBestScore   (double score);
 
 #endif

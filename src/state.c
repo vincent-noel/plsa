@@ -43,10 +43,11 @@
 #include <unistd.h>                                        /* getopt stuff */
 
 #include "state.h"
+#include "plsa.h"
 #include "error.h"
 #include "random.h"
 #include "sa_shared.h"
-
+#include "moves.h"
 #ifdef MPI
 #include "MPI.h"                                              /* for myid */
 #endif

@@ -40,7 +40,7 @@
 #include <sys/time.h>
 
 #include "sa_shared.h"
-// #include "sa.h"
+#include "moves.h"
 #include "error.h"
 #include "random.h"
 #include "config.h"

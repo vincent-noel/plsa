@@ -4,11 +4,6 @@
  *                                                                            *
  ******************************************************************************
  *                                                                            *
- *   created 5-02 for function prototypes                                     *
- *   found in distributions.c                                                 *
- *   used in tsp_sa.c (for qgt2_init and qlt2_init), and move.c               *
- *           need pi for distributions                                        *
- *           used in input file to set factors, in distributions              *
  *   modified by Vincent Noel                                                 *
  *                                                                            *
  ******************************************************************************
@@ -41,18 +36,18 @@ typedef struct
 						 /*  2   <  q < 2.6 uses qgt2_visit       */
 						 /*  2.6 <= q < 3   uses binom_qgt2_visit */
 
-	/*****variables that depend on q ********/
-	double gam1;           /* gammaln of 1/(q-1)       */
-	double gam2;           /* gammaln of 1/((q-1)-0.5) */
-	double fact2;          /* exp(gam1-gam2)           */
-	double alpha;          /* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
-	double alpha2;         /* (sqrt(2.)/ 2. )* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
-	double c;              /*  1/(q-1)                  */
-	double rejects;        /*  number of recursive calls; useful for efficiency analysis */
-	double trunc;          /*  range for x is [-trunc, trunc]             */
-						 /*  2    <  q < 2.6   trunc is OK at 2 million */
-						 /*  2.6  <= q < 2.85  trunc is 99 and 16 zeros*/
-						 /*  2.85 <= q < 3     trunc is 24 nines */
+	// /*****variables that depend on q ********/
+	// double gam1;           /* gammaln of 1/(q-1)       */
+	// double gam2;           /* gammaln of 1/((q-1)-0.5) */
+	// double fact2;          /* exp(gam1-gam2)           */
+	// double alpha;          /* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
+	// double alpha2;         /* (sqrt(2.)/ 2. )* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
+	// double c;              /*  1/(q-1)                  */
+	// double rejects;        /*  number of recursive calls; useful for efficiency analysis */
+	// double trunc;          /*  range for x is [-trunc, trunc]             */
+	// 					 /*  2    <  q < 2.6   trunc is OK at 2 million */
+	// 					 /*  2.6  <= q < 2.85  trunc is 99 and 16 zeros*/
+	// 					 /*  2.85 <= q < 3     trunc is 24 nines */
 
 
 

@@ -227,36 +227,36 @@ void WriteLog(int initial_moves);
 
 void PrintLog(FILE *outptr, int init_moves);
 
-
-
-/* move generation functions that are used in lsa.c (live in move(s).c) */
-
-/* GenerateMove: evaluates the old energy, changes a parameter, then eval- *
- *               uates the new energy; returns the difference between old  *
- *               and new energy to the caller                              *
- ***************************************************************************/
-
-double GenerateMove(void);
-
-/*** AcceptMove: sets new energy as the old energy for the next step and ***
- *               keeps track of the number of successful moves             *
- ***************************************************************************/
-
-void AcceptMove(void);
-
-/*** RejectMove: simply resets the tweaked parameter to the pretweak value *
- ***************************************************************************/
-
-void RejectMove(void);
-
-/*** GetEnergy: returned the last computed value of the scoring function   *
- *    To avoid computing e = old_e + (new e - old e), and using directly   *
- *    e = new_e
- *    Avoid precision errors due floating number representation            *
- **************************************************************************/
-
-double GetNewEnergy(void);
-double GetOldEnergy(void);
+//
+//
+// /* move generation functions that are used in lsa.c (live in move(s).c) */
+//
+// /* GenerateMove: evaluates the old energy, changes a parameter, then eval- *
+//  *               uates the new energy; returns the difference between old  *
+//  *               and new energy to the caller                              *
+//  ***************************************************************************/
+//
+// double GenerateMove(void);
+//
+// /*** AcceptMove: sets new energy as the old energy for the next step and ***
+//  *               keeps track of the number of successful moves             *
+//  ***************************************************************************/
+//
+// void AcceptMove(void);
+//
+// /*** RejectMove: simply resets the tweaked parameter to the pretweak value *
+//  ***************************************************************************/
+//
+// void RejectMove(void);
+//
+// /*** GetEnergy: returned the last computed value of the scoring function   *
+//  *    To avoid computing e = old_e + (new e - old e), and using directly   *
+//  *    e = new_e
+//  *    Avoid precision errors due floating number representation            *
+//  **************************************************************************/
+//
+// double GetNewEnergy(void);
+// double GetOldEnergy(void);
 // void WriteScoreTrace(double t_energy, int acceptance);
 
 

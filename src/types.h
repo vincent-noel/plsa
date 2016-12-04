@@ -27,6 +27,56 @@
 #ifndef PLSA_TYPES
 #define PLSA_TYPES
 
+
+/* The following are annealing parameters that are not specific to the Lam *
+ * algorithm. In general they should be used in moves.c or plsa.c but    *
+ * *not* in lsa.c. In the data file, the members of the struct labeled RO  *
+ * are read from the $annealing_input section. They are used for initial   *
+ * conditions of the annealer and do not change during a run. Members      *
+ * labeled OUT are written to the $annealing_output section upon comple-   *
+ * tion of a run.                                                          */
+
+typedef struct {
+  long   seed;                      /* seed for random number generator RO */
+  double start_tempr;          /* the initial equilibration temperature RO */
+  double gain;            /* gain for proportional control of move size RO */
+  double stop_energy;                /* the final energy of the answer OUT */
+  int    max_count;                      /* total number of iterations OUT */
+  int    interval;       /* number of sweeps between updating theta_bar RO */
+/*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
+  // int    log_params;
+} AParms;
+
+typedef enum StopStyle
+{
+	proportional_freeze,
+	absolute_freeze,
+	absolute_energy
+
+} StopStyle;
+
+/* Opts struct is for saving command line options in state.c */
+
+typedef struct {
+  StopStyle stop_flag;                                   /* stop criterion */
+  int       time_flag;                             /* flag for timing code */
+  int       log_flag;                                  /* log display flag */
+  long      state_write;              /* frequency for writing state files */
+  long      print_freq;         /* frequency for printing status to stdout */
+  long      captions;                         /* opt for printing captions */
+  int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
+  int       equil;              /* flag for equilibration mode (T = const) */
+#ifdef MPI
+  int       tuning;                                /* flag for tuning mode */
+  int       covar_index; /* index for sample interval (=covar_index * tau) */
+  int       write_tune_stat;    /* how many times to write tune statistics */
+  int       auto_stop_tune;                      /* auto-stop tuning runs? */
+#endif
+} Opts;
+
+
+
+
 typedef struct
 {
 	/* Added some log options here */
@@ -42,14 +92,6 @@ typedef struct
 	int 	best_res;
 
 } SALogs;
-
-typedef enum StopStyle
-{
-	proportional_freeze,
-	absolute_freeze,
-	absolute_energy
-
-} StopStyle;
 
 
 typedef struct
@@ -75,6 +117,27 @@ typedef struct
 	ParamList *array;            /* points to 1st element of ParamList array */
 
 } PArrPtr;
+
+typedef struct {
+  double acc_ratio;                      /* acceptance ratio for parameter */
+  double theta_bar;              /* theta bar is proportional to move size */
+  int    hits;       /* number of moves since last call to UpdateControl() */
+  int    success;              /* number of these moves that were accepted */
+} AccStats;
+
+/* following struct contains copies of the static variables of moves.c     *
+ * together with the values of parameters undergoing annealing             */
+
+typedef struct {
+  ParamList *pt;  /* Used during a save to point to annealed-on parameters */
+  AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
+  double    *newval; /* points to array of annealed-on doubles for restore */
+  double    old_energy;                     /* energy before the last move */
+  int       nparams;                      /* # of parameters to be tweaked */
+  int       index;      /* index of parameter to be tweaked during a sweep */
+  int       nhits;                         /* number of moves already made */
+  int       nsweeps;                         /* number of completed sweeps */
+} MoveState;
 
 typedef struct
 {
