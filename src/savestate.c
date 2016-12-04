@@ -148,7 +148,7 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
  *               interrupted                                               *
  ***************************************************************************/
 
-void StateWrite(char *statefile)
+void StateWrite(char *statefile, double energy, double S_0)
 {
   int i;                                             /* local loop counter */
   FILE           *outfile;                           /* state file pointer */
@@ -170,7 +170,7 @@ void StateWrite(char *statefile)
 
   options     = GetOptions();
   move_status = MoveSave();
-  lamsave     = GetLamstats();
+  lamsave     = GetLamstats(energy, S_0);
   prand       = GetERandState();
   if ( time_flag )
 	delta     = GetTimes();

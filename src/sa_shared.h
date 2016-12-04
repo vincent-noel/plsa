@@ -119,11 +119,11 @@
  ***************************************************************************/
 
 /*** GLOBALS ***************************************************************/
-
-// NucStatePtr state;                    /* global annealing parameter struct */
-SAType		state;
-PArrPtr * 	params_to_fit;
-StopStyle   stop_flag;               /* type of stop criterion (see above) */
+//
+// // NucStatePtr state;                    /* global annealing parameter struct */
+// SAType		state;
+// PArrPtr * 	params_to_fit;
+// StopStyle   stop_flag;               /* type of stop criterion (see above) */
 
 int         time_flag;                         /* flag for timing the code */
 int         log_flag;                 /* flag for displaying log to stdout */
@@ -168,8 +168,7 @@ int         start_time_seconds;
  *               of the annealer as saved in the state file                *
  ***************************************************************************/
 
-SAType * InitializePLSA(void);
-void StartPLSA();
+int InitializePLSA(SAType * state, char ** statefile);
 
 /*** InitFilenames: initializes static file names needed in lsa.c **********
  ***************************************************************************/
@@ -181,21 +180,18 @@ void InitFilenames(void);
  *                   2. loop for initial collection of statistics          *
  ***************************************************************************/
 
-void InitialLoop(void);
-
+double InitialLoop(SAType * state, double S_0, int proc_init);
 /*** InitializeParameter: initializes variables used for calculating the ***
  *                        parameters A, B, D and E and the estimate_mean   *
  *                        plus estimate_sd (see Lam & Delosme, 1988a)      *
  ***************************************************************************/
 
-void InitializeParameter(void);
-
+void InitializeParameter(SAType * state, double S_0);
 /*** InitializeWeights: initialize weights a and b; these weights are ******
  *                      computed from the lambda memory length products    *
  ***************************************************************************/
 
-void InitializeWeights(void);
-
+void InitializeWeights(SAType * state);
 
 
 /* Main loop and update functions */
@@ -204,18 +200,18 @@ void InitializeWeights(void);
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-double Loop(void);
+double Loop(SAType * state, double energy, double S_0, double Tau, int proc_tau, char * statefile,
+				 StopStyle stop_flag, int initial_moves, int proc_init);
 
 /*** UpdateS: update inverse temperature S at every Sskip step *************
  ***************************************************************************/
-
-void UpdateS(void);
+void UpdateS(SAType * state, double Tau, int proc_tau);
 
 /*** UpdateStats: updates mean, variance and acc_ratio after tau moves *****
  *                it needs i to do sanity check in parallel code           *
  ***************************************************************************/
 
-void UpdateStats(int i);
+void UpdateStats(SAType * state, double Tau, int proc_tau, int i);
 
 /*** UpdateParameter: update parameters A, B, D and E and the estimators ***
  *                    for mean and standard deviation for the current S    *
@@ -226,7 +222,7 @@ void UpdateParameter(void);
 /*** Frozen: returns TRUE if frozen, FALSE otherwise ***********************
  ***************************************************************************/
 
-int Frozen(void);
+int Frozen(SAType * state, StopStyle stop_flag);
 
 
 /* functions which communicate with other source files, these are needed  *
@@ -236,8 +232,7 @@ int Frozen(void);
  *                store Lam statistics in a state file                     *
  ***************************************************************************/
 
-double *GetLamstats(void);
-
+double *GetLamstats(double energy, double S_0);
 /*** GetTimes: returns a two-element array with the current wallclock and **
  *             user time to be saved in the state file                     *
  ***************************************************************************/
@@ -251,12 +246,12 @@ double *GetTimes(void);
  *                    file.                                                *
  ***************************************************************************/
 
-void RestoreLamstats(double *stats);
+double RestoreLamstats(double *stats, double * S_0);
 
 /*** RestoreLog: restores .log and .prolix files after upon restart ********
  ***************************************************************************/
 
-void RestoreLog(void);
+void RestoreLog(int initial_moves, int proc_init, int proc_tau);
 
 /*** RestoreTimes: restores the wallclock and user times if -t is used *****
  ***************************************************************************/
@@ -269,13 +264,11 @@ void RestoreTimes(double *delta);
 /* functions to write the .log */
 
 
-void WriteLog(void);
-
+void WriteLog(int initial_moves, int proc_init, int proc_tau);
 /*** PrintLog: actually writes stuff to the .log file **********************
  ***************************************************************************/
 
-void PrintLog(FILE *outptr);
-
+void PrintLog(FILE *outptr, int init_moves, int proc_init, int proc_tau);
 
 
 
@@ -371,7 +364,7 @@ void WriteScoreTrace(double t_energy, int acceptance);
  *               in case it gets interrupted                               *
  ***************************************************************************/
 
-void StateWrite();
+void StateWrite(char * statefile, double energy, double S_0);
 
 /* THE function that starts the optimization */
 

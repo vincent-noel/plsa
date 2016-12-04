@@ -49,6 +49,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/times.h>
+#include <unistd.h>          /* for command line option stuff and access() */
+#include <time.h>
 
 #include "error.h"                                 /* error handling funcs */
 #include "distributions.h"               /* DistP.variables and prototypes */
@@ -57,7 +60,8 @@
 #include "random.h"                                     /* for InitERand() */
 #include "sa_shared.h"                     /* problem-independent annealing funcs */
 #include "score.h"                             /* for init and Score funcs */
-
+#include "sa.h"
+#include "plsa.h"
 #ifdef MPI                 /* this inludes parallel-specific stuff for MPI */
 #include <mpi.h>                     /* this is the official MPI interface */
 #include "MPI.h"  /* our own structs and such only needed by parallel code */
@@ -73,6 +77,28 @@ static char version[MAX_RECORD];                 /* version gets set below */
 // static int    precision   = 16;                    /* precision for eqparms */
 PArrPtr * plsa_params;
 
+// // NucStatePtr state;                    /* global annealing parameter struct */
+SAType		state;
+StopStyle   stop_flag;               /* type of stop criterion (see above) */
+int    stateflag = 0;                              /* state file or not? */
+static char   *statefile;                        /* name of the state file */
+
+static double energy;                                    /* current energy */
+
+static double S_0;                      /* the initial inverse temperature */
+static int    proc_tau;  /* proc_tau = tau                     in serial   */
+static int    proc_init;                        /* number of initial moves */
+static double Tau;     /* double version of tau to calculate mean and vari */
+/* variables used for timing */
+
+/* these variables are used to evaluate real time using time() */
+static double      start;                     /* wallclock time before run */
+// static double      finish;                     /* wallclock time after run */
+
+/* these structs are used to evaluate user time using times() or MPI_Wtime */
+static struct tms *cpu_start;                      /* user time before run */
+static struct tms *cpu_finish;                      /* user time after run */
+
 /*** FUNCTIONS *************************************************************/
 
 /*** COMMAND LINE OPTS ARE ALL PARSED HERE *********************************/
@@ -81,6 +107,216 @@ PArrPtr * plsa_params;
  *                     to the 1st argument after the command line options  *
  ***************************************************************************/
 #define VERS 0.1
+void PrintMyPid()
+{
+	FILE * t_file = fopen("pid","w");
+	fprintf(t_file, "%d", getpid());
+	fclose(t_file);
+}
+PArrPtr * InitPLSAParameters(int nb_dimensions)
+{
+	plsa_params = (PArrPtr *) malloc(sizeof(PArrPtr));
+
+	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
+
+	plsa_params->size  = nb_dimensions;
+	plsa_params->array = p;
+
+	return plsa_params;
+}
+
+#ifdef MPI
+SAType * InitPLSA(int nb_procs, int my_id)
+{
+	nnodes = nb_procs;
+	myid = my_id;
+
+	InitLogs();
+
+	if (logPid() > 0)
+		PrintMyPid();
+
+	/* allocate memory for static file names */
+	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
+
+	stateflag = InitializePLSA(&state, &statefile);
+	return &state;
+}
+
+#else
+SAType * InitPLSA()
+{
+	InitLogs();
+
+	if (logPid() > 0)
+		PrintMyPid();
+
+	/* allocate memory for static file names */
+	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
+
+	stateflag = InitializePLSA(&state, &statefile);
+	return &state;
+}
+
+#endif
+
+
+void StartPLSA(PArrPtr * plsa_params)
+{
+	/* first get Lam parameters, initial temp and energy and initialize S_0 */
+	/* if we restore a run from a state file: call RestoreState() */
+#ifdef MPI
+	if (myid == 0)
+	{
+#endif
+	if (logParams() > 0)
+	{
+		char parameters_input[MAX_RECORD];
+		sprintf(parameters_input, "%s/params/input", getLogDir());
+		FILE * parameters = fopen(parameters_input,"w");
+
+		int ii;
+		for (ii=0; ii < plsa_params->size; ii++)
+		{
+			fprintf(parameters, "%s : %.16g\n",
+						plsa_params->array[ii].name,
+						*plsa_params->array[ii].param);
+		}
+		fclose(parameters);
+	}
+#ifdef MPI
+	}
+#endif
+
+
+	if ( !stateflag )
+	{
+		InitialMove(&state, &energy, plsa_params);
+		S_0 = 1./state.initial_temp;
+	}
+	else
+	   RestoreState(statefile, &state, &energy, plsa_params);
+
+	/* initialize those static file names that depend on the output file name */
+
+	InitFilenames();
+
+#ifdef MPI
+	/* note that for parallel code both tau and init must be divided by nnodes */
+	/* and we need to account for the case when tau isn't divisible by nnodes  */
+
+	if ( (state.tau % nnodes) != 0 )
+		error("plsa: the number of processors (%d) must be a divisor of tau",
+			  nnodes);
+	proc_tau  = state.tau / nnodes;               /* local copy of tau */
+
+	if ( (state.initial_moves % nnodes) != 0 )
+		error("plsa: number of init moves must be divisible by nnodes (%d)",
+			  nnodes);
+	proc_init = state.initial_moves / nnodes;    /* # of initial moves */
+#else
+	proc_tau  = state.tau;                       /* static copy to tau */
+	proc_init = state.initial_moves;             /* # of initial moves */
+#endif
+	Tau = (double) state.tau;                  /* double version to tau */
+	/* for calculating estimators */
+
+	/* if we're not restarting: do the initial moves for randomizing and ga-   *
+	 * thering initial statistics                                              */
+
+	if ( !stateflag )
+		energy = InitialLoop(&state, S_0, proc_init);
+
+	/* write first .log entry and write first statefile right after init; note *
+	 * that equilibration runs are short and therefore don't need state files  *
+	 * which would be rather complicated because of all the stats collected    *
+	 * during equilibration; for the exact same reasons we don't write state   *
+	 * files for tuning either; in case of a restart, we just restore the .log */
+
+	if ( !equil && !bench && !nofile_flag )
+	{
+		if ( !stateflag )
+		{
+			WriteLog(state.initial_moves, proc_init, proc_tau);
+	#ifdef MPI
+			if ( !tuning )
+	#endif
+			StateWrite(statefile, energy, S_0);
+		}
+		else
+			RestoreLog(state.initial_moves, proc_init, proc_tau);
+	}
+
+
+#ifdef MPI
+	/* if we are in tuning mode: initialize/restore tuning structs */
+	if ( tuning )
+		InitTuning(state.mix_interval, Tau);
+#endif
+
+}
+
+
+
+
+
+PLSARes * runPLSA()
+{
+	double *delta;                            /* used to store elapsed times */
+	double final_score;
+	/* code for timing: wallclock and user times */
+
+	BuildLogs();									/* build the log folders */
+
+	cpu_start  = (struct tms *)malloc(sizeof(struct tms));      /* user time */
+	cpu_finish = (struct tms *)malloc(sizeof(struct tms));
+
+	times(cpu_start);
+
+#ifdef MPI
+	start = MPI_Wtime();       /* returns wallclock time on the calling node */
+#else
+	start = time(NULL);     /* returns wallclock time since EPOCH (1/1/1970) */
+#endif
+
+	/* initialize cost function and move state, do initial moves (or restore   */
+	/* annealing state if restart                                              */
+
+	StartPLSA(plsa_params);
+
+	/* the following is for non-equlibration runs and equilibration runs that  */
+	/* have not yet settled to their equilibrium temperature                   */
+
+	final_score = Loop(&state, energy, S_0, Tau, proc_tau, statefile, stop_flag, state.initial_moves, proc_init);
+
+	/* code for timing */
+
+	if ( time_flag )
+	{
+		delta = GetTimes();                  /* calculates times to be printed */
+#ifdef MPI
+		if ( myid == 0 )
+#endif
+			WriteTimes(delta);                            /* then write them out */
+		free(delta);
+	}
+
+	PLSARes * res = (PLSARes *) malloc(sizeof(PLSARes));
+	res->params = malloc(sizeof(double)*plsa_params->size);
+
+	int ii;
+	for (ii=0; ii < plsa_params->size; ii++)
+		res->params[ii] = *plsa_params->array[ii].param;
+	res->flag = 0;
+	res->score = final_score;
+
+
+	free(cpu_start);
+	free(cpu_finish);
+	free(plsa_params);
+	return res;
+
+}
 
 void ParseCommandLine()
 {
@@ -277,7 +513,7 @@ void RestoreState(char *statefile, SAType * state, double *p_chisq,
 	InitDistribution(state);   /* initialize distribution stuff */
 
 	RestoreMoves(move_ptr);
-	RestoreLamstats(stats);
+	energy = RestoreLamstats(stats, &S_0);
 	if ( time_flag )
 		RestoreTimes(delta);
 	InitERand(rand);
