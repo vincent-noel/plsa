@@ -38,7 +38,7 @@
 #endif
 
 #include "types.h"
-/***** GLOBALS ** *************************************************************/
+/* GLOBALS ********************************************************************/
 
 
 /* Following are functions that are needed by many other reading funcs */
