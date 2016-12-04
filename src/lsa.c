@@ -149,7 +149,7 @@ static struct tms *cpu_finish;                      /* user time after run */
  *               randomization and collecting Lam stats or restores state  *
  *               of the annealer as saved in the state file.               *
  ***************************************************************************/
-int InitializePLSA(SAType * state, char ** statefile)
+int InitializePLSA(char ** statefile)
 {
 
 	int stateflag = 0;                              /* state file or not? */
@@ -203,31 +203,6 @@ int InitializePLSA(SAType * state, char ** statefile)
 		error("Initialize: state file for process %d is missing");
 #endif
 
-	state->seed = -6.60489e+08;
-	state->initial_temp = 1000;
-
-	state->lambda = 0.01;
-	state->lambda_mem_length_u = 200;
-	state->lambda_mem_length_v = 1000;
-
-	state->initial_moves = 200;
-	state->tau = 100;
-	state->freeze_count = 100;
-
-	state->update_S_skip = 1;
-	state->control = 1;
-	state->criterion = 0.01;
-#ifdef MPI
-	state->mix_interval = 10;
-#endif
-	state->gain_for_jump_size_control = 5;
-	state->interval = 100;
-
-	state->distribution = 1;
-	state->q = 1;
-	state->scoreFunction = NULL;
-	state->printFunction = NULL;
-
 	return stateflag;
 
 }
@@ -261,6 +236,114 @@ void InitFilenames(void)
 	InitLocalFilenames();
 #endif
 }
+
+
+/*** InitializeWeights: initialize weights a and b for calculating Lam *****
+ *                      estimators; these weights are computed from the    *
+ *                      lambda memory length products                      *
+ ***************************************************************************/
+
+void InitializeWeights(SAType * state)
+{
+	/* w_a is the weight for the mean */
+
+	w_a = state->lambda_mem_length_u / state->lambda;
+	w_a = 1.0 - state->tau / w_a;
+	if (w_a < 0.0)
+		w_a = 0.0;
+
+	/* w_b is the weight for the standard deviation */
+
+	w_b = state->lambda_mem_length_v / state->lambda;
+	w_b = 1.0 - state->tau / w_b;
+	if (w_b < 0.0)
+		w_b = 0.0;
+
+#ifdef MPI
+	/* local weights: there are two sets of local statistics, since we require *
+	 * a local Lam estimator of the mean energy with a small weight for the    *
+	 * calculation of cross-correlation of processors (for estimating the      *
+	 * lower bound of M), whereas we need a local Lam estimator for the mean   *
+	 * energy with a large weight for the calculation of the variance of local *
+	 * means; these two different weights for local Lam stats have been deter- *
+	 * mined experimentally by King-Wai Chu (although it's not mentioned in    *
+	 * his thesis); it works for all practical purposes, but in the future, a  *
+	 * better way of sampling local statistics will be needed (probably as     *
+	 * part of a general theory of parallel Lam simulated annealing)           */
+
+	if ( tuning && nnodes>1 )
+		InitializeLocalWeights(w_a, w_b);
+
+#endif
+
+}
+
+/*** InitializeParameter: initializes variables for Lam annealing: this is *
+ *                        executed after doing the initial steps;          *
+ *                        the local parameters only need to be set for tu- *
+ *                        ning code                                        *
+ ***************************************************************************/
+
+void InitializeParameter(SAType * state)
+{
+	double   d;             /* d is used to store intermediate results below */
+
+#ifdef MPI
+	// double   l_d;               /* l_d is used to store intermediate results */
+#endif
+
+
+	/* 1. set global parameters (serial and parallel code) *********************/
+
+	/* set estimators to stats collected during initializing phase of run */
+
+	estimate_sd   = sqrt(vari);
+	estimate_mean = mean;
+
+	/* initialize A,B,D,E according to Lam & Delosme, 1988b, p10 */
+
+	A = estimate_sd * estimate_sd / (estimate_mean * estimate_mean);
+	B = (1.0 / estimate_mean) - (A * S_0);
+	D = estimate_sd / estimate_mean;
+	E = (1.0 / estimate_sd) - (D * S_0);
+
+	/* initialize these intermediate variables for updating funcs for A,B,D,E */
+
+	usum = vsum = 1.0;
+	usxy = usxx = usx = 0.0;
+	usy  = 1.0 / estimate_mean;
+	usyy = usy * usy;
+	vsxy = vsxx = vsx = 0.0;
+	vsy  = 1.0 / estimate_sd;
+	vsyy = vsy * vsy;
+
+	/* set the initial temperature and the initial delta S */
+
+	S  = S_0;
+	dS = 0.5 / estimate_sd;            /* keep--may not need--based on s_0=0 */
+
+	/* alpha is the third term of the main Lam schedule formula */
+
+	d     = (1.0 - acc_ratio) / (2.0 - acc_ratio);
+	alpha = 4.0 * acc_ratio * d * d;
+
+#ifdef MPI
+	/* 2. set local parameters *************************************************
+	 * these are only needed when tuning...                                    *
+	 * note that the two sets of local estimators used for tuning only differ  *
+	 * in their weights, so they can actually be initialized the same way      */
+
+	if ( tuning && nnodes>1 )
+		InitializeLocalParameters(S_0);
+
+#endif
+
+	/* weights determine how the estimators are sampled for times before tau */
+	InitializeWeights(state);
+
+}
+
+
 
 
 
@@ -397,307 +480,7 @@ double InitialLoop(SAType * state, double s0, int p_tau, int p_init)
 
 
 
-/*** InitializeParameter: initializes variables for Lam annealing: this is *
- *                        executed after doing the initial steps;          *
- *                        the local parameters only need to be set for tu- *
- *                        ning code                                        *
- ***************************************************************************/
-
-void InitializeParameter(SAType * state)
-{
-	double   d;             /* d is used to store intermediate results below */
-
-#ifdef MPI
-	// double   l_d;               /* l_d is used to store intermediate results */
-#endif
-
-
-	/* 1. set global parameters (serial and parallel code) *********************/
-
-	/* set estimators to stats collected during initializing phase of run */
-
-	estimate_sd   = sqrt(vari);
-	estimate_mean = mean;
-
-	/* initialize A,B,D,E according to Lam & Delosme, 1988b, p10 */
-
-	A = estimate_sd * estimate_sd / (estimate_mean * estimate_mean);
-	B = (1.0 / estimate_mean) - (A * S_0);
-	D = estimate_sd / estimate_mean;
-	E = (1.0 / estimate_sd) - (D * S_0);
-
-	/* initialize these intermediate variables for updating funcs for A,B,D,E */
-
-	usum = vsum = 1.0;
-	usxy = usxx = usx = 0.0;
-	usy  = 1.0 / estimate_mean;
-	usyy = usy * usy;
-	vsxy = vsxx = vsx = 0.0;
-	vsy  = 1.0 / estimate_sd;
-	vsyy = vsy * vsy;
-
-	/* set the initial temperature and the initial delta S */
-
-	S  = S_0;
-	dS = 0.5 / estimate_sd;            /* keep--may not need--based on s_0=0 */
-
-	/* alpha is the third term of the main Lam schedule formula */
-
-	d     = (1.0 - acc_ratio) / (2.0 - acc_ratio);
-	alpha = 4.0 * acc_ratio * d * d;
-
-#ifdef MPI
-	/* 2. set local parameters *************************************************
-	 * these are only needed when tuning...                                    *
-	 * note that the two sets of local estimators used for tuning only differ  *
-	 * in their weights, so they can actually be initialized the same way      */
-
-	if ( tuning && nnodes>1 )
-		InitializeLocalParameters(S_0);
-
-#endif
-
-	/* weights determine how the estimators are sampled for times before tau */
-	InitializeWeights(state);
-
-}
-
-
-
-/*** InitializeWeights: initialize weights a and b for calculating Lam *****
- *                      estimators; these weights are computed from the    *
- *                      lambda memory length products                      *
- ***************************************************************************/
-
-void InitializeWeights(SAType * state)
-{
-	/* w_a is the weight for the mean */
-
-	w_a = state->lambda_mem_length_u / state->lambda;
-	w_a = 1.0 - state->tau / w_a;
-	if (w_a < 0.0)
-		w_a = 0.0;
-
-	/* w_b is the weight for the standard deviation */
-
-	w_b = state->lambda_mem_length_v / state->lambda;
-	w_b = 1.0 - state->tau / w_b;
-	if (w_b < 0.0)
-		w_b = 0.0;
-
-#ifdef MPI
-	/* local weights: there are two sets of local statistics, since we require *
-	 * a local Lam estimator of the mean energy with a small weight for the    *
-	 * calculation of cross-correlation of processors (for estimating the      *
-	 * lower bound of M), whereas we need a local Lam estimator for the mean   *
-	 * energy with a large weight for the calculation of the variance of local *
-	 * means; these two different weights for local Lam stats have been deter- *
-	 * mined experimentally by King-Wai Chu (although it's not mentioned in    *
-	 * his thesis); it works for all practical purposes, but in the future, a  *
-	 * better way of sampling local statistics will be needed (probably as     *
-	 * part of a general theory of parallel Lam simulated annealing)           */
-
-	if ( tuning && nnodes>1 )
-		InitializeLocalWeights(w_a, w_b);
-
-#endif
-
-}
-
-
 /*** MAIN LOOP AND UPDATE FUNCTIONS ****************************************/
-
-/*** Loop: loops (making moves, updating stats etc.) until the system is ***
- *         considered frozen according to the stop criterion               *
- ***************************************************************************/
-
-int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
-{
-	int    i;                                          /* local loop counter */
-	// double energy;
-	double energy_change;                                   /* local Delta E */
-	double d;                /* difference between energy and estimated mean */
-
-	/* quenchit mode: set temperature to (approximately) zero immediately */
-
-	if ( quenchit )
-		S = DBL_MAX;
-
-	/* loop till the end of the universe (or till the stop criterion applies) */
-
-	while (1)
-	{
-		/* reset statistics */
-		mean    = 0.0;
-		vari    = 0.0;
-		success = 0;
-
-#ifdef MPI
-		ResetLocalStats();
-#endif
-
-		/* do proc_tau moves here */
-
-		for (i=0; i<proc_tau; i++)
-		{
-			/* make a move: will either return the energy change or FORBIDDEN_MOVE */
-			energy_change = GenerateMove();
-
-			/* Metropolis stuff here; we usually want FORBIDDEN_MOVE to be very large  *
-			 * that's why we want to prevent overflows here (hence the 'if'); we also  *
-			 * need to avoid overflows with quenchit (where S is (almost) infinite!)   */
-
-			if ( !quenchit && (energy_change != FORBIDDEN_MOVE ) )
-				exp_arg = -S * energy_change;
-
-			/* MIN_DELTA provides a min. probability with which any move is accepted */
-
-			if ( (exp_arg <= MIN_DELTA) )
-				exp_arg = MIN_DELTA;
-
-
-			/* below, we apply the Metropolis criterion to accept or reject a move; in *
-			 * quenchit mode, only lower energies are accepted                         */
-			int acceptance_result = 0; // Initialized to 0 aka rejected
-
-			if (energy_change == FORBIDDEN_MOVE) {
-				RejectMove();
-			} else if ( (energy_change <= 0.0) ||
-					  ( (!quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
-				AcceptMove();
-				energy = GetNewEnergy();
-
-				success++;
-				acceptance_result = 1;
-#ifdef MPI
-				if ( tuning && nnodes>1 )
-					AddLocalSuccess();
-#endif
-			} else
-				RejectMove();
-
-			if (logTrace() > 0)
-				WriteScoreTrace(GetNewEnergy(), acceptance_result);
-
-			/* update statistics */
-
-			mean    += energy;
-			d        = energy - estimate_mean;
-			vari    += d * d;
-#ifdef MPI
-
-			/* if tuning: calculate the local mean and variance */
-			if ( tuning && nnodes>1 )
-				CalculateLocalStats(energy);
-#endif
-
-			/* update temperature every 'skip' steps; this was put here by Jimmy Lam,  *
-			 * probably to save computation time on his old Spark; I guess it's obso-  *
-			 * lete by now, but since it doesn't seem to do any harm and saves us some *
-			 * time, we left it in here                                                */
-
-			if ( !quenchit )
-				if ( --skip <= 0 )
-					UpdateS(state);
-
-
-		}                 /* this is the end of the proc_tau loop */
-
-		/* have done tau moves here: update the 'tau' counter */
-
-		count_tau++;
-
-		/* calculate mean, variance and acc_ratio for the last tau steps; i is     *
-		 * passed as an argument for checking if all local moves add up to Tau     */
-
-		UpdateStats(state, i);
-
-		/* check if the stop criterion applies: annealing and tuning runs (that    *
-		 * aren't stopped by the tuning stop criterion) leave the loop here; equi- *
-		 * libration runs exit below */
-
-		if (max_iter > 0 && count_tau >= max_iter)
-			return 0;//FinalMove(state);
-
-		if (max_seconds > 0)
-		{
-			struct timeval tp;
-			gettimeofday(&tp, NULL);
-			int duration = ((int) tp.tv_sec) - start_time_seconds;
-
-			if (duration > max_seconds)
-				return 0;//FinalMove(state);
-
-		}
-
-		if ( Frozen(state, stop_flag) )
-			return 0;//FinalMove(state);
-
-		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
-		 * don't need this in quenchit mode since the temperature is fixed to 0)   */
-
-		if ( !quenchit )
-			UpdateParameter();
-
- #ifdef MPI
-
-		/* tuning code: first update local Lam estimators */
-
-		if ( tuning && nnodes>1 )
-		{
-			UpdateLParameter(S);
-
-			if (UpdateTuning(logfile))
-				return 0;//FinalMove(state);
-		}
-
-		/* at each mix_interval: do some mixing */
-
-		if ( count_tau % state->mix_interval == 0 )
-			DoMix(energy, estimate_mean, S);
-
-#endif
-
-		/* write the log every print_freq * tau (not proc_tau!) */
-
-#ifdef MPI
-		if ( (count_tau % (print_freq*nnodes) == 0) && !equil && !nofile_flag )
-#else
-		if ( (count_tau % print_freq == 0) && !equil && !nofile_flag )
-#endif
-
-			WriteLog(state->initial_moves);
-
-		/* the state file gets written here every state_write * tau */
-
-#ifdef MPI
-		if ( (count_tau % (state_write*nnodes) == 0) && !equil && !tuning
-				&& !nofile_flag)
-#else
-		if ( (count_tau % state_write == 0) && !equil && !nofile_flag )
-#endif
-			StateWrite(statefile, energy);
-
-	}                                /* this is the end of the while(1) loop */
-	return -1;
-}                          /* this is the end of Loop */
-
-
-void WriteScoreTrace(double t_energy, int acceptance)
-{
-	FILE * trace_energy;
-	char best_name[MAX_RECORD];
-
-#ifdef MPI
-	sprintf(best_name,"%s/trace/trace_%d", getLogDir(), myid);
-#else
-	sprintf(best_name,"%s/trace/trace_%d", getLogDir(), 0);
-#endif
-
-	trace_energy = fopen(best_name,"a");
-	fprintf(trace_energy,"%g\t%d\n", t_energy, acceptance);
-	fclose(trace_energy);
-}
 /*** UpdateS: update inverse temperature S at every Sskip step *************
  ***************************************************************************/
 
@@ -884,6 +667,198 @@ int Frozen(SAType * state, StopStyle stop_flag)
 
 	return(counter >= state->freeze_count);
 }
+
+
+void WriteScoreTrace(double t_energy, int acceptance)
+{
+	FILE * trace_energy;
+	char best_name[MAX_RECORD];
+
+#ifdef MPI
+	sprintf(best_name,"%s/trace/score/score_%d", getLogDir(), myid);
+#else
+	sprintf(best_name,"%s/trace/score/score_%d", getLogDir(), 0);
+#endif
+
+	trace_energy = fopen(best_name,"a");
+	fprintf(trace_energy,"%g\t%d\n", t_energy, acceptance);
+	fclose(trace_energy);
+}
+
+/*** Loop: loops (making moves, updating stats etc.) until the system is ***
+ *         considered frozen according to the stop criterion               *
+ ***************************************************************************/
+
+int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
+{
+	int    i;                                          /* local loop counter */
+	// double energy;
+	double energy_change;                                   /* local Delta E */
+	double d;                /* difference between energy and estimated mean */
+
+	/* quenchit mode: set temperature to (approximately) zero immediately */
+
+	if ( quenchit )
+		S = DBL_MAX;
+
+	/* loop till the end of the universe (or till the stop criterion applies) */
+
+	while (1)
+	{
+		/* reset statistics */
+		mean    = 0.0;
+		vari    = 0.0;
+		success = 0;
+
+#ifdef MPI
+		ResetLocalStats();
+#endif
+
+		/* do proc_tau moves here */
+
+		for (i=0; i<proc_tau; i++)
+		{
+			/* make a move: will either return the energy change or FORBIDDEN_MOVE */
+			energy_change = GenerateMove();
+
+			/* Metropolis stuff here; we usually want FORBIDDEN_MOVE to be very large  *
+			 * that's why we want to prevent overflows here (hence the 'if'); we also  *
+			 * need to avoid overflows with quenchit (where S is (almost) infinite!)   */
+
+			if ( !quenchit && (energy_change != FORBIDDEN_MOVE ) )
+				exp_arg = -S * energy_change;
+
+			/* MIN_DELTA provides a min. probability with which any move is accepted */
+
+			if ( (exp_arg <= MIN_DELTA) )
+				exp_arg = MIN_DELTA;
+
+
+			/* below, we apply the Metropolis criterion to accept or reject a move; in *
+			 * quenchit mode, only lower energies are accepted                         */
+			int acceptance_result = 0; // Initialized to 0 aka rejected
+
+			if (energy_change == FORBIDDEN_MOVE) {
+				RejectMove();
+			} else if ( (energy_change <= 0.0) ||
+					  ( (!quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
+				AcceptMove();
+				energy = GetNewEnergy();
+
+				success++;
+				acceptance_result = 1;
+#ifdef MPI
+				if ( tuning && nnodes>1 )
+					AddLocalSuccess();
+#endif
+			} else
+				RejectMove();
+
+			if (logTraceScore() > 0)
+				WriteScoreTrace(GetNewEnergy(), acceptance_result);
+
+			/* update statistics */
+
+			mean    += energy;
+			d        = energy - estimate_mean;
+			vari    += d * d;
+#ifdef MPI
+
+			/* if tuning: calculate the local mean and variance */
+			if ( tuning && nnodes>1 )
+				CalculateLocalStats(energy);
+#endif
+
+			/* update temperature every 'skip' steps; this was put here by Jimmy Lam,  *
+			 * probably to save computation time on his old Spark; I guess it's obso-  *
+			 * lete by now, but since it doesn't seem to do any harm and saves us some *
+			 * time, we left it in here                                                */
+
+			if ( !quenchit )
+				if ( --skip <= 0 )
+					UpdateS(state);
+
+
+		}                 /* this is the end of the proc_tau loop */
+
+		/* have done tau moves here: update the 'tau' counter */
+
+		count_tau++;
+
+		/* calculate mean, variance and acc_ratio for the last tau steps; i is     *
+		 * passed as an argument for checking if all local moves add up to Tau     */
+
+		UpdateStats(state, i);
+
+		/* check if the stop criterion applies: annealing and tuning runs (that    *
+		 * aren't stopped by the tuning stop criterion) leave the loop here; equi- *
+		 * libration runs exit below */
+
+		if (max_iter > 0 && count_tau >= max_iter)
+			return 0;//FinalMove(state);
+
+		if (max_seconds > 0)
+		{
+			struct timeval tp;
+			gettimeofday(&tp, NULL);
+			int duration = ((int) tp.tv_sec) - start_time_seconds;
+
+			if (duration > max_seconds)
+				return 0;//FinalMove(state);
+
+		}
+
+		if ( Frozen(state, stop_flag) )
+			return 0;//FinalMove(state);
+
+		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
+		 * don't need this in quenchit mode since the temperature is fixed to 0)   */
+
+		if ( !quenchit )
+			UpdateParameter();
+
+ #ifdef MPI
+
+		/* tuning code: first update local Lam estimators */
+
+		if ( tuning && nnodes>1 )
+		{
+			UpdateLParameter(S);
+
+			if (UpdateTuning(logfile))
+				return 0;//FinalMove(state);
+		}
+
+		/* at each mix_interval: do some mixing */
+
+		if ( count_tau % state->mix_interval == 0 )
+			DoMix(energy, estimate_mean, S);
+
+#endif
+
+		/* write the log every print_freq * tau (not proc_tau!) */
+
+#ifdef MPI
+		if ( (count_tau % (print_freq*nnodes) == 0) && !equil && !nofile_flag )
+#else
+		if ( (count_tau % print_freq == 0) && !equil && !nofile_flag )
+#endif
+
+			WriteLog(state->initial_moves);
+
+		/* the state file gets written here every state_write * tau */
+
+#ifdef MPI
+		if ( (count_tau % (state_write*nnodes) == 0) && !equil && !tuning
+				&& !nofile_flag)
+#else
+		if ( (count_tau % state_write == 0) && !equil && !nofile_flag )
+#endif
+			StateWrite(statefile, energy);
+
+	}                                /* this is the end of the while(1) loop */
+	return -1;
+}                          /* this is the end of Loop */
 
 
 /*** GetLamstats: returns Lam statistics in an array of doubles; used to ***

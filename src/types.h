@@ -32,7 +32,8 @@ typedef struct
 	/* Added some log options here */
 	char * 	dir;
 
-	int    	trace;
+	int    	trace_score;
+	int 	trace_params;
 	int    	params;
 	int  	res;
 	int 	score;

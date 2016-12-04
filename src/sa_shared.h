@@ -119,11 +119,6 @@
  ***************************************************************************/
 
 /*** GLOBALS ***************************************************************/
-//
-// // NucStatePtr state;                    /* global annealing parameter struct */
-// SAType		state;
-// PArrPtr * 	params_to_fit;
-// StopStyle   stop_flag;               /* type of stop criterion (see above) */
 
 int         time_flag;                         /* flag for timing the code */
 int         log_flag;                 /* flag for displaying log to stdout */
@@ -155,8 +150,6 @@ int         max_seconds;
 int         start_time_seconds;
 
 
-
-
 /*** FUNCTION PROTOTYPES ***************************************************/
 
 /* problem independent functions that live in lsa.c ************************/
@@ -168,7 +161,7 @@ int         start_time_seconds;
  *               of the annealer as saved in the state file                *
  ***************************************************************************/
 
-int InitializePLSA(SAType * state, char ** statefile);
+int InitializePLSA(char ** statefile);
 
 /*** InitFilenames: initializes static file names needed in lsa.c **********
  ***************************************************************************/
@@ -181,18 +174,6 @@ void InitFilenames(void);
  ***************************************************************************/
 
 double InitialLoop(SAType * state, double S_0, int proc_tau, int proc_init);
-/*** InitializeParameter: initializes variables used for calculating the ***
- *                        parameters A, B, D and E and the estimate_mean   *
- *                        plus estimate_sd (see Lam & Delosme, 1988a)      *
- ***************************************************************************/
-
-void InitializeParameter(SAType * state);
-/*** InitializeWeights: initialize weights a and b; these weights are ******
- *                      computed from the lambda memory length products    *
- ***************************************************************************/
-
-void InitializeWeights(SAType * state);
-
 
 /* Main loop and update functions */
 
@@ -201,28 +182,6 @@ void InitializeWeights(SAType * state);
  ***************************************************************************/
 
 int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag);
-
-/*** UpdateS: update inverse temperature S at every Sskip step *************
- ***************************************************************************/
-void UpdateS(SAType * state);
-
-/*** UpdateStats: updates mean, variance and acc_ratio after tau moves *****
- *                it needs i to do sanity check in parallel code           *
- ***************************************************************************/
-
-void UpdateStats(SAType * state, int i);
-
-/*** UpdateParameter: update parameters A, B, D and E and the estimators ***
- *                    for mean and standard deviation for the current S    *
- ***************************************************************************/
-
-void UpdateParameter(void);
-
-/*** Frozen: returns TRUE if frozen, FALSE otherwise ***********************
- ***************************************************************************/
-
-int Frozen(SAType * state, StopStyle stop_flag);
-
 
 /* functions which communicate with other source files, these are needed  *
  * for reading/writing .state files                                       */
@@ -298,7 +257,7 @@ void RejectMove(void);
 
 double GetNewEnergy(void);
 double GetOldEnergy(void);
-void WriteScoreTrace(double t_energy, int acceptance);
+// void WriteScoreTrace(double t_energy, int acceptance);
 
 
 #endif

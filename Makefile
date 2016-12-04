@@ -52,7 +52,7 @@ test: examples
 	./run-funnel-serial
 	mpirun -np 2 ./run-funnel-parallel
 	make clean_examples
-	
+
 run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
 	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -o run-funnel-serial
 

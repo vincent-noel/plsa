@@ -49,9 +49,14 @@ char *      getLogDir()
 	return logs.dir;
 }
 
-int logTrace()
+int logTraceScore()
 {
-	return logs.trace;
+	return logs.trace_score;
+}
+
+int logTraceParams()
+{
+	return logs.trace_params;
 }
 
 int logParams()
@@ -87,7 +92,8 @@ int logBestRes()
 void InitLogs()
 {
 	logs.dir = "logs";
-	logs.trace = 0;
+	logs.trace_score = 0;
+	logs.trace_params = 0;
 	logs.params = 0;
 	logs.res = 0;
 	logs.score = 0;

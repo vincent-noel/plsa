@@ -33,7 +33,8 @@ SALogs * 	getLogSettings();
 
 char *		getLogDir();
 
-int			logTrace();
+int			logTraceScore();
+int 		logTraceParams();
 int 		logParams();
 int 		logRes();
 int 		logScore();

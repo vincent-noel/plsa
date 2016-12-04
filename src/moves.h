@@ -207,21 +207,21 @@ AParms GetFinalInfo(void);
 
 
 /* move generation functions that are used in moves.c, but not lsa.c */
-
-/*** Move: tweaks the parameter-to-be-tweaked according to the current *****
- *         value of index; also calls UpdateControl if necessary           *
- ***************************************************************************/
-
-int Move(void);
-
-/*** UpdateControl: each interval number of steps, acceptance stats are ****
- *                  dated here; this function also prints prolix stuff, if *
- *                  required                                               *
- ***************************************************************************/
-
-void UpdateControl(void);
-
-
+//
+// /*** Move: tweaks the parameter-to-be-tweaked according to the current *****
+//  *         value of index; also calls UpdateControl if necessary           *
+//  ***************************************************************************/
+//
+// int Move(void);
+//
+// /*** UpdateControl: each interval number of steps, acceptance stats are ****
+//  *                  dated here; this function also prints prolix stuff, if *
+//  *                  required                                               *
+//  ***************************************************************************/
+//
+// void UpdateControl(void);
+//
+//
 
 /* functions that communicate with other source files */
 
@@ -253,5 +253,5 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 
 void StateRm(void);
 
-void WriteParamsTrace(void);
+// void WriteParamsTrace(void);
 void randomModelParameters(void);

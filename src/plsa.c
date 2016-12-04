@@ -136,7 +136,33 @@ SAType * InitPLSA(int nb_procs, int my_id)
 
 	/* allocate memory for static file names */
 	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-	stateflag = InitializePLSA(&state, &statefile);
+	stateflag = InitializePLSA(&statefile);
+
+	state.seed = -6.60489e+08;
+	state.initial_temp = 1000;
+
+	state.lambda = 0.01;
+	state.lambda_mem_length_u = 200;
+	state.lambda_mem_length_v = 1000;
+
+	state.initial_moves = 200;
+	state.tau = 100;
+	state.freeze_count = 100;
+
+	state.update_S_skip = 1;
+	state.control = 1;
+	state.criterion = 0.01;
+#ifdef MPI
+	state.mix_interval = 10;
+#endif
+	state.gain_for_jump_size_control = 5;
+	state.interval = 100;
+
+	state.distribution = 1;
+	state.q = 1;
+	state.scoreFunction = NULL;
+	state.printFunction = NULL;
+
 	return &state;
 }
 
@@ -152,7 +178,33 @@ SAType * InitPLSA()
 
 	/* allocate memory for static file names */
 	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-	stateflag = InitializePLSA(&state, &statefile);
+	stateflag = InitializePLSA(&statefile);
+
+	state.seed = -6.60489e+08;
+	state.initial_temp = 1000;
+
+	state.lambda = 0.01;
+	state.lambda_mem_length_u = 200;
+	state.lambda_mem_length_v = 1000;
+
+	state.initial_moves = 200;
+	state.tau = 100;
+	state.freeze_count = 100;
+
+	state.update_S_skip = 1;
+	state.control = 1;
+	state.criterion = 0.01;
+#ifdef MPI
+	state.mix_interval = 10;
+#endif
+	state.gain_for_jump_size_control = 5;
+	state.interval = 100;
+
+	state.distribution = 1;
+	state.q = 1;
+	state.scoreFunction = NULL;
+	state.printFunction = NULL;
+
 	return &state;
 }
 
@@ -387,29 +439,7 @@ void InitDistribution(SAType * tune)
 	{
 		error ("plsa: 6=poisson or 9=pareto distribution returns positive values--do not use for fly \n");
 	}
-	else if (DistP.distribution == 7 )
-	{
-		/* general distribution */
-		if ((DistP.q >= 3.0) || (DistP.q <= 1.0))
-		{
-			error ("tsp_sa: q must be between 1 and 3 \n");
-		}
-		else if (DistP.q == 2.0)
-		{
-			DistP.distribution = 5;
-			/* fly needs lorentz, tsp use abs lorentz(4)*/
-			printf ("plsa: q=2 is lorentz--setting distribution to 5\n");
-		}
-		else if (DistP.q > 2.0)
-		{
-			qgt2_init();
-		}
-		else
-		{
-			qlt2_init();
-		}
-	} /* end of general distribution */
-
+	
 
 }  /* end InitDistribution */
 

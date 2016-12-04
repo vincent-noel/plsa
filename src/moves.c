@@ -223,87 +223,68 @@ AParms GetFinalInfo(void)
 
 /*** MOVE GENERATION *******************************************************/
 
-/* GenerateMove: wrapper for Move and Score; makes a move and reports ******
- *               difference of energies before and after the move          *
+
+
+/*** UpdateControl: each interval number of steps, acceptance stats are ****
+ *                  dated here; this function also prints prolix stuff, if *
+ *                  required.                                              *
  ***************************************************************************/
 
-double GenerateMove(void)
+void UpdateControl(void)
 {
+	int        i;                                      /* local loop counter */
+	double     x;                   /* temp variable to manipulate theta_bar */
 
-	// double     delta_e;           /* energy difference before and after move */
+#ifdef MPI
 
-	/* for first call: check for valid parameters */
-
-	if (old_energy == -999.)
+	for (i=0; i<nparams; i++)
 	{
-		old_energy = Score();
-
-		if (old_energy == FORBIDDEN_MOVE)
-			error("GenerateMove: 1st call gave forbidden move");
+		hits[i]    = (long)acc_tab[i].hits;
+		success[i] = (long)acc_tab[i].success;
 	}
 
-	/* make a move, score and return either FORBIDDEN_MOVE or delta_e */
-	int res;
-	res = Move();
+	for (i=0; i<nparams; i++)
+	{
+		tmp[i] = hits[i];
+	}
+	MPI_Allreduce(tmp, hits, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-	if (res == -1)
-		return FORBIDDEN_MOVE;
+	for(i=0; i<nparams; i++)
+	{
+		tmp[i] = success[i];
+	}
+	MPI_Allreduce(tmp, success, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-	acc_tab[idx].hits++;
+	for(i=0; i<nparams; i++)
+	{
+		acc_tab[i].hits    = (int)hits[i];
+		acc_tab[i].success = (int)success[i];
+	}
 
-	new_energy = Score();
+#endif
 
-	if (logTrace() > 0)
-	  WriteParamsTrace();
+	for(i=0; i<nparams; i++)
+	{
 
-	if (new_energy == FORBIDDEN_MOVE)
-		return FORBIDDEN_MOVE;
+		acc_tab[i].acc_ratio =
+			((double)acc_tab[i].success)/((double)acc_tab[i].hits);
 
-	else return (new_energy - old_energy);
+		x  = log(acc_tab[i].theta_bar);
+		x += ap.gain * (acc_tab[i].acc_ratio - 0.44);
+		acc_tab[i].theta_bar = exp(x);
+
+
+		if (acc_tab[i].theta_bar < THETA_MIN)
+			acc_tab[i].theta_bar = THETA_MIN;
+		if (acc_tab[i].theta_bar > THETA_MAX)
+			acc_tab[i].theta_bar = THETA_MAX;
+
+		acc_tab[i].hits    = 0;
+		acc_tab[i].success = 0;
+
+	}
 }
 
-
-
-/*** AcceptMove: sets new energy as the old energy for the next step and ***
- *               keeps track of the number of successful moves             *
- ***************************************************************************/
-
-void AcceptMove(void)
-{
-	old_energy = new_energy;
-	acc_tab[idx].success++;
-}
-
-
-
-/*** RejectMove: simply resets the tweaked parameter to the pretweak value *
- ***************************************************************************/
-
-void RejectMove(void)
-{
-	*(ptab[idx].param) = pretweak;
-}
-
-/*** GetEnergy: returned the last computed value of the scoring function   *
- *    To avoid computing e = old_e + (new e - old e), and using directly   *
- *    e = new_e
- *    Avoid precision errors due floating number representation            *
- **************************************************************************/
-
-double GetNewEnergy(void)
-{
-	return new_energy;
-}
-
-/*** GetEnergy: returned the last accepted value of the scoring function   *
- *                                                                         *
- **************************************************************************/
-
-double GetOldEnergy(void)
-{
-	return old_energy;
-}
-/*** MOVE GENERATION - PART 2: FUNCS NEEDED IN MOVES.C (BUT NOT LSA.C) *****/
 
 /*** Move: tweaks the parameter-to-be-tweaked according to the current *****
  *         value of index; also calls UpdateControl if necessary           *
@@ -372,85 +353,110 @@ int Move(void)
 
 }
 
+
+
+
+
 void WriteParamsTrace()
 {
 	FILE * trace_params;
 	char trace_name[MAX_RECORD];
   #ifdef MPI
-	sprintf(trace_name,"%s/trace/params_%d", getLogDir(), myid);
+	sprintf(trace_name,"%s/trace/params/params_%d", getLogDir(), myid);
   #else
-	sprintf(trace_name,"%s/trace/params_%d", getLogDir(), 0);
+	sprintf(trace_name,"%s/trace/params/params_%d", getLogDir(), 0);
   #endif
 	trace_params = fopen(trace_name, "a");
 
+	fprintf(trace_params, "%g\t", new_energy);
 	int i;
 	for (i=0; i < nparams; i++)
 		fprintf(trace_params, "%g\t", *(ptab[i].param));
+	fprintf(trace_params, "\n");
 
-	fprintf(trace_params, "%g\n", new_energy);
 	fclose(trace_params);
 }
-
-/*** UpdateControl: each interval number of steps, acceptance stats are ****
- *                  dated here; this function also prints prolix stuff, if *
- *                  required.                                              *
+/* GenerateMove: wrapper for Move and Score; makes a move and reports ******
+ *               difference of energies before and after the move          *
  ***************************************************************************/
 
-void UpdateControl(void)
+double GenerateMove(void)
 {
-	int        i;                                      /* local loop counter */
-	double     x;                   /* temp variable to manipulate theta_bar */
 
-#ifdef MPI
+	// double     delta_e;           /* energy difference before and after move */
 
-	for (i=0; i<nparams; i++)
+	/* for first call: check for valid parameters */
+
+	if (old_energy == -999.)
 	{
-		hits[i]    = (long)acc_tab[i].hits;
-		success[i] = (long)acc_tab[i].success;
+		old_energy = Score();
+
+		if (old_energy == FORBIDDEN_MOVE)
+			error("GenerateMove: 1st call gave forbidden move");
 	}
 
-	for (i=0; i<nparams; i++)
-	{
-		tmp[i] = hits[i];
-	}
-	MPI_Allreduce(tmp, hits, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+	/* make a move, score and return either FORBIDDEN_MOVE or delta_e */
+	int res;
+	res = Move();
 
-	for(i=0; i<nparams; i++)
-	{
-		tmp[i] = success[i];
-	}
-	MPI_Allreduce(tmp, success, nparams, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+	if (res == -1)
+		return FORBIDDEN_MOVE;
 
-	for(i=0; i<nparams; i++)
-	{
-		acc_tab[i].hits    = (int)hits[i];
-		acc_tab[i].success = (int)success[i];
-	}
+	acc_tab[idx].hits++;
 
-#endif
+	new_energy = Score();
 
-	for(i=0; i<nparams; i++)
-	{
+	if (logTraceParams() > 0)
+	  WriteParamsTrace();
 
-		acc_tab[i].acc_ratio =
-			((double)acc_tab[i].success)/((double)acc_tab[i].hits);
+	if (new_energy == FORBIDDEN_MOVE)
+		return FORBIDDEN_MOVE;
 
-		x  = log(acc_tab[i].theta_bar);
-		x += ap.gain * (acc_tab[i].acc_ratio - 0.44);
-		acc_tab[i].theta_bar = exp(x);
-
-
-		if (acc_tab[i].theta_bar < THETA_MIN)
-			acc_tab[i].theta_bar = THETA_MIN;
-		if (acc_tab[i].theta_bar > THETA_MAX)
-			acc_tab[i].theta_bar = THETA_MAX;
-
-		acc_tab[i].hits    = 0;
-		acc_tab[i].success = 0;
-
-	}
+	else return (new_energy - old_energy);
 }
 
+
+
+/*** AcceptMove: sets new energy as the old energy for the next step and ***
+ *               keeps track of the number of successful moves             *
+ ***************************************************************************/
+
+void AcceptMove(void)
+{
+	old_energy = new_energy;
+	acc_tab[idx].success++;
+}
+
+
+
+/*** RejectMove: simply resets the tweaked parameter to the pretweak value *
+ ***************************************************************************/
+
+void RejectMove(void)
+{
+	*(ptab[idx].param) = pretweak;
+}
+
+/*** GetEnergy: returned the last computed value of the scoring function   *
+ *    To avoid computing e = old_e + (new e - old e), and using directly   *
+ *    e = new_e
+ *    Avoid precision errors due floating number representation            *
+ **************************************************************************/
+
+double GetNewEnergy(void)
+{
+	return new_energy;
+}
+
+/*** GetEnergy: returned the last accepted value of the scoring function   *
+ *                                                                         *
+ **************************************************************************/
+
+double GetOldEnergy(void)
+{
+	return old_energy;
+}
+/*** MOVE GENERATION - PART 2: FUNCS NEEDED IN MOVES.C (BUT NOT LSA.C) *****/
 
 /*** MoveSave: returns a MoveState struct in which the current state of ****
  *             moves is saved; use for writing state file                  *
