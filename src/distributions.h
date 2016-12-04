@@ -29,7 +29,7 @@
  *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
  *                                                                            *
  ******************************************************************************/
-typedef struct my_distrib
+typedef struct
 {
 	int distribution;      /* move generation distribution type RO */
 						 /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
@@ -58,7 +58,8 @@ typedef struct my_distrib
 
 
 } DistParms;
- DistParms DistP;   /* variables for distributions */
+
+DistParms DistP;   /* variables for distributions */
 
 /* prototype functions for distributions */
 
