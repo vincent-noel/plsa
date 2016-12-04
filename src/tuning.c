@@ -734,14 +734,13 @@ double * InitLocalStats(double mean, double vari, int * success,
 }
 
 
-double * UpdateLocalStats(double mean, double vari, int i, int Tau, int tau, int * success)
+double * UpdateLocalStats(double mean, double vari, int i, int tau, int * success)
 {
 	double * total;             /* will hold mean & vari when pooling stats */
 	double tmptotal[2];	                      /* temporary array for above */
 
 	long   nodesuccess[2];             /* array for success and summed moves */
 	long   tmpsuccess[2];                       /* temporary array for above */
-
 
 	/* parallel code: pool statistics from all nodes */
 	total = (double *) malloc(sizeof(double)*2);
@@ -764,8 +763,8 @@ double * UpdateLocalStats(double mean, double vari, int i, int Tau, int tau, int
 	MPI_Allreduce(tmpsuccess, nodesuccess, 2, MPI_LONG, MPI_SUM,
 				  MPI_COMM_WORLD);
 
-	total[0] /= Tau;            /* need to divide mean and vari by Tau steps */
-	total[1] /= Tau;
+	total[0] /= ((double) tau);            /* need to divide mean and vari by Tau steps */
+	total[1] /= ((double) tau);
 
 	*success = (int)nodesuccess[0];         /* success is now global success! */
 

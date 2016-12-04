@@ -51,7 +51,7 @@ double * 	InitLocalStats				(double mean, double vari,
 void 		UpdateLocalSTuning			(double S);
 void 		UpdateLocalStatsTuning		(int proc_tau);
 double *	UpdateLocalStats			(double mean, double vari, int i,
-											int Tau, int tau, int * success);
+											int tau, int * success);
 
 
 void 		RestoreLocalLogTuning		(int max_saved_count);

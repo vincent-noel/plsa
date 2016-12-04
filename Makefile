@@ -22,7 +22,7 @@ FLAGS = -Wall -pedantic -std=gnu99
 LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
-SOBJ = plsa.o lsa.o moves.o savestate.o score.o
+SOBJ = plsa.o lsa.o moves.o state.o score.o
 POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o tuning_p.o
 
 
@@ -51,7 +51,8 @@ clean_examples:
 test: examples
 	./run-funnel-serial
 	mpirun -np 2 ./run-funnel-parallel
-
+	make clean_examples
+	
 run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
 	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -o run-funnel-serial
 
@@ -84,8 +85,8 @@ lsa_p.o: $(SRCDIR)/lsa.c
 moves_p.o: $(SRCDIR)/moves.c $(SRCDIR)/moves.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o moves_p.o -c $(SRCDIR)/moves.c
 
-savestate_p.o: $(SRCDIR)/savestate.c
-	$(MPICC) $(FLAGS) -fpic -DMPI -o savestate_p.o -c $(SRCDIR)/savestate.c
+savestate_p.o: $(SRCDIR)/state.c
+	$(MPICC) $(FLAGS) -fpic -DMPI -o savestate_p.o -c $(SRCDIR)/state.c
 
 score_p.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o score_p.o -c $(SRCDIR)/score.c
@@ -104,8 +105,8 @@ lsa.o: $(SRCDIR)/lsa.c
 moves.o: $(SRCDIR)/moves.c $(SRCDIR)/moves.h
 	$(CC) $(FLAGS) -fpic -c $(SRCDIR)/moves.c
 
-savestate.o: $(SRCDIR)/savestate.c
-	$(CC) $(FLAGS) -fpic -c $(SRCDIR)/savestate.c
+state.o: $(SRCDIR)/state.c
+	$(CC) $(FLAGS) -fpic -c $(SRCDIR)/state.c
 
 score.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 	$(CC) $(FLAGS) -fpic -c $(SRCDIR)/score.c

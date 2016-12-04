@@ -28,4 +28,58 @@
  *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
  *                                                                            *
  ******************************************************************************/
- void StartPLSA();
+#include "types.h"
+void PrintMyPid();
+void StartPLSA(PArrPtr * plsa_params);
+
+
+
+/* PROBLEM SPECIFIC FUNCTIONS THAT NEED TO BE DEFINED OUTSIDE LSA.C ********/
+
+/* miscellaneous functions that usually live in <problem>_sa.c */
+
+/*** ParseCommandLine: well, parses the command line and returns an index **
+ *                     to the 1st argument after the command line options  *
+ ***************************************************************************/
+
+void ParseCommandLine();
+
+/*** InitialMove: initializes the following stuff: *************************
+ *                - reads in Lam and other annealing parameters (passed to *
+ *                  lsa.c through the state_ptr; the first three arguments *
+ *                  are used to open the right data file etc.)             *
+ *                - initializes the cost function, establishes link be-    *
+ *                  tween cost function and annealer and passes the init-  *
+ *                  tial energy to lsa.c by p_chisq)                       *
+ *                - initializes move generation in move(s).c               *
+ *                - sets initial energy by evaluating cost function for    *
+ *                  the first time                                         *
+ ***************************************************************************/
+
+void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
+
+/*** RestoreState: called when an interrupted run is restored; does the ****
+ *                 following (see InitialMove for arguments, also see co-  *
+ *                 mmunication functions below for how to restore the ran- *
+ *                 dom number generator and Lam stats):                    *
+ *                 - restores Lam and other annealing parameters           *
+ *                 - reinitializes the cost function                       *
+ *                 - restores move state in move(s).c                      *
+ ***************************************************************************/
+
+void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
+						  PArrPtr * params);
+
+/*** FinalMove: determines the final energy and move count and then prints *
+ *              those to wherever they need to be printed to; also should  *
+ *              do the cleaning up, i.e freeing stuff and such after a run *
+ ***************************************************************************/
+
+double FinalMove(SAType * state);
+
+
+/*** WriteTimes: writes the timing information to wherever it needs to be **
+ *               written to at the end of a run                            *
+ ***************************************************************************/
+
+void WriteTimes(double *times);

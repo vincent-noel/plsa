@@ -15,7 +15,7 @@
  *   Although main() is in lsa.c, this is the file that 'defines'             *
  *   the plsa program, since it contains most of its problem-                 *
  *   specific code (except for move generation -> moves.c, saving             *
- *   of intermediate state files -> savestate.c and communication             *
+ *   of intermediate state files -> state.c and communication             *
  *   with the specific cost function that is used -> translate.c).            *
  *                                                                            *
  *   After I've told you all that's NOT in this file, here's what             *
@@ -56,12 +56,13 @@
 #include "error.h"                                 /* error handling funcs */
 #include "distributions.h"               /* DistP.variables and prototypes */
 #include "config.h"                          /* for olddivstyle and such */
-#include "moves.h"                     /* problem-specific annealing funcs */
+// #include "moves.h"                     /* problem-specific annealing funcs */
 #include "random.h"                                     /* for InitERand() */
 #include "sa_shared.h"                     /* problem-independent annealing funcs */
 #include "score.h"                             /* for init and Score funcs */
 #include "sa.h"
 #include "plsa.h"
+#include "state.h"
 #ifdef MPI                 /* this inludes parallel-specific stuff for MPI */
 #include <mpi.h>                     /* this is the official MPI interface */
 #include "MPI.h"  /* our own structs and such only needed by parallel code */
@@ -75,20 +76,15 @@ static char version[MAX_RECORD];                 /* version gets set below */
 /* other static variables */
 
 // static int    precision   = 16;                    /* precision for eqparms */
-PArrPtr * plsa_params;
+PArrPtr 	* 	plsa_params;
 
-// // NucStatePtr state;                    /* global annealing parameter struct */
-SAType		state;
-StopStyle   stop_flag;               /* type of stop criterion (see above) */
-int    stateflag = 0;                              /* state file or not? */
-static char   *statefile;                        /* name of the state file */
+SAType			state;
+StopStyle   	stop_flag;               /* type of stop criterion (see above) */
+int    			stateflag = 0;                              /* state file or not? */
+static char *	statefile;                        /* name of the state file */
 
 static double energy;                                    /* current energy */
 
-static double S_0;                      /* the initial inverse temperature */
-static int    proc_tau;  /* proc_tau = tau                     in serial   */
-static int    proc_init;                        /* number of initial moves */
-static double Tau;     /* double version of tau to calculate mean and vari */
 /* variables used for timing */
 
 /* these variables are used to evaluate real time using time() */
@@ -136,9 +132,10 @@ SAType * InitPLSA(int nb_procs, int my_id)
 	if (logPid() > 0)
 		PrintMyPid();
 
+	ParseCommandLine();
+
 	/* allocate memory for static file names */
 	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-
 	stateflag = InitializePLSA(&state, &statefile);
 	return &state;
 }
@@ -151,9 +148,10 @@ SAType * InitPLSA()
 	if (logPid() > 0)
 		PrintMyPid();
 
+	ParseCommandLine();
+
 	/* allocate memory for static file names */
 	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-
 	stateflag = InitializePLSA(&state, &statefile);
 	return &state;
 }
@@ -165,6 +163,10 @@ void StartPLSA(PArrPtr * plsa_params)
 {
 	/* first get Lam parameters, initial temp and energy and initialize S_0 */
 	/* if we restore a run from a state file: call RestoreState() */
+	double S_0;
+	int    proc_tau;  /* proc_tau = tau                     in serial   */
+	int    proc_init;                        /* number of initial moves */
+
 #ifdef MPI
 	if (myid == 0)
 	{
@@ -218,14 +220,12 @@ void StartPLSA(PArrPtr * plsa_params)
 	proc_tau  = state.tau;                       /* static copy to tau */
 	proc_init = state.initial_moves;             /* # of initial moves */
 #endif
-	Tau = (double) state.tau;                  /* double version to tau */
-	/* for calculating estimators */
 
 	/* if we're not restarting: do the initial moves for randomizing and ga-   *
 	 * thering initial statistics                                              */
 
 	if ( !stateflag )
-		energy = InitialLoop(&state, S_0, proc_init);
+		energy = InitialLoop(&state, S_0, proc_tau, proc_init);
 
 	/* write first .log entry and write first statefile right after init; note *
 	 * that equilibration runs are short and therefore don't need state files  *
@@ -237,21 +237,21 @@ void StartPLSA(PArrPtr * plsa_params)
 	{
 		if ( !stateflag )
 		{
-			WriteLog(state.initial_moves, proc_init, proc_tau);
+			WriteLog(state.initial_moves);
 	#ifdef MPI
 			if ( !tuning )
 	#endif
-			StateWrite(statefile, energy, S_0);
+			StateWrite(statefile, energy);
 		}
 		else
-			RestoreLog(state.initial_moves, proc_init, proc_tau);
+			RestoreLog(state.initial_moves);
 	}
 
 
 #ifdef MPI
 	/* if we are in tuning mode: initialize/restore tuning structs */
 	if ( tuning )
-		InitTuning(state.mix_interval, Tau);
+		InitTuning(state.mix_interval, (double) state.tau);
 #endif
 
 }
@@ -287,7 +287,8 @@ PLSARes * runPLSA()
 	/* the following is for non-equlibration runs and equilibration runs that  */
 	/* have not yet settled to their equilibrium temperature                   */
 
-	final_score = Loop(&state, energy, S_0, Tau, proc_tau, statefile, stop_flag, state.initial_moves, proc_init);
+	if (Loop(&state, energy, statefile, stop_flag))
+		final_score = FinalMove(&state);
 
 	/* code for timing */
 
@@ -513,7 +514,7 @@ void RestoreState(char *statefile, SAType * state, double *p_chisq,
 	InitDistribution(state);   /* initialize distribution stuff */
 
 	RestoreMoves(move_ptr);
-	energy = RestoreLamstats(stats, &S_0);
+	energy = RestoreLamstats(stats);
 	if ( time_flag )
 		RestoreTimes(delta);
 	InitERand(rand);
@@ -697,7 +698,7 @@ void PrintTimes(FILE *fp, double *times)
 
 /*** FUNCTIONS THAT COMMUNICATE WITH SAVESTATE.C ***************************/
 
-/*** GetOptions: returns command line options to savestate.c ***************
+/*** GetOptions: returns command line options to state.c ***************
  *               for the detailed meaning of all these options see Parse-  *
  *               CommandLine() above); Opts struct defined in moves.h      *
  ***************************************************************************/

@@ -122,7 +122,7 @@ typedef struct {
 
 
 
-/* Opts struct is for saving command line options in savestate.c */
+/* Opts struct is for saving command line options in state.c */
 
 typedef struct {
   StopStyle stop_flag;                                   /* stop criterion */
@@ -151,9 +151,9 @@ typedef struct {
 void PrintTimes(FILE *fp, double *delta);
 
 
-/* functions that communicate with savestate.c */
+/* functions that communicate with state.c */
 
-/*** GetOptions: returns command line options to savestate.c ***************
+/*** GetOptions: returns command line options to state.c ***************
  ***************************************************************************/
 
 Opts *GetOptions(void);
@@ -235,7 +235,7 @@ MoveState *MoveSave(void);
 
 
 
-/* savestate.c */
+/* state.c */
 
 /* funcs that read/write/erase the state file */
 

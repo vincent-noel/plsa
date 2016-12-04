@@ -180,13 +180,13 @@ void InitFilenames(void);
  *                   2. loop for initial collection of statistics          *
  ***************************************************************************/
 
-double InitialLoop(SAType * state, double S_0, int proc_init);
+double InitialLoop(SAType * state, double S_0, int proc_tau, int proc_init);
 /*** InitializeParameter: initializes variables used for calculating the ***
  *                        parameters A, B, D and E and the estimate_mean   *
  *                        plus estimate_sd (see Lam & Delosme, 1988a)      *
  ***************************************************************************/
 
-void InitializeParameter(SAType * state, double S_0);
+void InitializeParameter(SAType * state);
 /*** InitializeWeights: initialize weights a and b; these weights are ******
  *                      computed from the lambda memory length products    *
  ***************************************************************************/
@@ -200,18 +200,17 @@ void InitializeWeights(SAType * state);
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-double Loop(SAType * state, double energy, double S_0, double Tau, int proc_tau, char * statefile,
-				 StopStyle stop_flag, int initial_moves, int proc_init);
+int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag);
 
 /*** UpdateS: update inverse temperature S at every Sskip step *************
  ***************************************************************************/
-void UpdateS(SAType * state, double Tau, int proc_tau);
+void UpdateS(SAType * state);
 
 /*** UpdateStats: updates mean, variance and acc_ratio after tau moves *****
  *                it needs i to do sanity check in parallel code           *
  ***************************************************************************/
 
-void UpdateStats(SAType * state, double Tau, int proc_tau, int i);
+void UpdateStats(SAType * state, int i);
 
 /*** UpdateParameter: update parameters A, B, D and E and the estimators ***
  *                    for mean and standard deviation for the current S    *
@@ -232,7 +231,7 @@ int Frozen(SAType * state, StopStyle stop_flag);
  *                store Lam statistics in a state file                     *
  ***************************************************************************/
 
-double *GetLamstats(double energy, double S_0);
+double *GetLamstats(double energy);
 /*** GetTimes: returns a two-element array with the current wallclock and **
  *             user time to be saved in the state file                     *
  ***************************************************************************/
@@ -246,12 +245,12 @@ double *GetTimes(void);
  *                    file.                                                *
  ***************************************************************************/
 
-double RestoreLamstats(double *stats, double * S_0);
+double RestoreLamstats(double *stats);
 
 /*** RestoreLog: restores .log and .prolix files after upon restart ********
  ***************************************************************************/
 
-void RestoreLog(int initial_moves, int proc_init, int proc_tau);
+void RestoreLog(int initial_moves);
 
 /*** RestoreTimes: restores the wallclock and user times if -t is used *****
  ***************************************************************************/
@@ -260,67 +259,14 @@ void RestoreTimes(double *delta);
 
 
 
-
 /* functions to write the .log */
 
 
-void WriteLog(int initial_moves, int proc_init, int proc_tau);
+void WriteLog(int initial_moves);
 /*** PrintLog: actually writes stuff to the .log file **********************
  ***************************************************************************/
 
-void PrintLog(FILE *outptr, int init_moves, int proc_init, int proc_tau);
-
-
-
-
-/* PROBLEM SPECIFIC FUNCTIONS THAT NEED TO BE DEFINED OUTSIDE LSA.C ********/
-
-/* miscellaneous functions that usually live in <problem>_sa.c */
-
-/*** ParseCommandLine: well, parses the command line and returns an index **
- *                     to the 1st argument after the command line options  *
- ***************************************************************************/
-
-void ParseCommandLine();
-
-/*** InitialMove: initializes the following stuff: *************************
- *                - reads in Lam and other annealing parameters (passed to *
- *                  lsa.c through the state_ptr; the first three arguments *
- *                  are used to open the right data file etc.)             *
- *                - initializes the cost function, establishes link be-    *
- *                  tween cost function and annealer and passes the init-  *
- *                  tial energy to lsa.c by p_chisq)                       *
- *                - initializes move generation in move(s).c               *
- *                - sets initial energy by evaluating cost function for    *
- *                  the first time                                         *
- ***************************************************************************/
-
-void InitialMove(SAType * state_ptr_vs, double *p_chisq, PArrPtr * params);
-
-/*** RestoreState: called when an interrupted run is restored; does the ****
- *                 following (see InitialMove for arguments, also see co-  *
- *                 mmunication functions below for how to restore the ran- *
- *                 dom number generator and Lam stats):                    *
- *                 - restores Lam and other annealing parameters           *
- *                 - reinitializes the cost function                       *
- *                 - restores move state in move(s).c                      *
- ***************************************************************************/
-
-void RestoreState(char *statefile, SAType * state_ptr_vs, double *p_chisq,
-						  PArrPtr * params);
-
-/*** FinalMove: determines the final energy and move count and then prints *
- *              those to wherever they need to be printed to; also should  *
- *              do the cleaning up, i.e freeing stuff and such after a run *
- ***************************************************************************/
-
-double FinalMove(SAType * state);
-
-/*** WriteTimes: writes the timing information to wherever it needs to be **
- *               written to at the end of a run                            *
- ***************************************************************************/
-
-void WriteTimes(double *times);
+void PrintLog(FILE *outptr, int init_moves);
 
 
 
@@ -353,26 +299,6 @@ void RejectMove(void);
 double GetNewEnergy(void);
 double GetOldEnergy(void);
 void WriteScoreTrace(double t_energy, int acceptance);
-
-
-
-/* a function that writes the .state file (should live in savestate.c) */
-
-/*** StateWrite: collects Lam statistics, move state and the state of the **
- *               erand48 random number generator and writes all that into  *
- *               the state file, which can then be used to restore the run *
- *               in case it gets interrupted                               *
- ***************************************************************************/
-
-void StateWrite(char * statefile, double energy, double S_0);
-
-/* THE function that starts the optimization */
-
-/*** StateWrite: collects Lam statistics, move state and the state of the **
- *               erand48 random number generator and writes all that into  *
- *               the state file, which can then be used to restore the run *
- *               in case it gets interrupted                               *
- ***************************************************************************/
 
 
 #endif
