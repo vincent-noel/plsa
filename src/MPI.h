@@ -49,13 +49,13 @@
  ******************************************************************************/
 #ifndef MPI_INCLUDED
 #define MPI_INCLUDED
-
+#include "tuning.h"
 
 
 /*** CONSTANTS ****************************************************************/
 
 #define MAX_MIX         10000      /* max number of mixes during a tuning run */
-                       /* set this to a lower number if you run out of memory */
+					   /* set this to a lower number if you run out of memory */
 #define GROUP_SIZE         10       /* group size for calculating upper bound */
 
 #define STOP_TUNE_CNT      20                              /* stop tune count */
@@ -80,77 +80,6 @@ int write_llog;                        /* flag for writing local log files */
 
 
 /*** FUNCTION PROTOTYPES ***************************************************/
-
-/* lsa.c: parallel non-tuning funcs: update func for local Lam parameters */
-
-/*** UpdateLParameter: update local parameters l_A, l_B, l_D and l_E and ***
- *                    the local estimators for mean and standard deviation *
- *                    for both upper and lower bounds of M_Opt for the     *
- *                    current S                                            *
- ***************************************************************************/
-
-void UpdateLParameter(void);
-
-
-
-/* lsa.c: parallel non-tuning funcs: mixing functions */
-
-/*** DoMix: does the mixing; sends move state and local Lam stats to the ***
- *          dance partner(s)                                               *
- ***************************************************************************/
-
-void DoMix(void);
-
-/*** DoFixMix: for equilibration run, we only need to pass the move state **
- *             since Lam stats are not needed at constant temperature      *
- ***************************************************************************/
-
-void DoFixMix(void);
-
-/*** MakeLamMsg: packages local Lam stats into send buffer *****************
- ***************************************************************************/
-
-void MakeLamMsg(double **sendbuf);
-
-/*** AcceptLamMsg: receives new energy and Lam stats upon mixing ***********
- ***************************************************************************/
-
-void AcceptLamMsg(double *recvbuf);
-
-
-
-/* lsa.c: tuning functions */
-
-/*** InitTuning: sets up/restores structs and variables for tuning runs ****
- ***************************************************************************/
-
-void InitTuning(void);
-
-/*** DoTuning: calculates the cross-correlation (for lower bound) and the **
- *             variance of local means (for upper bound) for a sub_tune_   *
- *             interval; the results are added to arrays, which span the   *
- *             whole tuning_interval; when these values get written to the *
- *             'bound' files, they will be divided by the number of mixes  *
- *             we have done already to average them out (see also King-Wai *
- *             Chu's thesis, p. 63)                                        *
- ***************************************************************************/
-
-void DoTuning(void);
-
-/*** WriteTuning: writes tuning stats to files ever tune_interval **********
- ***************************************************************************/
-
-void WriteTuning(void);
-
-/*** StopTuning: is to tuning runs what Frozen() is to a normal annealing **
- *               run: it basically checks if the tuning stop criterion     *
- *               applies and returns true if that's the case               *
- ***************************************************************************/
-
-int StopTuning(void);
-
-
-
 
 /* move(s).c: functions for communicating move state for mixing */
 

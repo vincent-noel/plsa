@@ -135,4 +135,49 @@ typedef struct
 
 } SAType ;
 
+typedef struct
+{
+
+	double estimate_mean_l;     /* estimator for mean for lower bound */
+	double estimate_mean_u;     /* estimator for mean for upper bound */
+	double estimate_sd;       /* Lam estimator for sd for upper bound */
+
+	double usyy_l;     /* these parameters store intermediate results */
+	double usxy_l;   /* for the updating formulas for l_A_l and l_B_l */
+	double usxx_l;
+	double usx_l;
+	double usy_l;
+	double usum_l;
+
+	double A_l;  /* l_A_l and l_B_l: parameters for the rational func */
+	double B_l; /* for the estimation of the mean for the lower bound */
+
+	/* parallel code: variables for calculating local mean estimator for upper *
+	*                bound of M (see also comment on local weights above)     */
+
+	double usyy_u;     /* these parameters store intermediate results */
+	double usxy_u;   /* for the updating formulas for l_A_u and l_B_u */
+	double usxx_u;
+	double usx_u;
+	double usy_u;
+	double usum_u;
+
+	double A_u;        /* A and B are the parameters for the rational */
+	double B_u;            /* function for the estimation of the mean */
+
+
+	double vsyy;       /* these parameters store intermediate results */
+	double vsxy;         /* for the updating formulas for l_D and l_E */
+	double vsxx;
+	double vsx;
+	double vsy;
+	double vsum;
+
+	double D;    /* l_D_l and l_E_l: parameters for the rational func */
+	double E;     /* for the estimation of the sd for the lower bound */
+
+
+} LamMsgs;
+
+
 #endif

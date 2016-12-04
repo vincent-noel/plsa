@@ -23,7 +23,7 @@ LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
 SOBJ = plsa.o lsa.o moves.o savestate.o score.o
-POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o
+POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o tuning_p.o
 
 
 all: libplsa-serial.so libplsa-parallel.so
@@ -48,14 +48,18 @@ clean_examples:
 	rm -f *.o *.so run-funnel-serial run-funnel-parallel
 	rm -fr logs/ final_score plsa.log *.state input output
 
-run-funnel-serial: main-funnel-serial.o 
-	$(CC) main-funnel-serial.o -lplsa-serial -lm -o run-funnel-serial
+test: examples
+	./run-funnel-serial
+	mpirun -np 2 ./run-funnel-parallel
+
+run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
+	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -o run-funnel-serial
 
 main-funnel-serial.o: examples/funnel/main.c
 	$(CC) $(FLAGS) -c examples/funnel/main.c -o main-funnel-serial.o
 
-run-funnel-parallel: main-funnel-parallel.o
-	$(MPICC) main-funnel-parallel.o -lplsa-parallel -lm -o run-funnel-parallel
+run-funnel-parallel: main-funnel-parallel.o $(OBJ) $(POBJ)
+	$(MPICC) main-funnel-parallel.o $(OBJ) $(POBJ) -lm -o run-funnel-parallel
 
 main-funnel-parallel.o:	examples/funnel/main.c
 	$(MPICC) $(FLAGS) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
@@ -86,6 +90,8 @@ savestate_p.o: $(SRCDIR)/savestate.c
 score_p.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o score_p.o -c $(SRCDIR)/score.c
 
+tuning_p.o: $(SRCDIR)/tuning.c $(SRCDIR)/tuning.h
+	$(MPICC) $(FLAGS) -fpic -DMPI -o tuning_p.o -c $(SRCDIR)/tuning.c
 
 
 # serial ones

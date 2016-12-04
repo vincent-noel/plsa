@@ -274,7 +274,7 @@ void WriteLog(void);
 /*** PrintLog: actually writes stuff to the .log file **********************
  ***************************************************************************/
 
-void PrintLog(FILE *outptr, int local_flag);
+void PrintLog(FILE *outptr);
 
 
 
