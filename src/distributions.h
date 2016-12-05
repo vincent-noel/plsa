@@ -24,38 +24,8 @@
  *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
  *                                                                            *
  ******************************************************************************/
-typedef struct
-{
-	int distribution;      /* move generation distribution type RO */
-						 /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
-						 /*  LG: 07-05-00 formerly dist_type in lj code */
-	double q;              /* gen visiting distribution parameter RO */
-						 /* 1=guassian; 2=lor; but 1<q<3 */
-						 /*  LG: 03-02 need q and factors for GSA visit dist*/
-						 /*  1   <  q < 2   uses qlt2_visit       */
-						 /*  2   <  q < 2.6 uses qgt2_visit       */
-						 /*  2.6 <= q < 3   uses binom_qgt2_visit */
-
-	// /*****variables that depend on q ********/
-	// double gam1;           /* gammaln of 1/(q-1)       */
-	// double gam2;           /* gammaln of 1/((q-1)-0.5) */
-	// double fact2;          /* exp(gam1-gam2)           */
-	// double alpha;          /* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
-	// double alpha2;         /* (sqrt(2.)/ 2. )* sqrt((q-1)/pi) * exp(gam1-gam2) NOT dependent on theta_bar*/
-	// double c;              /*  1/(q-1)                  */
-	// double rejects;        /*  number of recursive calls; useful for efficiency analysis */
-	// double trunc;          /*  range for x is [-trunc, trunc]             */
-	// 					 /*  2    <  q < 2.6   trunc is OK at 2 million */
-	// 					 /*  2.6  <= q < 2.85  trunc is 99 and 16 zeros*/
-	// 					 /*  2.85 <= q < 3     trunc is 24 nines */
+#include "types.h"
 
 
-
-
-} DistParms;
-
-DistParms DistP;   /* variables for distributions */
-
-/* prototype functions for distributions */
-
-double generate_dev(double theta_bar, int distribution, double q);
+void InitDistribution(DistParms * dist);
+double generate_dev(double theta_bar);

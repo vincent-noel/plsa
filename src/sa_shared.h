@@ -26,8 +26,7 @@
  *   mostly modified it by adding some comments and restructuring             *
  *   the code to make it more easily understandable. JR has added             *
  *   the criterion for continous search spaces and separated Lam              *
- *   statistics from move acceptance statistics. King-Wai Chu has             *
- *   written the equilibration code.                                          *
+ *   statistics from move acceptance statistics. 							  *
  *                                                                            *
  ******************************************************************************
  *                                                                            *
@@ -76,8 +75,6 @@
 					/* provides a minimum probability for really bad moves */
 
 
-
-
 /*** STRUCTS AND ENUMS *****************************************************/
 
 /* These are the Lam parameters: *******************************************
@@ -120,34 +117,28 @@
 
 /*** GLOBALS ***************************************************************/
 
-int         time_flag;                         /* flag for timing the code */
-int         log_flag;                 /* flag for displaying log to stdout */
-int         nofile_flag;      /* flag for not writing .state or .log files */
-
-long        state_write;     /* frequency for writing state files (in tau) */
-long        print_freq;          /* frequency for printing to log (in tau) */
-long        captions;      /* option for printing freqency of log captions */
+// int         time_flag;                         /* flag for timing the code */
+// int         log_flag;                 /* flag for displaying log to stdout */
+//
+// long        state_write;     /* frequency for writing state files (in tau) */
+// long        print_freq;          /* frequency for printing to log (in tau) */
+// long        captions;      /* option for printing freqency of log captions */
 
 /* Special annealing modes: ************************************************
  *                                                                         *
  * the following are flags that should be set by cmd line opts for some    *
  * special annealing modes that we use for testing or gathering stats:     *
  *                                                                         *
- * - bench:    does no loop, i.e. only runs through initial steps; this    *
- *             can be useful to do solver benchmarks in -B mode            *
- * - equil:    runs at a fixed temperature to collect equilibrium stats    *
  * - quenchit: means lower the temperature to zero *instantly* after fini- *
  *             shing initialize; this is not implemented for parallel code *
  *             since it doesn't take a long time to finish                 *
  *                                                                         *
  ***************************************************************************/
 
-int         bench;
-int         equil;
-int         quenchit;
-int         max_iter;
-int         max_seconds;
-int         start_time_seconds;
+// int         quenchit;
+// int         max_iter;
+// int         max_seconds;
+// int         start_time_seconds;
 
 
 /*** FUNCTION PROTOTYPES ***************************************************/
@@ -161,7 +152,7 @@ int         start_time_seconds;
  *               of the annealer as saved in the state file                *
  ***************************************************************************/
 
-int InitializePLSA(char ** statefile);
+// int InitializePLSA(char ** statefile);
 
 /*** InitFilenames: initializes static file names needed in lsa.c **********
  ***************************************************************************/
@@ -173,7 +164,7 @@ void InitFilenames(void);
  *                   2. loop for initial collection of statistics          *
  ***************************************************************************/
 
-double InitialLoop(SAType * state, double S_0, int proc_tau, int proc_init);
+double InitialLoop(SAType * state, double S_0);
 
 /* Main loop and update functions */
 
@@ -209,7 +200,7 @@ double RestoreLamstats(double *stats);
 /*** RestoreLog: restores .log and .prolix files after upon restart ********
  ***************************************************************************/
 
-void RestoreLog(int initial_moves);
+void RestoreLog(SAType * state);
 
 /*** RestoreTimes: restores the wallclock and user times if -t is used *****
  ***************************************************************************/
@@ -221,7 +212,7 @@ void RestoreTimes(double *delta);
 /* functions to write the .log */
 
 
-void WriteLog(int initial_moves);
+void WriteLog(SAType * state);
 /*** PrintLog: actually writes stuff to the .log file **********************
  ***************************************************************************/
 

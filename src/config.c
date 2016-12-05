@@ -38,92 +38,77 @@
 
 #include "config.h"
 
-SALogs logs;
-SALogs * getLogSettings()
-{
-	return &logs;
-}
+static SALogs * log_settings;
 
 char *      getLogDir()
 {
-	return logs.dir;
+	return log_settings->dir;
 }
 
 int logTraceScore()
 {
-	return logs.trace_score;
+	return log_settings->trace_score;
 }
 
 int logTraceParams()
 {
-	return logs.trace_params;
+	return log_settings->trace_params;
 }
 
 int logParams()
 {
-	return logs.params;
+	return log_settings->params;
 }
 
 int logRes()
 {
-	return logs.res;
+	return log_settings->res;
 }
 
 int logScore()
 {
-	return logs.score;
+	return log_settings->score;
 }
 
 int logPid()
 {
-	return logs.pid;
+	return log_settings->pid;
 }
 
 int logBestScore()
 {
-	return logs.best_score;
+	return log_settings->best_score;
 }
 
 int logBestRes()
 {
-	return logs.best_res;
+	return log_settings->best_res;
 }
 
-void InitLogs()
+void InitializeLogs(SALogs * t_logs)
 {
-	logs.dir = "logs";
-	logs.trace_score = 0;
-	logs.trace_params = 0;
-	logs.params = 0;
-	logs.res = 0;
-	logs.score = 0;
-	logs.pid = 0;
-	logs.best_score = 0;
-	logs.best_res = 0;
-}
-
-void BuildLogs()
-{
-	mkdir(logs.dir, 0777);
+	log_settings = t_logs;
+	
+	mkdir(log_settings->dir, 0777);
 
 	if (logScore() > 0)
 	{
 		char score[200];
-		sprintf(score, "%s/score", logs.dir);
+		sprintf(score, "%s/score", log_settings->dir);
 		mkdir(score, 0777);
 	}
 
 	if (logRes() > 0)
 	{
 		char res[250];
-		sprintf(res, "%s/res", logs.dir);
+		sprintf(res, "%s/res", log_settings->dir);
 		mkdir(res, 0777);
 	}
 
 	if (logParams() > 0)
 	{
 		char res[250];
-		sprintf(res, "%s/params", logs.dir);
+		sprintf(res, "%s/params", log_settings->dir);
 		mkdir(res, 0777);
 
 	}
@@ -131,14 +116,14 @@ void BuildLogs()
 	if (logTraceScore() > 0)
 	{
 		char score[200];
-		sprintf(score, "%s/trace/score", logs.dir);
+		sprintf(score, "%s/trace/score", log_settings->dir);
 		mkdir(score, 0777);
 	}
 
 	if (logBestRes() > 0)
 	{
 		char res[250];
-		sprintf(res, "%s/trace/res", logs.dir);
+		sprintf(res, "%s/trace/res", log_settings->dir);
 		mkdir(res, 0777);
 
 	}
@@ -146,14 +131,14 @@ void BuildLogs()
 	if (logBestScore() > 0)
 	{
 		char score[200];
-		sprintf(score, "%s/best_score", logs.dir);
+		sprintf(score, "%s/best_score", log_settings->dir);
 		mkdir(score, 0777);
 	}
 
 	if (logBestRes() > 0)
 	{
 		char res[250];
-		sprintf(res, "%s/best_res", logs.dir);
+		sprintf(res, "%s/best_res", log_settings->dir);
 		mkdir(res, 0777);
 
 	}

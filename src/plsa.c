@@ -53,13 +53,14 @@
 #include <unistd.h>          /* for command line option stuff and access() */
 #include <time.h>
 
-#include "error.h"                                 /* error handling funcs */
-#include "distributions.h"               /* DistP.variables and prototypes */
-#include "config.h"                          /* for olddivstyle and such */
-#include "moves.h"                     /* problem-specific annealing funcs */
-#include "random.h"                                     /* for InitERand() */
-#include "sa_shared.h"                     /* problem-independent annealing funcs */
-#include "score.h"                             /* for init and Score funcs */
+#include "error.h"									  /* error handling funcs */
+#include "config.h"								  /* for olddivstyle and such */
+#include "random.h"										   /* for InitERand() */
+
+// #include "distributions.h"               /* DistP.variables and prototypes */
+#include "moves.h"						  /* problem-specific annealing funcs */
+#include "sa_shared.h"				   /* problem-independent annealing funcs */
+#include "score.h"								  /* for init and Score funcs */
 #include "sa.h"
 #include "plsa.h"
 #include "state.h"
@@ -76,11 +77,13 @@ static char version[MAX_RECORD];                 /* version gets set below */
 /* other static variables */
 
 // static int    precision   = 16;                    /* precision for eqparms */
-PArrPtr 	 	plsa_params;
-
-SAType			state;
-StopStyle   	stop_flag;               /* type of stop criterion (see above) */
-int    			stateflag = 0;                              /* state file or not? */
+static PArrPtr 	 	plsa_params;
+static DistParms		dist_params;
+static SAType			state;
+static Opts			options;
+static StopStyle   	stop_flag;               /* type of stop criterion (see above) */
+static SALogs			logs;
+static int    			stateflag;                              /* state file or not? */
 static char *	statefile;                        /* name of the state file */
 
 static double energy;                                    /* current energy */
@@ -105,7 +108,72 @@ static struct tms *cpu_finish;                      /* user time after run */
 #define VERS 0.1
 
 
-void ParseCommandLine()
+/*** Initialize: calls ParseCommandLine first; then does either initial ****
+ *               randomization and collecting Lam stats or restores state  *
+ *               of the annealer as saved in the state file.               *
+ ***************************************************************************/
+void InitializePLSA()
+{
+
+#ifdef MPI
+	// tuning          = 0;                    /* tuning mode is off by default */
+
+	// write_llog      = 0; /* write local llog files when tuning; default: off */
+#endif
+
+	stateflag = 0;                              /* state file or not? */
+#ifdef MPI
+	int    flagsum;                       /* used for state file check below */
+#endif
+
+
+	/* allocate memory for static file names */
+	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
+
+	/* state files: used for the case that a run terminates or crashes unex-   *
+	 * pectedly; we can then restore the state of the run *precisely* as it    *
+	 * was before the crash by restarting it from the state file               */
+#ifdef MPI
+
+	if ( nnodes>1 )
+	{
+		if ( nnodes <= 10 )
+			sprintf(statefile,   "plsa_%d.state", myid);
+		else if ( (nnodes > 10) && (nnodes <= 100) )
+			sprintf(statefile, "plsa_%02d.state", myid);
+		else if ( (nnodes > 100) && (nnodes <= 1000) )
+			sprintf(statefile, "plsa_%03d.state", myid);
+		else if ( (nnodes > 1000) && (nnodes <= 10000) )
+			sprintf(statefile, "plsa_%04d.state", myid);
+		else if ( (nnodes > 10000) && (nnodes <= 100000) )
+			sprintf(statefile, "plsa_%05d.state", myid);
+		else
+			error("Initialize: can't open more than 100'000 state files");
+	}
+	else
+		sprintf(statefile, "plsa.state");
+
+#else
+	sprintf(statefile, "plsa.state");
+#endif
+
+	/* check if a state file exists (access() is in unistd.h) */
+
+	if ( 0 == access(statefile, F_OK) )
+		stateflag = 1;
+
+#ifdef MPI
+	/* parallel code: make sure that all state files are present */
+
+	MPI_Allreduce(&stateflag, &flagsum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	if ( (flagsum > 0) && (flagsum != nnodes) && (stateflag == 0) )
+		error("Initialize: state file for process %d is missing");
+#endif
+
+
+}
+
+void SetDefaultOptions()
 {
 	/* set the version string */
 
@@ -117,28 +185,65 @@ void ParseCommandLine()
 
 	/* following part sets default values for command line options */
 
-	captions        = 100000000;  /* default freq for writing captions (off) */
-	print_freq      = 1;           /* default freq for writing to log file */
-	state_write     = 100;        /* default freq for writing to state file */
+	options.captions        = 100000000;  /* default freq for writing captions (off) */
+	options.print_freq      = 1;           /* default freq for writing to log file */
+	options.state_write     = 100;        /* default freq for writing to state file */
 
-	stop_flag       = absolute_freeze;             /* type of stop criterion */
-	time_flag       = 0;                                  /* flag for timing */
-	log_flag        = 0;              /* flag for writing logs to the screen */
-	nofile_flag     = 0;       /* flog for not writing .log and .state files */
-	max_iter        = 0;
-	max_seconds     = 0;
-	struct timeval tp;
-	gettimeofday(&tp, NULL);
-	start_time_seconds = (int) tp.tv_sec;
+	options.stop_flag       = absolute_freeze;             /* type of stop criterion */
+	options.time_flag       = 0;                                  /* flag for timing */
+	options.log_flag        = 0;              /* flag for writing logs to the screen */
+	options.max_iter        = 0;
+	options.max_seconds     = 0;
+	options.quenchit = 0;          /* flag for quenchit mode (T=0 immediately) */
 #ifdef MPI
-	tuning          = 0;                    /* tuning mode is off by default */
-	covar_index     = 1;      /* covariance sample will be covar_index * tau */
-	write_tune_stat = 1;         /* how many times do we write tuning stats? */
-	auto_stop_tune  = 1;               /* auto stop tuning runs? default: on */
-	write_llog      = 0; /* write local llog files when tuning; default: off */
+	options.tuning = 0;
+	options.covar_index     = 1;      /* covariance sample will be covar_index * tau */
+	options.write_tune_stat = 1;         /* how many times do we write tuning stats? */
+	options.auto_stop_tune  = 1;               /* auto stop tuning runs? default: on */
 #endif
 
 
+	state.seed = -6.60489e+08;
+	state.initial_temp = 1000;
+
+	state.lambda = 0.01;
+	state.lambda_mem_length_u = 200;
+	state.lambda_mem_length_v = 1000;
+
+	state.initial_moves = 200;
+	state.tau = 100;
+	state.freeze_count = 100;
+
+	state.update_S_skip = 1;
+	state.control = 1;
+	state.criterion = 0.01;
+#ifdef MPI
+	state.mix_interval = 10;
+#endif
+	state.gain_for_jump_size_control = 5;
+	state.interval = 100;
+
+	dist_params.distribution = 1;
+	dist_params.q = 1;
+
+	state.scoreFunction = NULL;
+	state.printFunction = NULL;
+
+	/* create time file name by appending .times to input file name */
+	logs.dir = (char *)calloc(MAX_RECORD, sizeof(char));
+	logs.dir = strcpy(logs.dir, "logs");
+	logs.trace_score = 0;
+	logs.trace_params = 0;
+	logs.params = 0;
+	logs.res = 0;
+	logs.score = 0;
+	logs.pid = 0;
+	logs.best_score = 0;
+	logs.best_res = 0;
+
+	state.logs = &logs;
+	state.options = &options;
+	state.dist_params = &dist_params;
 }
 
 void PrintMyPid()
@@ -149,6 +254,43 @@ void PrintMyPid()
 }
 
 
+PArrPtr * InitPLSAParameters(int nb_dimensions)
+{
+	// plsa_params = (PArrPtr *) malloc(sizeof(PArrPtr));
+
+	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
+
+	plsa_params.size  = nb_dimensions;
+	plsa_params.array = p;
+
+	return &plsa_params;
+}
+
+
+SAType * InitPLSA(int * nb_procs, int * my_id)
+{
+
+#ifdef MPI
+	// MPI initialization steps
+
+	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
+	if (rc != MPI_SUCCESS)
+		printf (" > Error starting MPI program. \n");
+
+	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
+	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
+
+	nnodes = *nb_procs;
+	myid = *my_id;
+#endif
+
+	SetDefaultOptions();
+
+
+	InitializePLSA();
+
+	return &state;
+}
 
 
 
@@ -251,11 +393,9 @@ double FinalMove()
 
 			int ii;
 			for (ii=0; ii < plsa_params.size; ii++)
-			{
 				fprintf(parameters, "%s : %.16g\n",
 							plsa_params.array[ii].name,
 							*(plsa_params.array[ii].param));
-			}
 
 			fclose(parameters);
 		}
@@ -273,11 +413,11 @@ double FinalMove()
 #endif
 
 	/* clean up the state file and free memory */
-	if ( !equil && !nofile_flag )
+
 #ifdef MPI
-		if ( ! tuning )
+	if ( ! options.tuning )
 #endif
-			StateRm();
+	StateRm();
 
 	return final_score;
 }
@@ -324,36 +464,6 @@ void PrintTimes(FILE *fp, double *times)
 
 /*** FUNCTIONS THAT INITIALIZE/RESTORE THINGS ******************************/
 
-/**********************************************************************
- * This routine reads the distribution parameters  from the input file*
- * and stores them in DistP.xx from distributions.h                   *
- * LG 03-02: need q for gen visiting distribution input file          *
- * LG 05-02: set factors only dependent on q for general visiting     *
- * distribution by calling qgt2_init or qlt2_init from distributions.c*
- **********************************************************************/
-
-void InitDistribution()
-{
-
-	DistP.distribution = state.distribution;
-	DistP.q = state.q;
-
-
-	if ((DistP.distribution > 11) || (DistP.distribution < 1))
-	{
-		error ("plsa: distribution must be int from 1 to 11 \n");
-	}
-	else if  ((DistP.distribution == 4)||(DistP.distribution == 3))
-	{
-		error ("plsa: PLEASE use 5 for Lorentz or 10 for normal distribution \n");
-	}
-	else if ((DistP.distribution == 6)||(DistP.distribution == 9))
-	{
-		error ("plsa: 6=poisson or 9=pareto distribution returns positive values--do not use for fly \n");
-	}
-
-
-}  /* end InitDistribution */
 
 /*** InitialMove: initializes the following stuff: *************************
  *                - various static things for filenames and such           *
@@ -386,7 +496,7 @@ void InitialMove(double *p_chisq)
 	InitScoring(&state);                   /* initializes facts and limits */
 	InitMoves(&state, &plsa_params);     /* set initial temperature and *
 											   *  initialize                 */
-	InitDistribution();   /* initialize distribution stuff */
+	// InitDistribution();   /* initialize distribution stuff */
 
 	energy = -999;
 
@@ -417,7 +527,7 @@ void RestoreState(char *statefile, double *p_chisq)
 {
 	char           *p;                                   /* temporary string */
 
-	Opts           *options;         /* used to restore command line options */
+	// Opts           *options;         /* used to restore command line options */
 	MoveState      *move_ptr;                       /* used to restore moves */
 	double         *stats;                      /* used to restore Lam stats */
 	unsigned short *rand;                         /* used to restore ERand48 */
@@ -426,7 +536,7 @@ void RestoreState(char *statefile, double *p_chisq)
 	/* allocate memory for structures that will be returned (stats gets allo-  *
 	 * cated in StateRead(), since we need to know if we're tuning or not)     */
 
-	options = (Opts *)malloc(sizeof(Opts));
+	// options = (Opts *)malloc(sizeof(Opts));
 	// options->inname    = (char *)calloc(MAX_RECORD, sizeof(char));
 	// options->outname   = (char *)calloc(MAX_RECORD, sizeof(char));
 
@@ -434,11 +544,11 @@ void RestoreState(char *statefile, double *p_chisq)
 	move_ptr = (MoveState *)malloc(sizeof(MoveState));
 	rand     = (unsigned short *)calloc(3, sizeof(unsigned short));
 
-	StateRead(statefile, options, move_ptr, stats, rand, delta);
+	StateRead(statefile, &options, move_ptr, stats, rand, delta);
 
 	/* restore options in plsa.c (and some in lsa.c) */
 
-	RestoreOptions(options);
+	RestoreOptions(&options);
 
 	/* initialize some Lam/Greening structures */
 
@@ -452,11 +562,11 @@ void RestoreState(char *statefile, double *p_chisq)
 	/* init initial cond., mutator and deriv */
 	InitScoring(&state);                            /* init facts and limits */
 	InitMoves(&state, &plsa_params);   /* set initial temperature and initialize */
-	InitDistribution();   /* initialize distribution stuff */
+	// InitDistribution();   /* initialize distribution stuff */
 
 	RestoreMoves(move_ptr);
 	energy = RestoreLamstats(stats);
-	if ( time_flag )
+	if ( options.time_flag )
 		RestoreTimes(delta);
 	InitERand(rand);
 
@@ -469,8 +579,6 @@ void StartPLSA()
 	/* first get Lam parameters, initial temp and energy and initialize S_0 */
 	/* if we restore a run from a state file: call RestoreState() */
 	double S_0;
-	int    proc_tau;  /* proc_tau = tau                     in serial   */
-	int    proc_init;                        /* number of initial moves */
 
 #ifdef MPI
 	if (myid == 0)
@@ -515,55 +623,42 @@ void StartPLSA()
 	if ( (state.tau % nnodes) != 0 )
 		error("plsa: the number of processors (%d) must be a divisor of tau",
 			  nnodes);
-	proc_tau  = state.tau / nnodes;               /* local copy of tau */
 
 	if ( (state.initial_moves % nnodes) != 0 )
 		error("plsa: number of init moves must be divisible by nnodes (%d)",
 			  nnodes);
-	proc_init = state.initial_moves / nnodes;    /* # of initial moves */
-#else
-	proc_tau  = state.tau;                       /* static copy to tau */
-	proc_init = state.initial_moves;             /* # of initial moves */
+
 #endif
 
 	/* if we're not restarting: do the initial moves for randomizing and ga-   *
 	 * thering initial statistics                                              */
 
 	if ( !stateflag )
-		energy = InitialLoop(&state, S_0, proc_tau, proc_init);
+		energy = InitialLoop(&state, S_0);
 
-	/* write first .log entry and write first statefile right after init; note *
-	 * that equilibration runs are short and therefore don't need state files  *
-	 * which would be rather complicated because of all the stats collected    *
-	 * during equilibration; for the exact same reasons we don't write state   *
-	 * files for tuning either; in case of a restart, we just restore the .log */
+	/* write first .log entry and write first statefile right after init; */
 
-	if ( !equil && !bench && !nofile_flag )
+
+	if ( !stateflag )
 	{
-		if ( !stateflag )
-		{
-			WriteLog(state.initial_moves);
-	#ifdef MPI
-			if ( !tuning )
-	#endif
-			StateWrite(statefile, energy);
-		}
-		else
-			RestoreLog(state.initial_moves);
+		WriteLog(&state);
+#ifdef MPI
+		if ( !options.tuning )
+#endif
+		StateWrite(statefile, energy);
 	}
+	else
+		RestoreLog(&state);
+
 
 
 #ifdef MPI
 	/* if we are in tuning mode: initialize/restore tuning structs */
-	if ( tuning )
+	if ( options.tuning )
 		InitTuning(state.mix_interval, (double) state.tau);
 #endif
 
 }
-
-
-
-
 
 
 
@@ -573,7 +668,12 @@ PLSARes * runPLSA()
 	double final_score;
 	/* code for timing: wallclock and user times */
 
-	BuildLogs();									/* build the log folders */
+	// printf("calling initializelogs : %s\n", logs.dir);
+
+	InitializeLogs(&logs);							/* build the log folders */
+
+	if (logPid() > 0)
+		PrintMyPid();
 
 	cpu_start  = (struct tms *)malloc(sizeof(struct tms));      /* user time */
 	cpu_finish = (struct tms *)malloc(sizeof(struct tms));
@@ -591,15 +691,12 @@ PLSARes * runPLSA()
 
 	StartPLSA();
 
-	/* the following is for non-equlibration runs and equilibration runs that  */
-	/* have not yet settled to their equilibrium temperature                   */
-
-	if (Loop(&state, energy, statefile, stop_flag))
+	if (!Loop(&state, energy, statefile, stop_flag))
 		final_score = FinalMove();
 
 	/* code for timing */
 
-	if ( time_flag )
+	if ( options.time_flag )
 	{
 		delta = GetTimes();                  /* calculates times to be printed */
 #ifdef MPI
@@ -621,111 +718,18 @@ PLSARes * runPLSA()
 
 	free(cpu_start);
 	free(cpu_finish);
+
+#ifdef MPI
+	// terminates MPI execution environment
+	MPI_Finalize();
+#endif
+
 	return res;
 
 }
 
 
-PArrPtr * InitPLSAParameters(int nb_dimensions)
-{
-	// plsa_params = (PArrPtr *) malloc(sizeof(PArrPtr));
 
-	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
-
-	plsa_params.size  = nb_dimensions;
-	plsa_params.array = p;
-
-	return &plsa_params;
-}
-
-#ifdef MPI
-SAType * InitPLSA(int nb_procs, int my_id)
-{
-	nnodes = nb_procs;
-	myid = my_id;
-
-	InitLogs();
-
-	if (logPid() > 0)
-		PrintMyPid();
-
-	ParseCommandLine();
-
-	/* allocate memory for static file names */
-	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-	stateflag = InitializePLSA(&statefile);
-
-	state.seed = -6.60489e+08;
-	state.initial_temp = 1000;
-
-	state.lambda = 0.01;
-	state.lambda_mem_length_u = 200;
-	state.lambda_mem_length_v = 1000;
-
-	state.initial_moves = 200;
-	state.tau = 100;
-	state.freeze_count = 100;
-
-	state.update_S_skip = 1;
-	state.control = 1;
-	state.criterion = 0.01;
-#ifdef MPI
-	state.mix_interval = 10;
-#endif
-	state.gain_for_jump_size_control = 5;
-	state.interval = 100;
-
-	state.distribution = 1;
-	state.q = 1;
-	state.scoreFunction = NULL;
-	state.printFunction = NULL;
-
-	return &state;
-}
-
-#else
-SAType * InitPLSA()
-{
-	InitLogs();
-
-	if (logPid() > 0)
-		PrintMyPid();
-
-	ParseCommandLine();
-
-	/* allocate memory for static file names */
-	statefile = (char *)calloc(MAX_RECORD, sizeof(char));
-	stateflag = InitializePLSA(&statefile);
-
-	state.seed = -6.60489e+08;
-	state.initial_temp = 1000;
-
-	state.lambda = 0.01;
-	state.lambda_mem_length_u = 200;
-	state.lambda_mem_length_v = 1000;
-
-	state.initial_moves = 200;
-	state.tau = 100;
-	state.freeze_count = 100;
-
-	state.update_S_skip = 1;
-	state.control = 1;
-	state.criterion = 0.01;
-#ifdef MPI
-	state.mix_interval = 10;
-#endif
-	state.gain_for_jump_size_control = 5;
-	state.interval = 100;
-
-	state.distribution = 1;
-	state.q = 1;
-	state.scoreFunction = NULL;
-	state.printFunction = NULL;
-
-	return &state;
-}
-
-#endif
 /*** FUNCTIONS THAT COMMUNICATE WITH SAVESTATE.C ***************************/
 
 /*** GetOptions: returns command line options to state.c ***************
@@ -735,25 +739,25 @@ SAType * InitPLSA()
 
 Opts *GetOptions(void)
 {
-	Opts       *options;
+// 	Opts       *options;
+//
+// 	options = (Opts *)malloc(sizeof(Opts));
+// 	options->stop_flag   = stop_flag;
+// 	options->log_flag    = log_flag;
+// 	options->time_flag   = time_flag;
+// 	options->state_write = state_write;
+// 	options->print_freq  = print_freq;
+// 	options->captions    = captions;
+// 	// options->precision   = precision;
+// 	options->quenchit    = quenchit;
+//
+// #ifdef MPI
+// 	options->covar_index     = covar_index;
+// 	options->write_tune_stat = write_tune_stat;
+// 	options->auto_stop_tune  = auto_stop_tune;
+// #endif
 
-	options = (Opts *)malloc(sizeof(Opts));
-	options->stop_flag   = stop_flag;
-	options->log_flag    = log_flag;
-	options->time_flag   = time_flag;
-	options->state_write = state_write;
-	options->print_freq  = print_freq;
-	options->captions    = captions;
-	// options->precision   = precision;
-	options->quenchit    = quenchit;
-
-#ifdef MPI
-	options->covar_index     = covar_index;
-	options->write_tune_stat = write_tune_stat;
-	options->auto_stop_tune  = auto_stop_tune;
-#endif
-
-	return options;
+	return &options;
 }
 
 
@@ -762,24 +766,25 @@ Opts *GetOptions(void)
  *                   from the Opts struct (used for restoring a run)       *
  ***************************************************************************/
 
-void RestoreOptions(Opts *options)
+void RestoreOptions(Opts *opts)
 {
-
-	/* all the other options */
-	stop_flag   = options->stop_flag;
-	log_flag    = options->log_flag;
-	time_flag   = options->time_flag;
-	state_write = options->state_write;
-	print_freq  = options->print_freq;
-	captions    = options->captions;
-	// precision   = options->precision;
-	quenchit    = options->quenchit;
-
-#ifdef MPI
-	covar_index     = options->covar_index;
-	write_tune_stat = options->write_tune_stat;
-	auto_stop_tune  = options->auto_stop_tune;
-#endif
-
-	free(options);
+//
+// 	/* all the other options */
+// 	stop_flag   = options->stop_flag;
+// 	log_flag    = options->log_flag;
+// 	time_flag   = options->time_flag;
+// 	state_write = options->state_write;
+// 	print_freq  = options->print_freq;
+// 	captions    = options->captions;
+// 	// precision   = options->precision;
+// 	quenchit    = options->quenchit;
+//
+// #ifdef MPI
+// 	covar_index     = options->covar_index;
+// 	write_tune_stat = options->write_tune_stat;
+// 	auto_stop_tune  = options->auto_stop_tune;
+// #endif
+//
+// 	free(options);
+	options = *opts;
 }

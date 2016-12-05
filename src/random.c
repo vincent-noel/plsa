@@ -31,33 +31,14 @@
  *                                                                            *
  ******************************************************************************/
 
-// #include <stdlib.h>
 
 #include "random.h"
-
-/* following to toggle between random number generators ********************
- * USE_... constants are defined in random.h or need to be specified using *
- * -D with the compiler; using any random number generator other than      *
- * erand48() is not supported and makes results hard to reproduce; it      *
- * should work fine though if you DO NOT RESTART RUNS FROM .state FILES    *
- * WHEN USING RANDOM NUMBER GENERATORS OTHER THAN ERAND48()                *
- ***************************************************************************/
-
-/* #ifdef USE_DRAND48
-  double drand48();
-  long   lrand48();
-  void   srand48();
-#elif USE_ERAND48
-  double erand48();
-  #endif  */
 
 
 /* STATIC VARIABLES ********************************************************/
 /* an array needed by erand48 */
 
-#ifdef USE_ERAND48
 static unsigned short int xsubj[3];        /* array used to initialize erand48 */
-#endif
 
 
 /*** RANDOM NUMBER FUNCTIONS ***********************************************/
@@ -67,11 +48,11 @@ static unsigned short int xsubj[3];        /* array used to initialize erand48 *
 
 void InitERand(unsigned short int xsubi[3])
 {
-    int i;
-    for(i=0; i<3; i++)
-	      xsubj[i] = xsubi[i];
+	int i;
+	for(i=0; i<3; i++)
+		  xsubj[i] = xsubi[i];
 
-    free(xsubi);  /* temporarily crashed for lorraine 1-19-03 */
+	free(xsubi);  /* temporarily crashed for lorraine 1-19-03 */
 }
 
 
@@ -81,15 +62,15 @@ void InitERand(unsigned short int xsubi[3])
 
 double RandomReal(void)
 {
-    double i;
+	double i;
 
-#ifdef USE_DRAND48
-    i = drand48();
-#elif  USE_ERAND48
-    i = erand48(xsubj);
-#else
-    i = ((double)random()) / 2147483648.;
-#endif
+// #ifdef USE_DRAND48
+//     i = drand48();
+// #elif  USE_ERAND48
+	i = erand48(xsubj);
+// #else
+//     i = ((double)random()) / 2147483648.;
+// #endif
 
   return i;
 }
@@ -101,17 +82,17 @@ double RandomReal(void)
 
 int RandomInt(int max)
 {
-    register int   i;
+	register int   i;
 
-#ifdef USE_DRAND48
-    i = ((int)(drand48() * max)) % max;
-#elif  USE_ERAND48
-    i = ((int)(erand48(xsubj) * max)) % max;
-#else
-    i = random() % max;
-#endif
+// #ifdef USE_DRAND48
+	// i = ((int)(drand48() * max)) % max;
+// #elif  USE_ERAND48
+	i = ((int)(erand48(xsubj) * max)) % max;
+// #else
+	// i = random() % max;
+// #endif
 
-    return i;
+	return i;
 }
 
 
@@ -122,7 +103,7 @@ int RandomInt(int max)
 
 unsigned short * GetERandState(void)
 {
-    unsigned short * p;
-    p = xsubj;
-    return(p);
+	unsigned short * p;
+	p = xsubj;
+	return(p);
 }

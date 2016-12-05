@@ -49,6 +49,10 @@
 #include "tuning.h"
 #include <mpi.h>
 
+
+int covar_index;    /* covariance sample index for tuning (in 'tau' units) */
+int write_tune_stat;               /* how often to write tuning statistics */
+int auto_stop_tune;       /* auto stop tune flag to stop tuning runs early */
 /* parallel code: variables for local Lam stats for tuning */
 
 /* local weights: there are two sets of local estimators for the mean ******
@@ -1151,7 +1155,7 @@ void InitTuning(int mix_interval, double Tau)
  *          dance partner(s)                                               *
  ***************************************************************************/
 
-double DoMix(double energy, double estimate_mean, double S)
+double DoMix(double energy, double estimate_mean, double S, int tuning)
 {
 	int    i;                                                /* loop counter */
 
@@ -1252,7 +1256,7 @@ double DoMix(double energy, double estimate_mean, double S)
 	/* get move state from move(s).c and collect local Lam stats for sending */
 
 	MakeStateMsg(&send_longbuf, &lsize, &send_doublebuf, &dsize);
-	MakeLamMsg(&sendbuf, l_energy);
+	MakeLamMsg(&sendbuf, l_energy, tuning);
 
 
 
@@ -1317,7 +1321,7 @@ double DoMix(double energy, double estimate_mean, double S)
 		MPI_Waitall(3, request, status);
 
 		AcceptStateMsg(recv_longbuf, recv_doublebuf);
-		l_energy = AcceptLamMsg(recvbuf);
+		l_energy = AcceptLamMsg(recvbuf, tuning);
 
 	}
 
@@ -1341,7 +1345,7 @@ double DoMix(double energy, double estimate_mean, double S)
 /*** MakeLamMsg: packages local Lam stats into send buffer *****************
  ***************************************************************************/
 
-void MakeLamMsg(double **sendbuf, double energy)
+void MakeLamMsg(double **sendbuf, double energy, int tuning)
 {
 	if ( tuning && nnodes>1 )
 		*sendbuf = (double *)calloc(LSTAT_LENGTH_TUNE, sizeof(double));
@@ -1395,7 +1399,7 @@ void MakeLamMsg(double **sendbuf, double energy)
 /*** AcceptLamMsg: receives new energy and Lam stats upon mixing ***********
  ***************************************************************************/
 
-double AcceptLamMsg(double *recvbuf)
+double AcceptLamMsg(double *recvbuf, int tuning)
 {
 	double energy = recvbuf[0];
 

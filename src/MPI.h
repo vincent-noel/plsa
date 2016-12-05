@@ -54,15 +54,15 @@
 
 /*** CONSTANTS ****************************************************************/
 
-#define MAX_MIX         10000      /* max number of mixes during a tuning run */
-					   /* set this to a lower number if you run out of memory */
-#define GROUP_SIZE         10       /* group size for calculating upper bound */
-
-#define STOP_TUNE_CNT      20                              /* stop tune count */
-#define STOP_TUNE_CRIT   0.05                        /* tuning stop criterion */
-
-#define LSTAT_LENGTH        1       /* length of Lam msg array when annealing */
-#define LSTAT_LENGTH_TUNE  28          /* length of Lam msg array when tuning */
+// #define MAX_MIX         10000      /* max number of mixes during a tuning run */
+// 					   /* set this to a lower number if you run out of memory */
+// #define GROUP_SIZE         10       /* group size for calculating upper bound */
+//
+// #define STOP_TUNE_CNT      20                              /* stop tune count */
+// #define STOP_TUNE_CRIT   0.05                        /* tuning stop criterion */
+//
+// #define LSTAT_LENGTH        1       /* length of Lam msg array when annealing */
+// #define LSTAT_LENGTH_TUNE  28          /* length of Lam msg array when tuning */
 
 
 
@@ -70,12 +70,12 @@
 
 int myid;                                  /* id of local node (processor) */
 int nnodes;               /* number of nodes (processors), also known as P */
-
-int tuning;                           /* flag for switching on tuning mode */
-int covar_index;    /* covariance sample index for tuning (in 'tau' units) */
-int write_tune_stat;               /* how often to write tuning statistics */
-int auto_stop_tune;       /* auto stop tune flag to stop tuning runs early */
-int write_llog;                        /* flag for writing local log files */
+//
+// int tuning;                           /* flag for switching on tuning mode */
+// // int covar_index;    /* covariance sample index for tuning (in 'tau' units) */
+// // int write_tune_stat;               /* how often to write tuning statistics */
+// // int auto_stop_tune;       /* auto stop tune flag to stop tuning runs early */
+// int write_llog;                        /* flag for writing local log files */
 
 
 

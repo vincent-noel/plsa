@@ -74,23 +74,15 @@ int 	main (int argc, char ** argv)
 #ifdef MPI
 	// MPI initialization steps
 	int nnodes, myid;
-
-	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
-	if (rc != MPI_SUCCESS)
-		printf (" > Error starting MPI program. \n");
-
-	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);        /* number of processors? */
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);         /* ID of local processor? */
-
 #endif
-
 
 	// define the optimization settings
 #ifdef MPI
-	SAType * t_sa = InitPLSA(nnodes, myid);
+	SAType * t_sa = InitPLSA(&nnodes, &myid);
 #else
-	SAType * t_sa = InitPLSA();
+	SAType * t_sa = InitPLSA(NULL, NULL);
 #endif
+
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
 
@@ -113,10 +105,6 @@ int 	main (int argc, char ** argv)
 		printf("final score : %g\n", res->score);
 #ifdef MPI
 	}
-
-
-	// terminates MPI execution environment
-	MPI_Finalize();
 #endif
 
 	free(res->params);

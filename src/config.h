@@ -29,8 +29,6 @@
 #include "types.h"
 
 
-SALogs * 	getLogSettings();
-
 char *		getLogDir();
 
 int			logTraceScore();
@@ -43,5 +41,4 @@ int 		logPid();
 int 		logBestScore();
 int 		logBestRes();
 
-void 		InitLogs();
-void 		BuildLogs();
+void 		InitializeLogs(SALogs * t_logs);

@@ -119,6 +119,10 @@ void InitMoves(SAType * state, PArrPtr * pl)
 
 	xsubj = (unsigned short *)calloc(3, sizeof(unsigned short));
 
+	InitDistribution(state->dist_params);
+
+
+
 	/* read annealing paramters and parameters-to-be-tweaked */
 
 	ap.max_count = 0;
@@ -294,7 +298,7 @@ int Move(void)
 {
 	double tweakee;
 	double theta;
-	double sign;
+	// double sign;
 
 	/* update counters */
 
@@ -321,16 +325,7 @@ int Move(void)
 	tweakee  = *(ptab[idx].param);
 	pretweak = tweakee;
 
-	theta = generate_dev(acc_tab[idx].theta_bar, DistP.distribution, DistP.q);
-
-	/* the sign stuff is needed for exponential distribution because always positive */
-	/* may (but not likely) need in future if wish to evaluate poisson or pareto distributions for fly  */
-	if (DistP.distribution == 1) /* need  positive + negative values for theta */
-	{
-		sign  = RandomReal() - 0.5;
-		if (sign <= 0)
-			theta = -theta;
-	}
+	theta = generate_dev(acc_tab[idx].theta_bar);
 
 	if (theta > THETA_MAX) theta = THETA_MAX;
 	if (theta < -THETA_MAX) theta = -THETA_MAX;

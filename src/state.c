@@ -174,7 +174,7 @@ void StateWrite(char *statefile, double energy)
 	move_status = MoveSave();
 	lamsave     = GetLamstats(energy);
 	prand       = GetERandState();
-	if ( time_flag )
+	if ( options->time_flag )
 		delta     = GetTimes();
 
 	/* write the answer; now *fully* portable, no binary!!! */
@@ -197,7 +197,7 @@ void StateWrite(char *statefile, double energy)
 	fprintf(outfile, "%d\n",    options->auto_stop_tune);
 #endif
 
-	if ( time_flag )
+	if ( options->time_flag )
 	{
 		fprintf(outfile, "%.3f\n", delta[0]);
 		fprintf(outfile, "%.3f\n", delta[1]);
@@ -228,11 +228,11 @@ void StateWrite(char *statefile, double energy)
 
 	fclose(outfile);
 
-	free(options);
 	free(move_status);
 	free(lamsave);
-	if ( time_flag )
+	if ( options->time_flag )
 		free(delta);
+	// free(options);
 
 }
 

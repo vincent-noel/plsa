@@ -46,7 +46,12 @@
 #include "distributions.h"   /* problem independent distibutions need q_init prototype */
 
 static double pi=3.14159265;     /* pi used for several distributions */
+static DistParms * params_dist;   /* variables for distributions */
 
+void InitDistribution(DistParms * dist)
+{
+	params_dist = dist;
+}
 /*******************************************
 * gasdev returns a normally distributed
 * deviate with zero mean and unit variance
@@ -172,7 +177,7 @@ double poidev(double xm)
 * The distribution type and theta_bar are input as parameters *
 * deviate is the value returned.                              *
 ***************************************************************/
-double generate_dev( double theta_bar, int distribution, double q)
+double generate_dev( double theta_bar)
 {
 	/* begin generate_dev*/
 
@@ -207,28 +212,32 @@ double generate_dev( double theta_bar, int distribution, double q)
 *******************************************************************************/
 
 
-	if (distribution == 1)
+	if (params_dist->distribution == 1)
 	{
 		/*****exponential distribution, exp(-x/mu) */
 		xi= RandomReal();
 		theta = (-1) * theta_bar * log(xi); /* exp dist */
 
+		double sign  = RandomReal() - 0.5;
+		if (sign <= 0)
+				theta = -theta;
+
 	}
 
-	else if ( distribution == 2 )
+	else if ( params_dist->distribution == 2 )
 	{
 		/* controlled uniform distribution*/
 		xi= RandomReal();  /* uniform dist interval =[0, theta_bar] */
 		theta = theta_bar * xi; /* controlled uniform */
 	}
 
-	else if ( distribution == 3 )
+	else if ( params_dist->distribution == 3 )
 	{
 		/* normal distribution */
 		theta = fabs (theta_bar * gasdev()); /* absolute values of normal dist */
 	}
 
-	else if ( distribution == 4 )
+	else if ( params_dist->distribution == 4 )
 	{
 		/* lorentzian distribution:(sigma) / [(x*x)+(sigma*sigma/4)]/pi */
 		/* tan of 0.5*pi is not good */
@@ -239,7 +248,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 		theta = fabs (theta_bar * tan(xi*pi) ); /* corrected 5-02 lorentz dist */
 	}
 
-	else if ( distribution == 5 )
+	else if ( params_dist->distribution == 5 )
 	{
 		/* lorentz2 distribution   */
 		/* tan of 0.5*pi is not good */
@@ -252,7 +261,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 
 	}
 
-	else if (distribution == 6 )
+	else if (params_dist->distribution == 6 )
 	{
 		/* begin poisson ---needs work still */
 		/* poisson deviates are all positive, and can get very large */
@@ -260,13 +269,13 @@ double generate_dev( double theta_bar, int distribution, double q)
 	}
 
 	/*******************************************************************/
-	else if (distribution == 8)
+	else if (params_dist->distribution == 8)
 	{
 		/* gasdev */
 		theta = gasdev(); /* just try standard normal */
 	}
 
-	else if (distribution == 9)
+	else if (params_dist->distribution == 9)
 	{
 		/* pareto */
 		/* pareto deviates are all positive, and can get very large */
@@ -277,7 +286,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 		/* deviate = b / [xi **(1/a)] */
 	}
 
-	else if (distribution == 10)
+	else if (params_dist->distribution == 10)
 	{
 		/* normal returning negative values  */
 		theta = theta_bar * gasdev(); /****  normal dist */
@@ -286,7 +295,7 @@ double generate_dev( double theta_bar, int distribution, double q)
 	else
 	{
 		/* unknown distribution, exit */
-		printf ("unknown distribution type=%d\n",distribution);
+		printf ("unknown distribution type=%d\n",params_dist->distribution);
 		exit (1);
 	}
 

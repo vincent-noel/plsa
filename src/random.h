@@ -35,9 +35,9 @@
  #endif
 /*** A CONSTANT **************************************************************/
 
-#define USE_ERAND48             1
-       /* tells the code to use erand48 by default, use -D opt to override ***/
-                /* alternative is: -DUSE_DRAND48 for using drand48 instead ***/
+// #define USE_ERAND48             1
+	   /* tells the code to use erand48 by default, use -D opt to override ***/
+				/* alternative is: -DUSE_DRAND48 for using drand48 instead ***/
 
 /*** FUNCTION PROTOTYPES *****************************************************/
 

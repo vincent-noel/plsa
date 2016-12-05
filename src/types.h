@@ -36,7 +36,8 @@
  * labeled OUT are written to the $annealing_output section upon comple-   *
  * tion of a run.                                                          */
 
-typedef struct {
+typedef struct
+{
   long   seed;                      /* seed for random number generator RO */
   double start_tempr;          /* the initial equilibration temperature RO */
   double gain;            /* gain for proportional control of move size RO */
@@ -57,25 +58,49 @@ typedef enum StopStyle
 
 /* Opts struct is for saving command line options in state.c */
 
-typedef struct {
-  StopStyle stop_flag;                                   /* stop criterion */
-  int       time_flag;                             /* flag for timing code */
-  int       log_flag;                                  /* log display flag */
-  long      state_write;              /* frequency for writing state files */
-  long      print_freq;         /* frequency for printing status to stdout */
-  long      captions;                         /* opt for printing captions */
-  int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
-  int       equil;              /* flag for equilibration mode (T = const) */
+typedef struct
+{
+	StopStyle stop_flag;                                   /* stop criterion */
+	int       time_flag;                             /* flag for timing code */
+	int       log_flag;                                  /* log display flag */
+	long      state_write;              /* frequency for writing state files */
+	long      print_freq;         /* frequency for printing status to stdout */
+	long      captions;                         /* opt for printing captions */
+	int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
+	int       equil;              /* flag for equilibration mode (T = const) */
+	int		  bench;
+
 #ifdef MPI
-  int       tuning;                                /* flag for tuning mode */
-  int       covar_index; /* index for sample interval (=covar_index * tau) */
-  int       write_tune_stat;    /* how many times to write tune statistics */
-  int       auto_stop_tune;                      /* auto-stop tuning runs? */
+
+	int       tuning;                                /* flag for tuning mode */
+	int       covar_index; /* index for sample interval (=covar_index * tau) */
+	int       write_tune_stat;    /* how many times to write tune statistics */
+	int       auto_stop_tune;                      /* auto-stop tuning runs? */
+
 #endif
+
+	int nofile_flag;       /* flog for not writing .log and .state files */
+	int max_iter;
+	int max_seconds;
+
 } Opts;
 
 
 
+typedef struct
+{
+	int distribution;      /* move generation distribution type RO */
+						 /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
+						 /*  LG: 07-05-00 formerly dist_type in lj code */
+	double q;              /* gen visiting distribution parameter RO */
+						 /* 1=guassian; 2=lor; but 1<q<3 */
+						 /*  LG: 03-02 need q and factors for GSA visit dist*/
+						 /*  1   <  q < 2   uses qlt2_visit       */
+						 /*  2   <  q < 2.6 uses qgt2_visit       */
+						 /*  2.6 <= q < 3   uses binom_qgt2_visit */
+
+
+} DistParms;
 
 typedef struct
 {
@@ -118,25 +143,29 @@ typedef struct
 
 } PArrPtr;
 
-typedef struct {
-  double acc_ratio;                      /* acceptance ratio for parameter */
-  double theta_bar;              /* theta bar is proportional to move size */
-  int    hits;       /* number of moves since last call to UpdateControl() */
-  int    success;              /* number of these moves that were accepted */
+typedef struct
+{
+	double acc_ratio;                      /* acceptance ratio for parameter */
+	double theta_bar;              /* theta bar is proportional to move size */
+	int    hits;       /* number of moves since last call to UpdateControl() */
+	int    success;              /* number of these moves that were accepted */
+
 } AccStats;
 
 /* following struct contains copies of the static variables of moves.c     *
  * together with the values of parameters undergoing annealing             */
 
-typedef struct {
-  ParamList *pt;  /* Used during a save to point to annealed-on parameters */
-  AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
-  double    *newval; /* points to array of annealed-on doubles for restore */
-  double    old_energy;                     /* energy before the last move */
-  int       nparams;                      /* # of parameters to be tweaked */
-  int       index;      /* index of parameter to be tweaked during a sweep */
-  int       nhits;                         /* number of moves already made */
-  int       nsweeps;                         /* number of completed sweeps */
+typedef struct
+{
+	ParamList *pt;  /* Used during a save to point to annealed-on parameters */
+	AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
+	double    *newval; /* points to array of annealed-on doubles for restore */
+	double    old_energy;                     /* energy before the last move */
+	int       nparams;                      /* # of parameters to be tweaked */
+	int       index;      /* index of parameter to be tweaked during a sweep */
+	int       nhits;                         /* number of moves already made */
+	int       nsweeps;                         /* number of completed sweeps */
+
 } MoveState;
 
 typedef struct
@@ -150,7 +179,13 @@ typedef struct
 
 typedef struct
 {
+	/* PLSA, aka top level settings */
 	long   				seed;
+
+	/* LSA General settings (printing and stuff )*/
+	Opts * 				options;
+
+	/* LSA settings */
 	double 				initial_temp;     /* initial temperature for annealer */
 
 	double 				lambda;
@@ -162,9 +197,11 @@ typedef struct
 	int    				update_S_skip;
 	double 				control;
 	double 				criterion;
-	#ifdef MPI
+
+	/* Parallel settings */
+#ifdef MPI
 	int    				mix_interval;
-	#endif
+#endif
 
 	/* These were marked "Application program must set these." in the code        */
 	/* from Greening/Lam; only progname is used at the moment; we kept them       */
@@ -178,23 +215,15 @@ typedef struct
 	double      		gain_for_jump_size_control;
 	double      		interval;
 
-
-
-	int         distribution;        /* move generation distribution type RO */
-			 /* 1 - exp; 2 - uni; 3 - absnor; 4 - abs lorentz */
-			   /*  LG: 07-05-00 formerly dist_type in lj code */
-
-	double      q;                 /* gen visiting distribution parameter RO */
-							  /* 1=guassian; 2=lor; but 1<q<3 */
-		   /*  LG: 03-02 need q and factors for GSA visit dist*/
-			/*  1   <  q < 2   uses qlt2_visit       */
-			/*  2   <  q < 2.6 uses qgt2_visit       */
-			/*  2.6 <= q < 3   uses binom_qgt2_visit */
-
+	/* Score settings */
 	double      		(*scoreFunction)   	();
 	void        		(*printFunction)   	(char * path, int proc);
 
-	SALogs * logs;
+	/* Distribution settings */
+	DistParms * 		dist_params;
+
+	/* Logs settings */
+	SALogs * 			logs;
 
 } SAType ;
 
