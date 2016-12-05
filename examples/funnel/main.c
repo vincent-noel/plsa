@@ -38,10 +38,6 @@
 #include "../../src/sa.h"
 #include <math.h>
 
-#ifdef MPI
-#include <mpi.h>
-#endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Problem definition :

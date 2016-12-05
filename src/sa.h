@@ -39,11 +39,12 @@
 
 
 /*** InitPLSA: Initialize the settings variable, are returns it               */
-SAType * InitPLSA(int * nb_procs, int * my_id);
+SAType * 	InitPLSA				(int * nb_procs, int * my_id);
 
 
 /*** InitPLSAParameters: Initialize the parameters variable, are returns it   */
-PArrPtr * InitPLSAParameters(int nb_dimensions);
+PArrPtr * 	InitPLSAParameters		(int nb_dimensions);
+
 
 /*** runPLSA: Perform the optimization, and returns the result                */
-PLSARes * runPLSA();
+PLSARes * 	runPLSA();

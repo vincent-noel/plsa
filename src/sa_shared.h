@@ -172,7 +172,7 @@ double InitialLoop(SAType * state, double S_0);
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag);
+int Loop(SAType * state, char * statefile, StopStyle stop_flag);
 
 /* functions which communicate with other source files, these are needed  *
  * for reading/writing .state files                                       */

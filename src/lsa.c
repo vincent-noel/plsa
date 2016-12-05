@@ -59,11 +59,11 @@ int write_llog;                        /* flag for writing local log files */
 
 // static char   *statefile;                        /* name of the state file */
 static char   *logfile;                    /* name of the global .log file */
-int         	start_time_seconds;
+static int         	start_time_seconds;
 
 /* some energy-related variables *******************************************/
 
-// static double energy;                                    /* current energy */
+static double energy;                                    /* current energy */
 
 static double S;                                 /* current inverse energy */
 static double dS;                      /* delta S: change in S during move */
@@ -212,7 +212,7 @@ void InitializeWeights(SAType * state)
 	 * better way of sampling local statistics will be needed (probably as     *
 	 * part of a general theory of parallel Lam simulated annealing)           */
 
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		InitializeLocalWeights(w_a, w_b);
 
 #endif
@@ -274,7 +274,7 @@ void InitializeParameter(SAType * state)
 	 * note that the two sets of local estimators used for tuning only differ  *
 	 * in their weights, so they can actually be initialized the same way      */
 
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		InitializeLocalParameters(S_0);
 
 #endif
@@ -297,7 +297,7 @@ double InitialLoop(SAType * state, double s0)
 {
 	int         i;                                     /* local loop counter */
 
-	double 		energy;
+	// double 		energy;
 	double      energy_change;               /* change of energy during move */
 
 #ifdef MPI
@@ -400,7 +400,7 @@ double InitialLoop(SAType * state, double s0)
 #ifdef MPI
 
 	/* collect local stats if tuning */
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		InitLocalStatsTuning(mean, vari, success);
 
 	total = InitLocalStats(mean, vari, &success, i, state->initial_moves);
@@ -411,7 +411,7 @@ double InitialLoop(SAType * state, double s0)
 	free(total);
 
 	/* local stats are calculated here (only if tuning) */
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		Init2LocalStatsTuning(proc_init);
 
 #endif
@@ -448,7 +448,7 @@ void UpdateS(SAType * state)
 
 	/* do the same for local Lam parameters (for both lower and upper bounds) */
 
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		UpdateLocalSTuning(S);
 
 #endif
@@ -487,11 +487,10 @@ void UpdateStats(SAType * state, int i)
 	vari = total[1];
 	free(total);
 
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		UpdateLocalStatsTuning(proc_tau);
 
 #else
-
 	mean /= ((double) state->tau);                                  /* collect some statistics */
 	vari /= ((double) state->tau);
 
@@ -603,7 +602,6 @@ int Frozen(SAType * state, StopStyle stop_flag)
 		delta = mean;
 
 
-
 	if (delta <= 0.)
 		delta = -delta;
 
@@ -640,7 +638,7 @@ void WriteScoreTrace(double t_energy, int acceptance)
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
+int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 {
 	int    i;                                          /* local loop counter */
 	// double energy;
@@ -649,7 +647,7 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 
 	/* quenchit mode: set temperature to (approximately) zero immediately */
 
-	if ( state->options->quenchit )
+	if ( state->quenchit )
 		S = DBL_MAX;
 
 	/* loop till the end of the universe (or till the stop criterion applies) */
@@ -664,19 +662,19 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 #ifdef MPI
 		ResetLocalStats();
 #endif
-
+		// printf("proc tau = %d\n", proc_tau);
 		/* do proc_tau moves here */
-
 		for (i=0; i<proc_tau; i++)
 		{
 			/* make a move: will either return the energy change or FORBIDDEN_MOVE */
+
 			energy_change = GenerateMove();
 
 			/* Metropolis stuff here; we usually want FORBIDDEN_MOVE to be very large  *
 			 * that's why we want to prevent overflows here (hence the 'if'); we also  *
 			 * need to avoid overflows with quenchit (where S is (almost) infinite!)   */
 
-			if ( !state->options->quenchit && (energy_change != FORBIDDEN_MOVE ) )
+			if ( !state->quenchit && (energy_change != FORBIDDEN_MOVE ) )
 				exp_arg = -S * energy_change;
 
 			/* MIN_DELTA provides a min. probability with which any move is accepted */
@@ -692,14 +690,14 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 			if (energy_change == FORBIDDEN_MOVE) {
 				RejectMove();
 			} else if ( (energy_change <= 0.0) ||
-					  ( (!state->options->quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
+					  ( (!state->quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
 				AcceptMove();
 				energy = GetNewEnergy();
 
 				success++;
 				acceptance_result = 1;
 #ifdef MPI
-				if ( state->options->tuning && nnodes>1 )
+				if ( state->tuning && nnodes>1 )
 					AddLocalSuccess();
 #endif
 			} else
@@ -709,14 +707,14 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 				WriteScoreTrace(GetNewEnergy(), acceptance_result);
 
 			/* update statistics */
-
+			// printf("energy = %g\n", energy);
 			mean    += energy;
 			d        = energy - estimate_mean;
 			vari    += d * d;
 #ifdef MPI
 
 			/* if tuning: calculate the local mean and variance */
-			if ( state->options->tuning && nnodes>1 )
+			if ( state->tuning && nnodes>1 )
 				CalculateLocalStats(energy);
 #endif
 
@@ -725,7 +723,7 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 			 * lete by now, but since it doesn't seem to do any harm and saves us some *
 			 * time, we left it in here                                                */
 
-			if ( !state->options->quenchit )
+			if ( !state->quenchit )
 				if ( --skip <= 0 )
 					UpdateS(state);
 
@@ -745,34 +743,34 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 		 * aren't stopped by the tuning stop criterion) leave the loop here; equi- *
 		 * libration runs exit below */
 
-		if (state->options->max_iter > 0 && count_tau >= state->options->max_iter)
-			return 0;//FinalMove(state);
+		if (state->max_iter > 0 && count_tau >= state->max_iter)
+			return 0;
 
-		if (state->options->max_seconds > 0)
+		if (state->max_seconds > 0)
 		{
 			struct timeval tp;
 			gettimeofday(&tp, NULL);
 			int duration = ((int) tp.tv_sec) - start_time_seconds;
 
-			if (duration > state->options->max_seconds)
+			if (duration > state->max_seconds)
 				return 0;
 
 		}
 
-		if ( Frozen(state, state->options->stop_flag) )
+		if ( Frozen(state, state->stop_flag) )
 			return 0;
 
 		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
 		 * don't need this in quenchit mode since the temperature is fixed to 0)   */
 
-		if ( !state->options->quenchit )
+		if ( !state->quenchit )
 			UpdateParameter();
 
  #ifdef MPI
 
 		/* tuning code: first update local Lam estimators */
 
-		if ( state->options->tuning && nnodes>1 )
+		if ( state->tuning && nnodes>1 )
 		{
 			UpdateLParameter(S);
 
@@ -783,16 +781,16 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 		/* at each mix_interval: do some mixing */
 
 		if ( count_tau % state->mix_interval == 0 )
-			DoMix(energy, estimate_mean, S, state->options->tuning);
+			DoMix(energy, estimate_mean, S, state->tuning);
 
 #endif
 
 		/* write the log every print_freq * tau (not proc_tau!) */
 
 #ifdef MPI
-		if ( (count_tau % (state->options->print_freq*nnodes) == 0) )
+		if ( (count_tau % (state->print_freq*nnodes) == 0) )
 #else
-		if ( (count_tau % state->options->print_freq == 0) )
+		if ( (count_tau % state->print_freq == 0) )
 #endif
 
 			WriteLog(state);
@@ -800,9 +798,9 @@ int Loop(SAType * state, double energy, char * statefile, StopStyle stop_flag)
 		/* the state file gets written here every state_write * tau */
 
 #ifdef MPI
-		if ( (count_tau % (state->options->state_write*nnodes) == 0) && !state->options->tuning )
+		if ( (count_tau % (state->state_write*nnodes) == 0) && !state->tuning )
 #else
-		if ( (count_tau % state->options->state_write == 0) )
+		if ( (count_tau % state->state_write == 0) )
 #endif
 			StateWrite(statefile, energy);
 
@@ -819,7 +817,7 @@ double *GetLamstats(double energy)
 {
 	double *stats;
 
-	stats = (double *)calloc(31, sizeof(double));
+	stats = (double *)calloc(33, sizeof(double));
 
 	stats[0] = (double)counter;
 
@@ -828,7 +826,6 @@ double *GetLamstats(double energy)
 
 	stats[3]  = mean;
 	stats[4]  = vari;
-
 	stats[5]  = estimate_mean;
 	stats[6]  = estimate_sd;
 
@@ -860,6 +857,8 @@ double *GetLamstats(double energy)
 	stats[29] = B;
 
 	stats[30] = (double)count_tau;
+	stats[31] = (double)proc_init;
+	stats[32] = (double)proc_tau;
 
 	return(stats);
 }
@@ -915,10 +914,12 @@ double *GetTimes(void)
 double RestoreLamstats(double *stats)
 {
 	double energy;
+
 	counter = (int)rint(stats[0]);
 
 	old_mean      = stats[1];
 	energy        = stats[2];
+
 	mean          = stats[3];
 	vari          = stats[4];
 
@@ -928,6 +929,7 @@ double RestoreLamstats(double *stats)
 	S             = stats[7];
 	dS            = stats[8];
 	S_0           = stats[9];
+
 	alpha         = stats[10];
 	acc_ratio     = stats[11];
 
@@ -952,6 +954,9 @@ double RestoreLamstats(double *stats)
 	B             = stats[29];
 
 	count_tau = (long)rint(stats[30]);
+
+	proc_init = (int)rint(stats[31]);
+	proc_tau = (int)rint(stats[32]);
 
 	free(stats);
 	return energy;
@@ -1069,7 +1074,7 @@ void RestoreLog(SAType * state)
 
 	/* now do the same stuff for the local .llog files */
 
-	if ( state->options->tuning && nnodes>1 )
+	if ( state->tuning && nnodes>1 )
 		RestoreLocalLogTuning(max_saved_count);
 
 #endif
@@ -1101,23 +1106,24 @@ void WriteLog(SAType * state)
 #ifdef MPI
 	}
 
-	if ( write_llog && state->options->tuning && nnodes>1 )
+	if ( write_llog && state->tuning && nnodes>1 )
 		WriteLocalLog((state->initial_moves+proc_init+count_tau*proc_tau),
 						S, dS);
 
-	if ( myid == 0 )
-	{
-#endif
 
-		if ( state->options->log_flag )                          /* display log to the screen? */
-		{
-			PrintLog(stdout, state->initial_moves);
-			fflush( stdout );
-		}
-
-#ifdef MPI
-	}
+// 	if ( myid == 0 )
+// 	{
 #endif
+//
+// 		if ( state->options->log_flag )                          /* display log to the screen? */
+// 		{
+// 			PrintLog(stdout, state->initial_moves);
+// 			fflush( stdout );
+// 		}
+//
+// #ifdef MPI
+// 	}
+// #endif
 
 }
 

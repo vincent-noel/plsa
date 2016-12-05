@@ -78,15 +78,14 @@ static char version[MAX_RECORD];                 /* version gets set below */
 
 // static int    precision   = 16;                    /* precision for eqparms */
 static PArrPtr 	 	plsa_params;
-static DistParms		dist_params;
-static SAType			state;
-static Opts			options;
+static DistParms	dist_params;
+static SAType		state;
+// static Opts			options;
 static StopStyle   	stop_flag;               /* type of stop criterion (see above) */
-static SALogs			logs;
-static int    			stateflag;                              /* state file or not? */
-static char *	statefile;                        /* name of the state file */
+static SALogs		logs;
+static int    		stateflag;                              /* state file or not? */
+static char *		statefile;                        /* name of the state file */
 
-static double energy;                                    /* current energy */
 
 /* variables used for timing */
 
@@ -183,45 +182,58 @@ void SetDefaultOptions()
 	sprintf(version, "plsa version %f serial", VERS);
 #endif
 
-	/* following part sets default values for command line options */
-
-	options.captions        = 100000000;  /* default freq for writing captions (off) */
-	options.print_freq      = 1;           /* default freq for writing to log file */
-	options.state_write     = 100;        /* default freq for writing to state file */
-
-	options.stop_flag       = absolute_freeze;             /* type of stop criterion */
-	options.time_flag       = 0;                                  /* flag for timing */
-	options.log_flag        = 0;              /* flag for writing logs to the screen */
-	options.max_iter        = 0;
-	options.max_seconds     = 0;
-	options.quenchit = 0;          /* flag for quenchit mode (T=0 immediately) */
-#ifdef MPI
-	options.tuning = 0;
-	options.covar_index     = 1;      /* covariance sample will be covar_index * tau */
-	options.write_tune_stat = 1;         /* how many times do we write tuning stats? */
-	options.auto_stop_tune  = 1;               /* auto stop tuning runs? default: on */
-#endif
+// 	/* following part sets default values for command line options */
+//
+// 	options.captions        = 100000000;  /* default freq for writing captions (off) */
+// 	options.print_freq      = 1;           /* default freq for writing to log file */
+// 	options.state_write     = 100;        /* default freq for writing to state file */
+//
+// 	options.stop_flag       = absolute_freeze;             /* type of stop criterion */
+// 	options.time_flag       = 0;                                  /* flag for timing */
+// 	// options.log_flag        = 0;              /* flag for writing logs to the screen */
+// 	options.max_iter        = 0;
+// 	options.max_seconds     = 0;
+// 	options.quenchit = 0;          /* flag for quenchit mode (T=0 immediately) */
+// #ifdef MPI
+// 	options.tuning = 0;
+// 	options.covar_index     = 1;      /* covariance sample will be covar_index * tau */
+// 	options.write_tune_stat = 1;         /* how many times do we write tuning stats? */
+// 	options.auto_stop_tune  = 1;               /* auto stop tuning runs? default: on */
+// #endif
 
 
 	state.seed = -6.60489e+08;
+
+	state.print_freq      = 1;           /* default freq for writing to log file */
+	state.state_write     = 100;        /* default freq for writing to state file */
+	state.time_flag = 0;
+
 	state.initial_temp = 1000;
 
-	state.lambda = 0.01;
+	state.lambda = 0.000001;
 	state.lambda_mem_length_u = 200;
 	state.lambda_mem_length_v = 1000;
 
 	state.initial_moves = 200;
 	state.tau = 100;
-	state.freeze_count = 100;
+	state.freeze_count = 1000;
 
 	state.update_S_skip = 1;
 	state.control = 1;
-	state.criterion = 0.01;
+	state.criterion = 0;
 #ifdef MPI
 	state.mix_interval = 10;
+	state.tuning = 0;
 #endif
 	state.gain_for_jump_size_control = 5;
 	state.interval = 100;
+
+	state.max_iter = -1;
+	state.max_seconds = -1;
+	state.quenchit = 0;
+	state.stop_flag = absolute_freeze;             /* type of stop criterion */
+
+
 
 	dist_params.distribution = 1;
 	dist_params.q = 1;
@@ -242,7 +254,7 @@ void SetDefaultOptions()
 	logs.best_res = 0;
 
 	state.logs = &logs;
-	state.options = &options;
+	// state.options = &options;
 	state.dist_params = &dist_params;
 }
 
@@ -415,7 +427,7 @@ double FinalMove()
 	/* clean up the state file and free memory */
 
 #ifdef MPI
-	if ( ! options.tuning )
+	if ( ! state.tuning )
 #endif
 	StateRm();
 
@@ -499,7 +511,7 @@ void InitialMove(double *p_chisq)
 	// InitDistribution();   /* initialize distribution stuff */
 
 	energy = -999;
-
+	energy = Score();
 	*p_chisq = energy;                                  /* set initial score */
 
 	return;//(i_temp);                                   /* initial temperature */
@@ -526,8 +538,8 @@ void InitialMove(double *p_chisq)
 void RestoreState(char *statefile, double *p_chisq)
 {
 	char           *p;                                   /* temporary string */
-
-	// Opts           *options;         /* used to restore command line options */
+	double 			energy;
+	Opts           *options;         /* used to restore command line options */
 	MoveState      *move_ptr;                       /* used to restore moves */
 	double         *stats;                      /* used to restore Lam stats */
 	unsigned short *rand;                         /* used to restore ERand48 */
@@ -535,20 +547,20 @@ void RestoreState(char *statefile, double *p_chisq)
 
 	/* allocate memory for structures that will be returned (stats gets allo-  *
 	 * cated in StateRead(), since we need to know if we're tuning or not)     */
-
-	// options = (Opts *)malloc(sizeof(Opts));
+	printf("> Restoring state...\n");
+	options = (Opts *)malloc(sizeof(Opts));
 	// options->inname    = (char *)calloc(MAX_RECORD, sizeof(char));
 	// options->outname   = (char *)calloc(MAX_RECORD, sizeof(char));
 
-	stats    = (double *)calloc(31, sizeof(double));
+	stats    = (double *)calloc(33, sizeof(double));
 	move_ptr = (MoveState *)malloc(sizeof(MoveState));
 	rand     = (unsigned short *)calloc(3, sizeof(unsigned short));
 
-	StateRead(statefile, &options, move_ptr, stats, rand, delta);
+	StateRead(statefile, options, move_ptr, stats, rand, delta);
 
 	/* restore options in plsa.c (and some in lsa.c) */
 
-	RestoreOptions(&options);
+	RestoreOptions(options);
 
 	/* initialize some Lam/Greening structures */
 
@@ -566,7 +578,8 @@ void RestoreState(char *statefile, double *p_chisq)
 
 	RestoreMoves(move_ptr);
 	energy = RestoreLamstats(stats);
-	if ( options.time_flag )
+	*p_chisq = energy;
+	if ( state.time_flag )
 		RestoreTimes(delta);
 	InitERand(rand);
 
@@ -579,7 +592,7 @@ void StartPLSA()
 	/* first get Lam parameters, initial temp and energy and initialize S_0 */
 	/* if we restore a run from a state file: call RestoreState() */
 	double S_0;
-
+	double energy;
 #ifdef MPI
 	if (myid == 0)
 	{
@@ -602,7 +615,6 @@ void StartPLSA()
 #ifdef MPI
 	}
 #endif
-
 
 	if ( !stateflag )
 	{
@@ -636,14 +648,14 @@ void StartPLSA()
 	if ( !stateflag )
 		energy = InitialLoop(&state, S_0);
 
-	/* write first .log entry and write first statefile right after init; */
 
+	/* write first .log entry and write first statefile right after init; */
 
 	if ( !stateflag )
 	{
 		WriteLog(&state);
 #ifdef MPI
-		if ( !options.tuning )
+		if ( !state.tuning )
 #endif
 		StateWrite(statefile, energy);
 	}
@@ -654,7 +666,7 @@ void StartPLSA()
 
 #ifdef MPI
 	/* if we are in tuning mode: initialize/restore tuning structs */
-	if ( options.tuning )
+	if ( state.tuning )
 		InitTuning(state.mix_interval, (double) state.tau);
 #endif
 
@@ -691,12 +703,12 @@ PLSARes * runPLSA()
 
 	StartPLSA();
 
-	if (!Loop(&state, energy, statefile, stop_flag))
+	if (!Loop(&state, statefile, stop_flag))
 		final_score = FinalMove();
 
 	/* code for timing */
 
-	if ( options.time_flag )
+	if ( state.time_flag )
 	{
 		delta = GetTimes();                  /* calculates times to be printed */
 #ifdef MPI
@@ -739,25 +751,25 @@ PLSARes * runPLSA()
 
 Opts *GetOptions(void)
 {
-// 	Opts       *options;
-//
-// 	options = (Opts *)malloc(sizeof(Opts));
-// 	options->stop_flag   = stop_flag;
-// 	options->log_flag    = log_flag;
-// 	options->time_flag   = time_flag;
-// 	options->state_write = state_write;
-// 	options->print_freq  = print_freq;
-// 	options->captions    = captions;
-// 	// options->precision   = precision;
-// 	options->quenchit    = quenchit;
-//
-// #ifdef MPI
-// 	options->covar_index     = covar_index;
-// 	options->write_tune_stat = write_tune_stat;
-// 	options->auto_stop_tune  = auto_stop_tune;
-// #endif
+	Opts * options;
 
-	return &options;
+	options = (Opts *)malloc(sizeof(Opts));
+	options->stop_flag   = state.stop_flag;
+	// options->log_flag    = log_flag;
+	options->time_flag   = state.time_flag;
+	options->state_write = state.state_write;
+	options->print_freq  = state.print_freq;
+	// options->captions    = state.captions;
+	// options->precision   = precision;
+	options->quenchit    = state.quenchit;
+#ifdef MPI
+	options->tuning = state.tuning;
+	// options->covar_index     = covar_index;
+	// options->write_tune_stat = write_tune_stat;
+	// options->auto_stop_tune  = auto_stop_tune;
+#endif
+
+	return options;
 }
 
 
@@ -766,25 +778,26 @@ Opts *GetOptions(void)
  *                   from the Opts struct (used for restoring a run)       *
  ***************************************************************************/
 
-void RestoreOptions(Opts *opts)
+void RestoreOptions(Opts * options)
 {
-//
-// 	/* all the other options */
-// 	stop_flag   = options->stop_flag;
-// 	log_flag    = options->log_flag;
-// 	time_flag   = options->time_flag;
-// 	state_write = options->state_write;
-// 	print_freq  = options->print_freq;
-// 	captions    = options->captions;
-// 	// precision   = options->precision;
-// 	quenchit    = options->quenchit;
-//
-// #ifdef MPI
+
+	/* all the other options */
+	state.stop_flag   = options->stop_flag;
+	// state.log_flag    = options->log_flag;
+	state.time_flag   = options->time_flag;
+	state.state_write = options->state_write;
+	state.print_freq  = options->print_freq;
+	// state.captions    = options->captions;
+	// precision   = options->precision;
+	state.quenchit    = options->quenchit;
+
+#ifdef MPI
+	state.tuning 	  = options->tuning;
 // 	covar_index     = options->covar_index;
 // 	write_tune_stat = options->write_tune_stat;
 // 	auto_stop_tune  = options->auto_stop_tune;
-// #endif
-//
-// 	free(options);
-	options = *opts;
+#endif
+
+	free(options);
+	// options = *opts;
 }

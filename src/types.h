@@ -62,13 +62,9 @@ typedef struct
 {
 	StopStyle stop_flag;                                   /* stop criterion */
 	int       time_flag;                             /* flag for timing code */
-	int       log_flag;                                  /* log display flag */
 	long      state_write;              /* frequency for writing state files */
 	long      print_freq;         /* frequency for printing status to stdout */
-	long      captions;                         /* opt for printing captions */
 	int       quenchit;          /* flag for quenchit mode (T=0 immediately) */
-	int       equil;              /* flag for equilibration mode (T = const) */
-	int		  bench;
 
 #ifdef MPI
 
@@ -79,7 +75,6 @@ typedef struct
 
 #endif
 
-	int nofile_flag;       /* flog for not writing .log and .state files */
 	int max_iter;
 	int max_seconds;
 
@@ -161,6 +156,7 @@ typedef struct
 	AccStats  *acc_tab_ptr;            /* points to current acceptance stats */
 	double    *newval; /* points to array of annealed-on doubles for restore */
 	double    old_energy;                     /* energy before the last move */
+
 	int       nparams;                      /* # of parameters to be tweaked */
 	int       index;      /* index of parameter to be tweaked during a sweep */
 	int       nhits;                         /* number of moves already made */
@@ -183,8 +179,10 @@ typedef struct
 	long   				seed;
 
 	/* LSA General settings (printing and stuff )*/
-	Opts * 				options;
-
+	// Opts * 				options;
+	int 				print_freq;   /* default freq for writing to log file */
+	int 				state_write;/* default freq for writing to state file */
+	int 				time_flag;
 	/* LSA settings */
 	double 				initial_temp;     /* initial temperature for annealer */
 
@@ -198,14 +196,21 @@ typedef struct
 	double 				control;
 	double 				criterion;
 
-	/* Parallel settings */
 #ifdef MPI
+/* Parallel settings */
 	int    				mix_interval;
+	int 				tuning;
 #endif
 
-	/* These were marked "Application program must set these." in the code        */
-	/* from Greening/Lam; only progname is used at the moment; we kept them       */
-	/* mainly for historical reasons (and to write funny things into tunename)    */
+
+	int 				max_iter;
+	int					max_seconds;
+	int 				quenchit;
+	StopStyle 			stop_flag;                          /* stop criterion */
+
+	/* These were marked "Application program must set these." in the code    */
+	/* from Greening/Lam; only progname is used at the moment; we kept them   */
+	/* mainly for historical reasons (and to write funny things into tunename)*/
 
 	char   				progname[128];                     /* name of my prog */
 	int    				debuglevel;                              /* who cares */

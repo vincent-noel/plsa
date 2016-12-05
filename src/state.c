@@ -89,14 +89,13 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 	file_error("StateRead");
 
   fscanf(infile, "%d\n",  (int*) &(options->stop_flag));
-  fscanf(infile, "%d\n",  &(options->log_flag));
   fscanf(infile, "%d\n",  &(options->time_flag));
   fscanf(infile, "%ld\n", &(options->state_write));
   fscanf(infile, "%ld\n", &(options->print_freq));
-  fscanf(infile, "%ld\n", &(options->captions));
-  // fscanf(infile, "%d\n",  &(options->precision));
+
   fscanf(infile, "%d\n",  &(options->quenchit));
 #ifdef MPI
+  fscanf(infile, "%d\n",  &(options->tuning));
   fscanf(infile, "%d\n",  &(options->covar_index));
   fscanf(infile, "%d\n",  &(options->write_tune_stat));
   fscanf(infile, "%d\n",  &(options->auto_stop_tune));
@@ -107,20 +106,25 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 	fscanf(infile, "%lf\n", &(delta[1]));
   }
 
+  fscanf(infile, "%d\n",  &(options->max_iter));
+  fscanf(infile, "%d\n",  &(options->max_seconds));
+
   fscanf(infile, "%d\n",  &(move_ptr->nparams));
   fscanf(infile, "%d\n",  &(move_ptr->index));
   fscanf(infile, "%d\n",  &(move_ptr->nhits));
   fscanf(infile, "%d\n",  &(move_ptr->nsweeps));
 
+  // Here we put the values in a double array, and not in the ParamList array
+  // TODO : just remove the ParamList, and always use the doubles ?
   move_ptr->newval      =
 	(double *)calloc(move_ptr->nparams, sizeof(double));
   move_ptr->pt          = NULL;
-
   move_ptr->acc_tab_ptr =
 	(AccStats *)calloc(move_ptr->nparams, sizeof(AccStats));
 
   for(i=0; i < move_ptr->nparams; i++)
 	fscanf(infile, "%lg\n", &(move_ptr->newval[i]));
+
   fscanf(infile,"%lg\n", &(move_ptr->old_energy));
 
   for(i=0; i < move_ptr->nparams; i++)
@@ -130,7 +134,7 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 	   &(move_ptr->acc_tab_ptr[i].hits),
 	   &(move_ptr->acc_tab_ptr[i].success) );
 
-  for(i=0; i<31; i++)
+  for(i=0; i<33; i++)
 	fscanf(infile, "%lg\n", &(stats[i]));
 
   for(i=0; i<3; i++)
@@ -183,15 +187,15 @@ void StateWrite(char *statefile, double energy)
 	if ( !outfile )
 		file_error("StateWrite");
 
+
+	/* Start of the Opts struct */
 	fprintf(outfile, "%d\n",    options->stop_flag);
-	fprintf(outfile, "%d\n",    options->log_flag);
 	fprintf(outfile, "%d\n",    options->time_flag);
 	fprintf(outfile, "%ld\n",   options->state_write);
 	fprintf(outfile, "%ld\n",   options->print_freq);
-	fprintf(outfile, "%ld\n",   options->captions);
-	// fprintf(outfile, "%d\n",    options->precision);
 	fprintf(outfile, "%d\n",    options->quenchit);
 #ifdef MPI
+	fprintf(outfile, "%d\n", 	options->tuning);
 	fprintf(outfile, "%d\n",    options->covar_index);
 	fprintf(outfile, "%d\n",    options->write_tune_stat);
 	fprintf(outfile, "%d\n",    options->auto_stop_tune);
@@ -203,6 +207,11 @@ void StateWrite(char *statefile, double energy)
 		fprintf(outfile, "%.3f\n", delta[1]);
 	}
 
+	fprintf(outfile, "%d\n", 	options->max_iter);
+	fprintf(outfile, "%d\n", 	options->max_seconds);
+
+
+	/* Start of the move_state struct */
 	fprintf(outfile, "%d\n",    move_status->nparams);
 	fprintf(outfile, "%d\n",    move_status->index);
 	fprintf(outfile, "%d\n",    move_status->nhits);
@@ -220,11 +229,17 @@ void StateWrite(char *statefile, double energy)
 			move_status->acc_tab_ptr[i].hits,
 			move_status->acc_tab_ptr[i].success);
 
-	for(i=0; i < 31; i++)
+
+	/* LAM stats (some huge array of 31 vals... Yeepeeee) */
+	for(i=0; i < 33; i++)
 		fprintf(outfile,"%.16g\n", lamsave[i]);
 
+
+	/* The three values to initialize ERand I guess */
 	for(i=0; i < 3; i++)
 		fprintf(outfile,"%d\n", prand[i]);
+
+
 
 	fclose(outfile);
 
