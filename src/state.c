@@ -71,7 +71,7 @@ static char           *filename;                     /* name of state file */
  ***************************************************************************/
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-		   double *stats, unsigned short *rand, double *delta)
+		   LamState *lam_state, unsigned short *rand, double *delta)
 {
   int            i;                                  /* local loop counter */
   FILE           *infile;                         /* pointer to state file */
@@ -134,8 +134,58 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
 	   &(move_ptr->acc_tab_ptr[i].hits),
 	   &(move_ptr->acc_tab_ptr[i].success) );
 
-  for(i=0; i<33; i++)
-	fscanf(infile, "%lg\n", &(stats[i]));
+  // for(i=0; i<33; i++)
+  // scanf(infile, "%lg\n", &(stats[i]));
+
+  	fscanf(infile, "%d", &(lam_state->counter));
+
+  	fscanf(infile, "%lg", &(lam_state->old_mean));
+  	fscanf(infile, "%lg", &(lam_state->energy));
+
+  	fscanf(infile, "%lg", &(lam_state->mean));
+  	fscanf(infile, "%lg", &(lam_state->vari));
+
+  	fscanf(infile, "%lg", &(lam_state->estimate_mean));
+  	fscanf(infile, "%lg", &(lam_state->estimate_sd));
+
+  	fscanf(infile, "%lg", &(lam_state->S));
+  	fscanf(infile, "%lg", &(lam_state->dS));
+  	fscanf(infile, "%lg", &(lam_state->S_0));
+
+  	fscanf(infile, "%lg", &(lam_state->alpha));
+  	fscanf(infile, "%lg", &(lam_state->acc_ratio));
+
+  	fscanf(infile, "%lg", &(lam_state->w_b));
+  	fscanf(infile, "%lg", &(lam_state->vsyy));
+  	fscanf(infile, "%lg", &(lam_state->vsxy));
+  	fscanf(infile, "%lg", &(lam_state->vsxx));
+  	fscanf(infile, "%lg", &(lam_state->vsx));
+  	fscanf(infile, "%lg", &(lam_state->vsy));
+  	fscanf(infile, "%lg", &(lam_state->vsum));
+  	fscanf(infile, "%lg", &(lam_state->D));
+  	fscanf(infile, "%lg", &(lam_state->E));
+
+  	fscanf(infile, "%lg", &(lam_state->w_a));
+  	fscanf(infile, "%lg", &(lam_state->usyy));
+  	fscanf(infile, "%lg", &(lam_state->usxy));
+  	fscanf(infile, "%lg", &(lam_state->usxx));
+  	fscanf(infile, "%lg", &(lam_state->usx));
+  	fscanf(infile, "%lg", &(lam_state->usy));
+  	fscanf(infile, "%lg", &(lam_state->usum));
+  	fscanf(infile, "%lg", &(lam_state->A));
+  	fscanf(infile, "%lg", &(lam_state->B));
+
+  	fscanf(infile, "%ld", &(lam_state->count_tau));
+
+  	fscanf(infile, "%d", &(lam_state->proc_init));
+  	fscanf(infile, "%d", &(lam_state->proc_tau));
+
+
+
+
+
+
+
 
   for(i=0; i<3; i++)
 	fscanf(infile, "%hu\n", &(rand[i]));
@@ -159,7 +209,8 @@ void StateWrite(char *statefile, double energy)
 	FILE           *outfile;                           /* state file pointer */
 	Opts           *options;                /* command line opts to be saved */
 	MoveState      *move_status;                    /* MoveState to be saved */
-	double         *lamsave;                        /* Lam stats to be saved */
+	// double         *lamsave;                        /* Lam stats to be saved */
+	LamState       *lam_state;                        /* Lam stats to be saved */
 	unsigned short *prand;                    /* erand48() state to be saved */
 	double         *delta;            /* wallclock and user time to be saved */
 
@@ -176,7 +227,7 @@ void StateWrite(char *statefile, double energy)
 
 	options     = GetOptions();
 	move_status = MoveSave();
-	lamsave     = GetLamstats(energy);
+	lam_state     = GetLamstats(energy);
 	prand       = GetERandState();
 	if ( options->time_flag )
 		delta     = GetTimes();
@@ -230,9 +281,55 @@ void StateWrite(char *statefile, double energy)
 			move_status->acc_tab_ptr[i].success);
 
 
-	/* LAM stats (some huge array of 31 vals... Yeepeeee) */
-	for(i=0; i < 33; i++)
-		fprintf(outfile,"%.16g\n", lamsave[i]);
+	/* LAM stats*/
+
+	fprintf(outfile, "%d", lam_state->counter);
+
+	fprintf(outfile, "%.16g", lam_state->old_mean);
+	fprintf(outfile, "%.16g", lam_state->energy);
+
+	fprintf(outfile, "%.16g", lam_state->mean);
+	fprintf(outfile, "%.16g", lam_state->vari);
+
+	fprintf(outfile, "%.16g", lam_state->estimate_mean);
+	fprintf(outfile, "%.16g", lam_state->estimate_sd);
+
+	fprintf(outfile, "%.16g", lam_state->S);
+	fprintf(outfile, "%.16g", lam_state->dS);
+	fprintf(outfile, "%.16g", lam_state->S_0);
+
+	fprintf(outfile, "%.16g", lam_state->alpha);
+	fprintf(outfile, "%.16g", lam_state->acc_ratio);
+
+	fprintf(outfile, "%.16g", lam_state->w_b);
+	fprintf(outfile, "%.16g", lam_state->vsyy);
+	fprintf(outfile, "%.16g", lam_state->vsxy);
+	fprintf(outfile, "%.16g", lam_state->vsxx);
+	fprintf(outfile, "%.16g", lam_state->vsx);
+	fprintf(outfile, "%.16g", lam_state->vsy);
+	fprintf(outfile, "%.16g", lam_state->vsum);
+	fprintf(outfile, "%.16g", lam_state->D);
+	fprintf(outfile, "%.16g", lam_state->E);
+
+	fprintf(outfile, "%.16g", lam_state->w_a);
+	fprintf(outfile, "%.16g", lam_state->usyy);
+	fprintf(outfile, "%.16g", lam_state->usxy);
+	fprintf(outfile, "%.16g", lam_state->usxx);
+	fprintf(outfile, "%.16g", lam_state->usx);
+	fprintf(outfile, "%.16g", lam_state->usy);
+	fprintf(outfile, "%.16g", lam_state->usum);
+	fprintf(outfile, "%.16g", lam_state->A);
+	fprintf(outfile, "%.16g", lam_state->B);
+
+	fprintf(outfile, "%.ld", lam_state->count_tau);
+
+	fprintf(outfile, "%d", lam_state->proc_init);
+	fprintf(outfile, "%d", lam_state->proc_tau);
+
+
+
+
+
 
 
 	/* The three values to initialize ERand I guess */
@@ -244,7 +341,7 @@ void StateWrite(char *statefile, double energy)
 	fclose(outfile);
 
 	free(move_status);
-	free(lamsave);
+	free(lam_state);
 	if ( options->time_flag )
 		free(delta);
 	// free(options);

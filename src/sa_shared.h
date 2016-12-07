@@ -181,7 +181,7 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag);
  *                store Lam statistics in a state file                     *
  ***************************************************************************/
 
-double *GetLamstats(double energy);
+LamState *GetLamstats(double energy);
 /*** GetTimes: returns a two-element array with the current wallclock and **
  *             user time to be saved in the state file                     *
  ***************************************************************************/
@@ -195,7 +195,7 @@ double *GetTimes(void);
  *                    file.                                                *
  ***************************************************************************/
 
-double RestoreLamstats(double *stats);
+double RestoreLamstats(LamState *stats);
 
 /*** RestoreLog: restores .log and .prolix files after upon restart ********
  ***************************************************************************/

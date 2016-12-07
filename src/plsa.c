@@ -210,13 +210,13 @@ void SetDefaultOptions()
 
 	state.initial_temp = 1000;
 
-	state.lambda = 0.000001;
+	state.lambda = 0.001;
 	state.lambda_mem_length_u = 200;
 	state.lambda_mem_length_v = 1000;
 
 	state.initial_moves = 200;
 	state.tau = 100;
-	state.freeze_count = 1000;
+	state.freeze_count = 100;
 
 	state.update_S_skip = 1;
 	state.control = 1;
@@ -541,7 +541,8 @@ void RestoreState(char *statefile, double *p_chisq)
 	double 			energy;
 	Opts           *options;         /* used to restore command line options */
 	MoveState      *move_ptr;                       /* used to restore moves */
-	double         *stats;                      /* used to restore Lam stats */
+	// double         *stats;                      /* used to restore Lam stats */
+	LamState         *lam_state;                      /* used to restore Lam stats */
 	unsigned short *rand;                         /* used to restore ERand48 */
 	double         delta[2];                        /* used to restore times */
 
@@ -552,11 +553,12 @@ void RestoreState(char *statefile, double *p_chisq)
 	// options->inname    = (char *)calloc(MAX_RECORD, sizeof(char));
 	// options->outname   = (char *)calloc(MAX_RECORD, sizeof(char));
 
-	stats    = (double *)calloc(33, sizeof(double));
+	// stats    = (double *)calloc(33, sizeof(double));
+	lam_state = (LamState *) malloc(sizeof(LamState));
 	move_ptr = (MoveState *)malloc(sizeof(MoveState));
 	rand     = (unsigned short *)calloc(3, sizeof(unsigned short));
 
-	StateRead(statefile, options, move_ptr, stats, rand, delta);
+	StateRead(statefile, options, move_ptr, lam_state, rand, delta);
 
 	/* restore options in plsa.c (and some in lsa.c) */
 
@@ -577,7 +579,7 @@ void RestoreState(char *statefile, double *p_chisq)
 	// InitDistribution();   /* initialize distribution stuff */
 
 	RestoreMoves(move_ptr);
-	energy = RestoreLamstats(stats);
+	energy = RestoreLamstats(lam_state);
 	*p_chisq = energy;
 	if ( state.time_flag )
 		RestoreTimes(delta);
@@ -755,12 +757,9 @@ Opts *GetOptions(void)
 
 	options = (Opts *)malloc(sizeof(Opts));
 	options->stop_flag   = state.stop_flag;
-	// options->log_flag    = log_flag;
 	options->time_flag   = state.time_flag;
 	options->state_write = state.state_write;
 	options->print_freq  = state.print_freq;
-	// options->captions    = state.captions;
-	// options->precision   = precision;
 	options->quenchit    = state.quenchit;
 #ifdef MPI
 	options->tuning = state.tuning;
@@ -768,6 +767,8 @@ Opts *GetOptions(void)
 	// options->write_tune_stat = write_tune_stat;
 	// options->auto_stop_tune  = auto_stop_tune;
 #endif
+	options->max_iter = state.max_iter;
+	options->max_seconds = state.max_seconds;
 
 	return options;
 }
@@ -783,12 +784,9 @@ void RestoreOptions(Opts * options)
 
 	/* all the other options */
 	state.stop_flag   = options->stop_flag;
-	// state.log_flag    = options->log_flag;
 	state.time_flag   = options->time_flag;
 	state.state_write = options->state_write;
 	state.print_freq  = options->print_freq;
-	// state.captions    = options->captions;
-	// precision   = options->precision;
 	state.quenchit    = options->quenchit;
 
 #ifdef MPI
@@ -797,7 +795,7 @@ void RestoreOptions(Opts * options)
 // 	write_tune_stat = options->write_tune_stat;
 // 	auto_stop_tune  = options->auto_stop_tune;
 #endif
-
+	state.max_iter = options->max_iter;
+	state.max_seconds = options->max_seconds;
 	free(options);
-	// options = *opts;
 }

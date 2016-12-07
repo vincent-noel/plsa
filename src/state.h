@@ -49,6 +49,6 @@
 void StateWrite(char * statefile, double energy);
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-		   double *stats, unsigned short *rand, double *delta);
+		   LamState *lam_state, unsigned short *rand, double *delta);
 
 void StateRm(void);

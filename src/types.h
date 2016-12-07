@@ -147,6 +147,68 @@ typedef struct
 
 } AccStats;
 
+typedef struct
+{
+	int    counter;                           /* counter used by Frozen */
+	double old_mean;                    /* old mean as stored by Frozen */
+	double energy;                                    /* current energy */
+
+	double mean;          /* mean energy, collected from tau last steps */
+	double vari;      /* energy variance, collected from tau last steps */
+	double estimate_mean;              /* Lam estimator for mean energy */
+	double estimate_sd;  /* Lam estimator for energy standard deviation */
+
+	double S;                                 /* current inverse energy */
+	double dS;                      /* delta S: change in S during move */
+	double S_0;                      /* the initial inverse temperature */
+
+	double alpha;         /* the third term of the Lam schedule formula */
+	double acc_ratio;    /* average acceptance ratio for all parameters */
+
+
+	/* Lam stats stuff: variables for calculating the estimators  **************/
+
+	/* mean estimator */
+
+	double w_a;                       /* w_a is the weight for the mean */
+
+	double usyy;         /* these parameters store intermediate results */
+	double usxy;               /* for the updating formulas for A and B */
+	double usxx;                       /* see Lam & Delosme, 1988b, p10 */
+	double usx;
+	double usy;
+	double usum;
+
+	double A;            /* A and B are the parameters for the rational */
+	double B;                /* function for the estimation of the mean */
+
+	/* sd estimator */
+
+	double w_b;         /* w_b is the weight for the standard deviation */
+
+	double vsyy;         /* these parameters store intermediate results */
+	double vsxy;               /* for the updating formulas for D and E */
+	double vsxx;                       /* see Lam & Delosme, 1988b, p10 */
+	double vsx;
+	double vsy;
+	double vsum;
+
+	double D;            /* D and E are the parameters for the rational */
+	double E;  /* function for the estimation of the standard deviation */
+
+	/* Lam stats stuff: variables related to tau *******************************/
+	int    proc_tau;  /* proc_tau = tau                     in serial   */
+	/* proc_tau = tau / (# of processors) in parallel */
+	long   count_tau;  /* how many times we did tau (or proc_tau) moves */
+
+	/* the actual number of moves for collecting initial statistics ************/
+
+	int    proc_init;                        /* number of initial moves */
+
+
+} LamState;
+
+
 /* following struct contains copies of the static variables of moves.c     *
  * together with the values of parameters undergoing annealing             */
 

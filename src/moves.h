@@ -154,8 +154,8 @@ MoveState *MoveSave(void);
  *     CAUTION: InitMoves should be called before StateRead!               *
  ***************************************************************************/
 
-void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-		   double *stats, unsigned short *rand, double *times);
+// void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
+// 		   double *stats, unsigned short *rand, double *times);
 
 /*** StateRm: removes the state file after the run has been completed ******
  ***************************************************************************/
