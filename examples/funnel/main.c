@@ -67,17 +67,11 @@ void 	print_function()
 int 	main (int argc, char ** argv)
 {
 
-#ifdef MPI
-	// MPI initialization steps
 	int nnodes, myid;
-#endif
-
 	// define the optimization settings
-#ifdef MPI
+
 	SAType * t_sa = InitPLSA(&nnodes, &myid);
-#else
-	SAType * t_sa = InitPLSA(NULL, NULL);
-#endif
+
 
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
