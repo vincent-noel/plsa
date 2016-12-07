@@ -31,7 +31,7 @@ all: libplsa-serial.so libplsa-parallel.so
 install: libplsa-serial.so libplsa-parallel.so $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h
 	cp libplsa-serial.so libplsa-parallel.so /usr/lib/
 	mkdir -p /usr/include/plsa
-	cp $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h	/usr/include/plsa
+	cp $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h $(SRCDIR)/types.h	/usr/include/plsa
 	rm -f *.so *.o
 
 uninstall:
