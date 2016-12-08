@@ -53,16 +53,16 @@
 #include <unistd.h>          /* for command line option stuff and access() */
 #include <time.h>
 
+#include "types.h"
 #include "error.h"									  /* error handling funcs */
 #include "config.h"								  /* for olddivstyle and such */
 #include "random.h"										   /* for InitERand() */
 
 // #include "distributions.h"               /* DistP.variables and prototypes */
-#include "moves.h"						  /* problem-specific annealing funcs */
-#include "sa_shared.h"				   /* problem-independent annealing funcs */
-#include "score.h"								  /* for init and Score funcs */
+// #include "moves.h"						  /* problem-specific annealing funcs */
+#include "lsa.h"				   /* problem-independent annealing funcs */
+// #include "score.h"								  /* for init and Score funcs */
 #include "sa.h"
-#include "plsa.h"
 #include "state.h"
 
 #ifdef MPI                 /* this inludes parallel-specific stuff for MPI */
@@ -229,7 +229,7 @@ void SetDefaultOptions()
 	state.criterion = 0;
 #ifdef MPI
 	state.mix_interval = 10;
-	state.tuning = 1;
+	state.tuning = 0;
 
 	tuning_settings.covar_index     = 1;      /* covariance sample will be covar_index * tau */
 	tuning_settings.write_tune_stat = 1;         /* how many times do we write tuning stats? */
@@ -320,13 +320,13 @@ SAType * InitPLSA(int * nb_procs, int * my_id)
  *              state file                                                 *
  ***************************************************************************/
 
-double FinalMove()
+double FinalMove(AParms * ap)
 {
 #ifdef MPI
 	int      i;                                              /* loop counter */
 #endif
 
-	AParms   ap;
+	// AParms   ap;
 	double 	 final_score = DBL_MAX;
 #ifdef MPI
 	int      winner = 0;                           /* id of the winning node */
@@ -339,7 +339,7 @@ double FinalMove()
 
 	/* get the answer and some additional info */
 
-	ap   = GetFinalInfo();              /* reads final energy and move count */
+	// ap   = GetFinalInfo();              /* reads final energy and move count */
 
 
 #ifdef MPI
@@ -349,7 +349,7 @@ double FinalMove()
 	for(i=0; i<nnodes; i++)                   /* initialize the energy array */
 		final_e[i] = 0;
 	/* collect the final scores from all nodes */
-	MPI_Allgather(&ap.stop_energy, 1, MPI_DOUBLE, final_e, 1, MPI_DOUBLE,
+	MPI_Allgather(&ap->stop_energy, 1, MPI_DOUBLE, final_e, 1, MPI_DOUBLE,
 				  MPI_COMM_WORLD);
 
 	for(i=0; i<nnodes; i++)       /* evaluate the node with the lowest score */
@@ -363,7 +363,7 @@ double FinalMove()
 
 	final_score = minyet;
 #else
-	final_score = ap.stop_energy;
+	final_score = ap->stop_energy;
 #endif
 
 #ifdef MPI
@@ -399,7 +399,7 @@ double FinalMove()
 			sprintf(score_final_name, "%s/score/score", getLogDir());
 
 			FILE * score_final_f = fopen(score_final_name,"w");
-			fprintf(score_final_f,"%g",ap.stop_energy);
+			fprintf(score_final_f,"%g",ap->stop_energy);
 			fclose(score_final_f);
 		}
 
@@ -444,6 +444,15 @@ double FinalMove()
 
 
 
+/*** PrintTimes: writes two (parallel: three) times sections ***************
+ ***************************************************************************/
+
+void PrintTimes(FILE *fp, double *times)
+{
+	fprintf(fp, "wallclock: %.3f\n", times[0]);
+	fprintf(fp, "user:      %.3f\n", times[1]);
+}
+
 
 /*** WriteTimes: writes the time-structure to a .times file ****************
  ***************************************************************************/
@@ -468,15 +477,6 @@ void WriteTimes(double *times)
 }
 
 
-
-/*** PrintTimes: writes two (parallel: three) times sections ***************
- ***************************************************************************/
-
-void PrintTimes(FILE *fp, double *times)
-{
-	fprintf(fp, "wallclock: %.3f\n", times[0]);
-	fprintf(fp, "user:      %.3f\n", times[1]);
-}
 
 
 
@@ -512,13 +512,17 @@ void InitialMove(double *p_chisq)
 	p = state.tunename;
 	p = strcpy(p, "The Other One");        /* Grateful Dead tune, what else? */
 
-	InitScoring(&state);                   /* initializes facts and limits */
-	InitMoves(&state, &plsa_params);     /* set initial temperature and *
-											   *  initialize                 */
+	// InitScoring(&state);                   /* initializes facts and limits */
+	// InitMoves(&state, &plsa_params);     /* set initial temperature and *
+	// 										   *  initialize                 */
 	// InitDistribution();   /* initialize distribution stuff */
 
-	energy = -999;
-	energy = Score();
+	// energy = Score();
+	energy = InitializeLSA(&state, &plsa_params);
+
+	if ( energy == FORBIDDEN_MOVE )        /* - set initial energy (p_chisq) */
+	  error("fly_sa: the initial state was forbidden, cannot proceed");
+
 	*p_chisq = energy;                                  /* set initial score */
 
 	return;//(i_temp);                                   /* initial temperature */
@@ -586,10 +590,13 @@ void RestoreState(char *statefile, double *p_chisq)
 	p = strcpy(p,"The Other One");         /* Grateful Dead tune, what else? */
 
 	/* init initial cond., mutator and deriv */
-	InitScoring(&state);                            /* init facts and limits */
-	InitMoves(&state, &plsa_params);   /* set initial temperature and initialize */
+	// InitScoring(&state);                            /* init facts and limits */
+	// InitMoves(&state, &plsa_params);   /* set initial temperature and initialize */
 	// InitDistribution();   /* initialize distribution stuff */
 
+	// Here we don't care about the initial temperature
+	// since we are going to restore
+	InitializeLSA(&state, &plsa_params);
 	RestoreMoves(move_ptr);
 	energy = RestoreLamstats(lam_state);
 	*p_chisq = energy;
@@ -639,9 +646,9 @@ void StartPLSA()
 	else
 	   RestoreState(statefile, &energy);
 
-	/* initialize those static file names that depend on the output file name */
-
-	InitFilenames();
+	// /* initialize those static file names that depend on the output file name */
+	//
+	// InitFilenames();
 
 #ifdef MPI
 	/* note that for parallel code both tau and init must be divided by nnodes */
@@ -718,8 +725,9 @@ PLSARes * runPLSA()
 
 	StartPLSA();
 
-	if (!Loop(&state, statefile, stop_flag))
-		final_score = FinalMove();
+	AParms * results;
+	results = Loop(&state, statefile, stop_flag);
+	final_score = FinalMove(results);
 
 	/* code for timing */
 

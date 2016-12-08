@@ -39,8 +39,9 @@
 #include <unistd.h>          /* for command line option stuff and access() */
 #include <sys/time.h>
 
-#include "sa_shared.h"
+#include "lsa.h"
 #include "moves.h"
+#include "score.h"
 #include "error.h"
 #include "random.h"
 #include "config.h"
@@ -179,6 +180,16 @@ void InitFilenames(void)
 #endif
 }
 
+double InitializeLSA(SAType * state, PArrPtr * pl)
+{
+	double t_energy;
+	InitFilenames();
+	InitScoring(state);                   /* initializes facts and limits */
+	InitMoves(state, pl);     /* set initial temperature and */
+	t_energy = Score();
+
+	return t_energy;
+}
 
 /*** InitializeWeights: initialize weights a and b for calculating Lam *****
  *                      estimators; these weights are computed from the    *
@@ -639,7 +650,7 @@ void WriteScoreTrace(double t_energy, int acceptance)
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-int Loop(SAType * state, char * statefile, StopStyle stop_flag)
+AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 {
 	int    i;                                          /* local loop counter */
 	// double energy;
@@ -714,7 +725,6 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 				WriteScoreTrace(GetNewEnergy(), acceptance_result);
 
 			/* update statistics */
-			// printf("energy = %g\n", energy);
 			mean    += energy;
 			d        = energy - estimate_mean;
 			vari    += d * d;
@@ -751,7 +761,7 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 		 * libration runs exit below */
 
 		if (state->max_iter > 0 && count_tau >= state->max_iter)
-			return 0;
+			return GetFinalInfo();
 
 		if (state->max_seconds > 0)
 		{
@@ -760,12 +770,12 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 			int duration = ((int) tp.tv_sec) - start_time_seconds;
 
 			if (duration > state->max_seconds)
-				return 0;
+				return GetFinalInfo();
 
 		}
 
 		if ( Frozen(state, state->stop_flag) )
-			return 0;
+			return GetFinalInfo();
 
 		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
 		 * don't need this in quenchit mode since the temperature is fixed to 0)   */
@@ -782,7 +792,7 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 			UpdateLParameter(S);
 
 			if (UpdateTuning(logfile))
-				return 0;//FinalMove(state);
+				return GetFinalInfo();//FinalMove(state);
 		}
 
 		/* at each mix_interval: do some mixing */
@@ -812,7 +822,7 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 			StateWrite(statefile, energy);
 
 	}                                /* this is the end of the while(1) loop */
-	return -1;
+	return NULL;
 }                          /* this is the end of Loop */
 
 

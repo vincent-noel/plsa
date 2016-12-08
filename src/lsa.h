@@ -146,18 +146,7 @@
 /* problem independent functions that live in lsa.c ************************/
 
 /* Initializing functions */
-
-/*** Initialize: calls ParseCommandLine first; then does either initial ****
- *               randomization and collecting Lam stats or restores state  *
- *               of the annealer as saved in the state file                *
- ***************************************************************************/
-
-// int InitializePLSA(char ** statefile);
-
-/*** InitFilenames: initializes static file names needed in lsa.c **********
- ***************************************************************************/
-
-void InitFilenames(void);
+double InitializeLSA(SAType * state, PArrPtr * pl);
 
 /*** InitialLoop: performs the two sets of initial moves: ******************
  *                   1. randomizing moves (not parallelized)               *
@@ -172,15 +161,11 @@ double InitialLoop(SAType * state, double S_0);
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
 
-int Loop(SAType * state, char * statefile, StopStyle stop_flag);
+AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag);
 
 
 void RestoreLog(SAType * state);
-
-
-
 /* functions to write the .log */
-
 
 void WriteLog(SAType * state);
 /*** PrintLog: actually writes stuff to the .log file **********************

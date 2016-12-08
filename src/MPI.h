@@ -1,34 +1,34 @@
 /******************************************************************************
- *                                  				    					  									*
- *   MPI.h                                                      			  			*
- *                                                              			  			*
+ *                                                                            *
+ *   MPI.h                                                                    *
+ *                                                                            *
  ******************************************************************************
- *                                                              			  			*
- *   written by John Reinitz                                    			  			*
- *   modified by King-Wai Chu, Johannes Jaeger                  			 				*
+ *                                                                            *
+ *   written by John Reinitz                                                  *
+ *   modified by King-Wai Chu, Johannes Jaeger                                *
  *   modified by Vincent Noel                                                 *
- *                                                              			  			*
+ *                                                                            *
  ******************************************************************************
- *                                                              			  			*
- *   IMPORTANT: IF YOU EVER CHANGE ANYTHING IN THIS FILE, LET ALL 			 			*
- *            YOUR FELLOW PROGRAMMERS KNOW WELL IN ADVANCE AND  			  			*
- *            CONSULT WITH THEM IF THEY AGREE ON YOUR CHANGES!! 			 				*
- *                                                              			  			*
+ *                                                                            *
+ *   IMPORTANT: IF YOU EVER CHANGE ANYTHING IN THIS FILE, LET ALL             *
+ *            YOUR FELLOW PROGRAMMERS KNOW WELL IN ADVANCE AND                *
+ *            CONSULT WITH THEM IF THEY AGREE ON YOUR CHANGES!!               *
+ *                                                                            *
  ******************************************************************************
- *                                                              			  			*
- *   MPI.h contains structs and constants that are specific to    			  		*
- *   parallel annealing code using MPI.                           			  		*
- *                                                              	          	*
- *   This includes prototypes for all the tuning functions below. 	 		  		*
- *                                                              			  			*
- *   There are two problem-specific functions declared below that 			  		*
- *   need to be defined in move(s).c.                             			  		*
- *                                                              			  			*
- ******************************************************************************                                                               			  *
- *   NOTE: this header only contains prototypes for functions used 			  		*
- *       for parallel annealing code only; all prototypes of    			  			*
- *       functions that include serial code need to go into sa.h	  		  		*
- *                                 											  										*
+ *                                                                            *
+ *   MPI.h contains structs and constants that are specific to                *
+ *   parallel annealing code using MPI.                                       *
+ *                                                                            *
+ *   This includes prototypes for all the tuning functions below.             *
+ *                                                                            *
+ *   There are two problem-specific functions declared below that             *
+ *   need to be defined in move(s).c.                                         *
+ *                                                                            *
+ ******************************************************************************
+ *   NOTE: this header only contains prototypes for functions used            *
+ *       for parallel annealing code only; all prototypes of                  *
+ *       functions that include serial code need to go into sa.h              *
+ *                                                                            *
  ******************************************************************************
  *                                                                            *
  *   Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)           *

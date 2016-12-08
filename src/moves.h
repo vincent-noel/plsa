@@ -47,7 +47,7 @@
 
 /* following for StopStyle enum style */
 #ifndef SA_INCLUDED
-#include "sa_shared.h"
+#include "lsa.h"
 #endif
 
 /* ... and this for the Range struct */
@@ -99,10 +99,6 @@ void RejectMove(void);
 double GetNewEnergy(void);
 double GetOldEnergy(void);
 
-/* plsa.c: I/O functions for miscellaneous stuff */
-
-void PrintTimes(FILE *fp, double *delta);
-
 /* moves.c: functions for move generation */
 
 /* Initializing and restoring functions */
@@ -119,13 +115,6 @@ void PrintTimes(FILE *fp, double *delta);
  ***************************************************************************/
 
 void InitMoves(SAType * state, PArrPtr * pl);
-//
-// /*** RestoreMoves: restores move generator from state file *****************
-//  *           NOTE: InitMoves will be called before this function during    *
-//  *                 a restore                                               *
-//  ***************************************************************************/
-//
-// void RestoreMoves(MoveState *MovePtr);
 
 /* a function for finalizing a run */
 
@@ -133,32 +122,7 @@ void InitMoves(SAType * state, PArrPtr * pl);
  *                 data file                                               *
  ***************************************************************************/
 
-AParms GetFinalInfo(void);
-//
-// /* functions that communicate with other source files */
-//
-// /*** MoveSave: returns a MoveState struct in which the current state of ****
-//  *             moves is saved; use for writing state file                  *
-//  ***************************************************************************/
-//
-// MoveState *MoveSave(void);
+AParms * GetFinalInfo(void);
 
-/* state.c */
-
-/* funcs that read/write/erase the state file */
-
-/*** StateRead: reads Lam statistics, move state and erand state from a ****
- *              state file and restores the annealer's state to the same   *
- *              state it was in before it got interrupted                  *
- *     CAUTION: InitMoves should be called before StateRead!               *
- ***************************************************************************/
-
-// void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-// 		   double *stats, unsigned short *rand, double *times);
-
-/*** StateRm: removes the state file after the run has been completed ******
- ***************************************************************************/
-
-// void StateRm(void);
 
 void randomModelParameters(void);

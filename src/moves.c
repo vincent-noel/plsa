@@ -50,7 +50,7 @@
 #include "random.h"
 #include "score.h"
 #include "distributions.h"               /* DistP.variables and prototypes */
-#include "sa_shared.h"                /* *ONLY* for random number funcs and flags */
+#include "lsa.h"                /* *ONLY* for random number funcs and flags */
 #include "config.h"
 #include "state.h"
 
@@ -218,12 +218,12 @@ void RestoreMoves(MoveState *MovePtr)
  *                 data file                                               *
  ***************************************************************************/
 
-AParms GetFinalInfo(void)
+AParms * GetFinalInfo(void)
 {
 	ap.stop_energy = old_energy;
 	ap.max_count   = nhits;
 
-	return ap;
+	return &ap;
 }
 
 /*** MOVE GENERATION *******************************************************/
