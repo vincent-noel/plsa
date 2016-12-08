@@ -23,7 +23,7 @@ LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
 SOBJ = plsa.o lsa.o moves.o state.o score.o
-POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o tuning_p.o
+POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o mixing_p.o tuning_p.o
 
 
 all: libplsa-serial.so libplsa-parallel.so
@@ -91,9 +91,11 @@ savestate_p.o: $(SRCDIR)/state.c
 score_p.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o score_p.o -c $(SRCDIR)/score.c
 
+mixing_p.o: $(SRCDIR)/mixing.c $(SRCDIR)/mixing.h
+	$(MPICC) $(FLAGS) -fpic -DMPI -o mixing_p.o -c $(SRCDIR)/mixing.c
+
 tuning_p.o: $(SRCDIR)/tuning.c $(SRCDIR)/tuning.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o tuning_p.o -c $(SRCDIR)/tuning.c
-
 
 # serial ones
 plsa.o: $(SRCDIR)/plsa.c

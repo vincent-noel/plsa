@@ -48,6 +48,7 @@
 #ifdef MPI
 #include <mpi.h>
 #include "MPI.h"
+#include "mixing.h"
 #include "tuning.h"
 #endif
 
@@ -645,8 +646,14 @@ int Loop(SAType * state, char * statefile, StopStyle stop_flag)
 	double energy_change;                                   /* local Delta E */
 	double d;                /* difference between energy and estimated mean */
 
-	/* quenchit mode: set temperature to (approximately) zero immediately */
+#ifdef MPI
+	/* if we are in tuning mode: initialize/restore tuning structs */
+	if ( state->tuning )
+		InitTuning(state);
+#endif
 
+
+	/* quenchit mode: set temperature to (approximately) zero immediately */
 	if ( state->quenchit )
 		S = DBL_MAX;
 

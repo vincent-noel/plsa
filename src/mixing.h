@@ -28,31 +28,61 @@
  *   along with plsa. If not, see <http://www.gnu.org/licenses/>.             *
  *                                                                            *
  ******************************************************************************/
-
 #include <stdio.h>
 #include "types.h"
 
-#define MAX_MIX         10000      /* max number of mixes during a tuning run */
-					/* set this to a lower number if you run out of memory */
-#define GROUP_SIZE         10       /* group size for calculating upper bound */
-
-#define STOP_TUNE_CNT      20                              /* stop tune count */
-#define STOP_TUNE_CRIT   0.05                        /* tuning stop criterion */
-
-#define LSTAT_LENGTH_TUNE  28          /* length of Lam msg array when tuning */
+#define LSTAT_LENGTH        1       /* length of Lam msg array when annealing */
 
  /* tuning functions */
 
  /*** InitTuning: sets up/restores structs and variables for tuning runs ****
  ***************************************************************************/
-void 		InitTuning					(SAType * state);
-void 		InitLocalStatsTuning		(double mean, double vari, int success);
-void 		Init2LocalStatsTuning		(int proc_init);
-void 		UpdateLocalSTuning			(double S);
-void 		UpdateLocalStatsTuning		(int proc_tau);
+
+void 		InitLocalFilenames();
+void 		InitializeLocalParameters	(double S_0);
+void 		InitializeLocalWeights		(double w_a, double w_b);
+
+void 		InitializeMixing();
+
+double * 	InitLocalStats				(double mean, double vari,
+											int * success, int i,
+											int initial_moves);
+
+double *	UpdateLocalStats			(double mean, double vari, int i,
+											int tau, int * success);
+
+void 		ResetLocalStats				();
+void 		AddLocalSuccess				();
+
+/* lsa.c: parallel non-tuning funcs: update func for local Lam parameters */
+/*** UpdateLParameter: update local parameters l_A, l_B, l_D and l_E and ***
+*                    the local estimators for mean and standard deviation *
+*                    for both upper and lower bounds of M_Opt for the     *
+*                    current S                                            *
+***************************************************************************/
+
+void 		UpdateLParameter			(double S);
 
 
-void 		RestoreLocalLogTuning		(int max_saved_count);
-void 		CalculateLocalStats			(double energy);
-int 		UpdateTuning				(char * logfile);
-void 		InitLocalTuningFilenames();
+/* lsa.c: parallel non-tuning funcs: mixing functions */
+
+/*** DoMix: does the mixing; sends move state and local Lam stats to the ***
+*          dance partner(s)                                               *
+***************************************************************************/
+
+double 		DoMix						(double energy, double estimate_mean,
+											double S, int tuning);
+
+
+/*** MakeLamMsg: packages local Lam stats into send buffer *****************
+***************************************************************************/
+
+void 		MakeLamMsg					(double **sendbuf, double energy, int tuning);
+
+/*** AcceptLamMsg: receives new energy and Lam stats upon mixing ***********
+***************************************************************************/
+
+double 		AcceptLamMsg				(double *recvbuf, int tuning);
+void 		WriteLocalLog				(int count_steps, double S, double dS);
+void 		PrintLocalLog				(FILE *outptr, int count_steps,
+											double S, double dS);

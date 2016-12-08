@@ -64,6 +64,7 @@
 #include "sa.h"
 #include "plsa.h"
 #include "state.h"
+
 #ifdef MPI                 /* this inludes parallel-specific stuff for MPI */
 #include <mpi.h>                     /* this is the official MPI interface */
 #include "MPI.h"  /* our own structs and such only needed by parallel code */
@@ -678,11 +679,11 @@ void StartPLSA()
 
 
 
-#ifdef MPI
-	/* if we are in tuning mode: initialize/restore tuning structs */
-	if ( state.tuning )
-		InitTuning(&state);
-#endif
+// #ifdef MPI
+// 	/* if we are in tuning mode: initialize/restore tuning structs */
+// 	if ( state.tuning )
+// 		InitTuning(&state);
+// #endif
 
 }
 
