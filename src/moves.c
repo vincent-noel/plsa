@@ -52,6 +52,7 @@
 #include "distributions.h"               /* DistP.variables and prototypes */
 #include "sa_shared.h"                /* *ONLY* for random number funcs and flags */
 #include "config.h"
+#include "state.h"
 
 #ifdef MPI                      /* inludes parallel-specific stuff for MPI */
 #include <mpi.h>                     /* this is the official MPI interface */

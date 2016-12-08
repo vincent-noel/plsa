@@ -29,6 +29,7 @@
  *                                                                            *
  ******************************************************************************/
 #include <stdio.h>
+#include "types.h"
 
 #define MAX_MIX         10000      /* max number of mixes during a tuning run */
 					/* set this to a lower number if you run out of memory */
@@ -44,7 +45,7 @@
 
  /*** InitTuning: sets up/restores structs and variables for tuning runs ****
  ***************************************************************************/
-void 		InitTuning					(int mix_interval, double Tau);
+void 		InitTuning					(SAType * state);
 
 void 		InitLocalFilenames();
 void 		InitializeLocalParameters	(double S_0);

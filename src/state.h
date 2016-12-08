@@ -49,6 +49,76 @@
 void StateWrite(char * statefile, double energy);
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-		   LamState *lam_state, unsigned short *rand, double *delta);
+		   LamState *lam_state, unsigned short *rand, TuningSettings * t_settings,
+		   double *delta);
 
 void StateRm(void);
+
+
+
+/* functions that are defined in lsa.c */
+
+/*** RestoreMoves: restores move generator from state file *****************
+ *           NOTE: InitMoves will be called before this function during    *
+ *                 a restore                                               *
+ ***************************************************************************/
+
+void RestoreMoves(MoveState *MovePtr);
+
+/* functions that communicate with other source files */
+
+/*** MoveSave: returns a MoveState struct in which the current state of ****
+ *             moves is saved; use for writing state file                  *
+ ***************************************************************************/
+
+MoveState *MoveSave(void);
+
+
+
+/* functions that are defined in lsa.c */
+
+/*** GetLamstats: returns Lam statistics in an array of doubles; used to ***
+ *                store Lam statistics in a state file                     *
+ ***************************************************************************/
+
+LamState *GetLamstats(double energy);
+
+/*** RestoreLamstats: restores static Lam statistics in lsa.c from an ******
+ *                    array of doubles; used to restore runs from a state  *
+ *                    file.                                                *
+ ***************************************************************************/
+
+double RestoreLamstats(LamState *stats);
+
+
+
+
+
+/* functions that are defined in plsa.c */
+
+/*** GetOptions: returns command line options to state.c ***************
+ ***************************************************************************/
+
+Opts *GetOptions(void);
+
+/*** RestoreOptions: restores the values of the command line opt variables *
+ ***************************************************************************/
+
+void RestoreOptions(Opts *options);
+
+
+/* Functions defined in tunning.c */
+TuningSettings * GetTuningSettings();
+
+void RestoreTuningSettings(TuningSettings * t_settings);
+
+
+
+/*** GetTimes: returns a two-element array with the current wallclock and **
+ *             user time to be saved in the state file                     *
+ ***************************************************************************/
+double *GetTimes(void);
+
+/*** RestoreTimes: restores the wallclock and user times if -t is used *****
+ ***************************************************************************/
+void RestoreTimes(double *delta);

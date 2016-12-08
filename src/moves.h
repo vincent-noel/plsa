@@ -119,14 +119,13 @@ void PrintTimes(FILE *fp, double *delta);
  ***************************************************************************/
 
 void InitMoves(SAType * state, PArrPtr * pl);
-
-/*** RestoreMoves: restores move generator from state file *****************
- *           NOTE: InitMoves will be called before this function during    *
- *                 a restore                                               *
- ***************************************************************************/
-
-void RestoreMoves(MoveState *MovePtr);
-
+//
+// /*** RestoreMoves: restores move generator from state file *****************
+//  *           NOTE: InitMoves will be called before this function during    *
+//  *                 a restore                                               *
+//  ***************************************************************************/
+//
+// void RestoreMoves(MoveState *MovePtr);
 
 /* a function for finalizing a run */
 
@@ -135,14 +134,14 @@ void RestoreMoves(MoveState *MovePtr);
  ***************************************************************************/
 
 AParms GetFinalInfo(void);
-
-/* functions that communicate with other source files */
-
-/*** MoveSave: returns a MoveState struct in which the current state of ****
- *             moves is saved; use for writing state file                  *
- ***************************************************************************/
-
-MoveState *MoveSave(void);
+//
+// /* functions that communicate with other source files */
+//
+// /*** MoveSave: returns a MoveState struct in which the current state of ****
+//  *             moves is saved; use for writing state file                  *
+//  ***************************************************************************/
+//
+// MoveState *MoveSave(void);
 
 /* state.c */
 
@@ -160,6 +159,6 @@ MoveState *MoveSave(void);
 /*** StateRm: removes the state file after the run has been completed ******
  ***************************************************************************/
 
-void StateRm(void);
+// void StateRm(void);
 
 void randomModelParameters(void);

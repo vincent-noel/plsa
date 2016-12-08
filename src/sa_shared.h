@@ -174,38 +174,8 @@ double InitialLoop(SAType * state, double S_0);
 
 int Loop(SAType * state, char * statefile, StopStyle stop_flag);
 
-/* functions which communicate with other source files, these are needed  *
- * for reading/writing .state files                                       */
-
-/*** GetLamstats: returns Lam statistics in an array of doubles; used to ***
- *                store Lam statistics in a state file                     *
- ***************************************************************************/
-
-LamState *GetLamstats(double energy);
-/*** GetTimes: returns a two-element array with the current wallclock and **
- *             user time to be saved in the state file                     *
- ***************************************************************************/
-
-double *GetTimes(void);
-
-/* functions which restore things in lsa.c upon restart from state file */
-
-/*** RestoreLamstats: restores static Lam statistics in lsa.c from an ******
- *                    array of doubles; used to restore runs from a state  *
- *                    file.                                                *
- ***************************************************************************/
-
-double RestoreLamstats(LamState *stats);
-
-/*** RestoreLog: restores .log and .prolix files after upon restart ********
- ***************************************************************************/
 
 void RestoreLog(SAType * state);
-
-/*** RestoreTimes: restores the wallclock and user times if -t is used *****
- ***************************************************************************/
-
-void RestoreTimes(double *delta);
 
 
 
@@ -218,37 +188,6 @@ void WriteLog(SAType * state);
 
 void PrintLog(FILE *outptr, int init_moves);
 
-//
-//
-// /* move generation functions that are used in lsa.c (live in move(s).c) */
-//
-// /* GenerateMove: evaluates the old energy, changes a parameter, then eval- *
-//  *               uates the new energy; returns the difference between old  *
-//  *               and new energy to the caller                              *
-//  ***************************************************************************/
-//
-// double GenerateMove(void);
-//
-// /*** AcceptMove: sets new energy as the old energy for the next step and ***
-//  *               keeps track of the number of successful moves             *
-//  ***************************************************************************/
-//
-// void AcceptMove(void);
-//
-// /*** RejectMove: simply resets the tweaked parameter to the pretweak value *
-//  ***************************************************************************/
-//
-// void RejectMove(void);
-//
-// /*** GetEnergy: returned the last computed value of the scoring function   *
-//  *    To avoid computing e = old_e + (new e - old e), and using directly   *
-//  *    e = new_e
-//  *    Avoid precision errors due floating number representation            *
-//  **************************************************************************/
-//
-// double GetNewEnergy(void);
-// double GetOldEnergy(void);
-// void WriteScoreTrace(double t_energy, int acceptance);
 
 
 #endif

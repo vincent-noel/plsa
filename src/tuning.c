@@ -43,16 +43,20 @@
 #include <float.h>                                    /* for double limits */
 #include <time.h>                                    /* this is for time() */
 #include <string.h>
-#include "MPI.h"
-#include "error.h"
-#include "random.h"
-#include "tuning.h"
+
 #include <mpi.h>
 
+#include "MPI.h"
+#include "tuning.h"
 
-int covar_index;    /* covariance sample index for tuning (in 'tau' units) */
-int write_tune_stat;               /* how often to write tuning statistics */
-int auto_stop_tune;       /* auto stop tune flag to stop tuning runs early */
+#include "error.h"
+#include "random.h"
+#include "state.h"
+
+
+static int covar_index;    /* covariance sample index for tuning (in 'tau' units) */
+static int write_tune_stat;               /* how often to write tuning statistics */
+static int auto_stop_tune;       /* auto stop tune flag to stop tuning runs early */
 /* parallel code: variables for local Lam stats for tuning */
 
 /* local weights: there are two sets of local estimators for the mean ******
@@ -189,6 +193,26 @@ static int    *midpoints;           /* midpoints of groups for upper bound */
 /* an array needed for mixing in parallel code *****************************/
 
 static int    *dance_partner;       /* stores dance partners for each node */
+
+TuningSettings * GetTuningSettings()
+{
+	TuningSettings * t_settings = (TuningSettings *) malloc(sizeof(TuningSettings));
+	t_settings->covar_index = covar_index;
+	t_settings->write_tune_stat = write_tune_stat;
+	t_settings->auto_stop_tune = auto_stop_tune;
+	return t_settings;
+}
+
+void RestoreTuningSettings(TuningSettings * t_settings)
+{
+	covar_index = t_settings->covar_index;
+	write_tune_stat = t_settings->write_tune_stat;
+	auto_stop_tune = t_settings->auto_stop_tune;
+}
+
+
+void RestoreTuningSettings(TuningSettings * tuning_settings);
+
 
 // /*** DoTuning: calculates the cross-correlation (for lower bound) and the **
 // *             variance of local means (for upper bound) for a sub_tune_   *
@@ -1062,23 +1086,26 @@ void UpdateLParameter(double S)
 /*** InitTuning: sets up/restores structs and variables for tuning runs ****
  ***************************************************************************/
 
-void InitTuning(int mix_interval, double Tau)
+void InitTuning(SAType * state)
 {
 	int     i;                                               /* loop counter */
 	FILE    *mbptr;                            /* pointer for mix_bound file */
 
-
+	/* Initializing variables */
+	covar_index     = state->tuning_settings->covar_index;      /* covariance sample will be covar_index * tau */
+	write_tune_stat = state->tuning_settings->write_tune_stat;         /* how many times do we write tuning stats? */
+	auto_stop_tune  = state->tuning_settings->auto_stop_tune;               /* auto stop tuning runs? default: on */
 	/* error check */
 
 	if ( nnodes <= 1 )
 		error("plsa: tuning does not make sense on one processor");
 
-	if ( covar_index > mix_interval )
+	if ( covar_index > state->mix_interval )
 		error("plsa: you can't sample over more than the whole mix interval");
 
 	/* set size of sample interval */
 
-	covar_sample = covar_index * (int)Tau;
+	covar_sample = covar_index * state->tau;
 
 	/* set size of sample interval per processor */
 	/* by the way: sample_size corresponds to covar_index * proc_tau */
@@ -1089,12 +1116,11 @@ void InitTuning(int mix_interval, double Tau)
 	sample_size = covar_sample / nnodes;
 
 	/* tune_interval: how many covar_samples per mix_interval? */
-
-	if ( (mix_interval % covar_index) != 0 )
+	if ( (state->mix_interval % covar_index) != 0 )
 		error("plsa: mix interval (%d) not divisible by covar_index",
-			  mix_interval);
+			  state->mix_interval);
 
-	tune_interval = mix_interval / covar_index;
+	tune_interval = state->mix_interval / covar_index;
 
 	/* size of every tune interval in between writing tuning stats */
 

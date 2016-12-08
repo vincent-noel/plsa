@@ -1,12 +1,12 @@
 /******************************************************************************
- *                                                              					 	  *
- *   state.c                                                			 				*
- *                                                              						 	*
+ *																			  *
+ *   state.c                                                			 	  *
+ *                                                              			  *
  ******************************************************************************
- *                                                               						  *
- *   written by JR, modified by Yoginho                         			 				*
- *   modified by Vincent Noel                                                	*
- *                                                              			 				*
+ *                                                               			  *
+ *   written by JR, modified by Yoginho                         			  *
+ *   modified by Vincent Noel                                                 *
+ *                                                              			  *
  ******************************************************************************
  *                                                              			 				*
  *   state.c contains three functions that read, write and remove the    	*
@@ -43,11 +43,9 @@
 #include <unistd.h>                                        /* getopt stuff */
 
 #include "state.h"
-#include "plsa.h"
 #include "error.h"
 #include "random.h"
-#include "sa_shared.h"
-#include "moves.h"
+
 #ifdef MPI
 #include "MPI.h"                                              /* for myid */
 #endif
@@ -60,8 +58,6 @@ static char           *filename;                     /* name of state file */
 
 
 
-
-
 /*** FUNCTION DEFINITIONS **************************************************/
 
 /*** StateRead: reads Lam statistics, move state and erand state from a ****
@@ -71,7 +67,7 @@ static char           *filename;                     /* name of state file */
  ***************************************************************************/
 
 void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
-		   LamState *lam_state, unsigned short *rand, double *delta)
+		   LamState *lam_state, unsigned short *rand, TuningSettings * t_settings, double *delta)
 {
   int            i;                                  /* local loop counter */
   FILE           *infile;                         /* pointer to state file */
@@ -137,60 +133,60 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   // for(i=0; i<33; i++)
   // scanf(infile, "%lg\n", &(stats[i]));
 
-  	fscanf(infile, "%d", &(lam_state->counter));
+	  fscanf(infile, "%d", &(lam_state->counter));
 
-  	fscanf(infile, "%lg", &(lam_state->old_mean));
-  	fscanf(infile, "%lg", &(lam_state->energy));
+	  fscanf(infile, "%lg", &(lam_state->old_mean));
+	  fscanf(infile, "%lg", &(lam_state->energy));
 
-  	fscanf(infile, "%lg", &(lam_state->mean));
-  	fscanf(infile, "%lg", &(lam_state->vari));
+	  fscanf(infile, "%lg", &(lam_state->mean));
+	  fscanf(infile, "%lg", &(lam_state->vari));
 
-  	fscanf(infile, "%lg", &(lam_state->estimate_mean));
-  	fscanf(infile, "%lg", &(lam_state->estimate_sd));
+	  fscanf(infile, "%lg", &(lam_state->estimate_mean));
+	  fscanf(infile, "%lg", &(lam_state->estimate_sd));
 
-  	fscanf(infile, "%lg", &(lam_state->S));
-  	fscanf(infile, "%lg", &(lam_state->dS));
-  	fscanf(infile, "%lg", &(lam_state->S_0));
+	  fscanf(infile, "%lg", &(lam_state->S));
+	  fscanf(infile, "%lg", &(lam_state->dS));
+	  fscanf(infile, "%lg", &(lam_state->S_0));
 
-  	fscanf(infile, "%lg", &(lam_state->alpha));
-  	fscanf(infile, "%lg", &(lam_state->acc_ratio));
+	  fscanf(infile, "%lg", &(lam_state->alpha));
+	  fscanf(infile, "%lg", &(lam_state->acc_ratio));
 
-  	fscanf(infile, "%lg", &(lam_state->w_b));
-  	fscanf(infile, "%lg", &(lam_state->vsyy));
-  	fscanf(infile, "%lg", &(lam_state->vsxy));
-  	fscanf(infile, "%lg", &(lam_state->vsxx));
-  	fscanf(infile, "%lg", &(lam_state->vsx));
-  	fscanf(infile, "%lg", &(lam_state->vsy));
-  	fscanf(infile, "%lg", &(lam_state->vsum));
-  	fscanf(infile, "%lg", &(lam_state->D));
-  	fscanf(infile, "%lg", &(lam_state->E));
+	  fscanf(infile, "%lg", &(lam_state->w_b));
+	  fscanf(infile, "%lg", &(lam_state->vsyy));
+	  fscanf(infile, "%lg", &(lam_state->vsxy));
+	  fscanf(infile, "%lg", &(lam_state->vsxx));
+	  fscanf(infile, "%lg", &(lam_state->vsx));
+	  fscanf(infile, "%lg", &(lam_state->vsy));
+	  fscanf(infile, "%lg", &(lam_state->vsum));
+	  fscanf(infile, "%lg", &(lam_state->D));
+	  fscanf(infile, "%lg", &(lam_state->E));
 
-  	fscanf(infile, "%lg", &(lam_state->w_a));
-  	fscanf(infile, "%lg", &(lam_state->usyy));
-  	fscanf(infile, "%lg", &(lam_state->usxy));
-  	fscanf(infile, "%lg", &(lam_state->usxx));
-  	fscanf(infile, "%lg", &(lam_state->usx));
-  	fscanf(infile, "%lg", &(lam_state->usy));
-  	fscanf(infile, "%lg", &(lam_state->usum));
-  	fscanf(infile, "%lg", &(lam_state->A));
-  	fscanf(infile, "%lg", &(lam_state->B));
+	  fscanf(infile, "%lg", &(lam_state->w_a));
+	  fscanf(infile, "%lg", &(lam_state->usyy));
+	  fscanf(infile, "%lg", &(lam_state->usxy));
+	  fscanf(infile, "%lg", &(lam_state->usxx));
+	  fscanf(infile, "%lg", &(lam_state->usx));
+	  fscanf(infile, "%lg", &(lam_state->usy));
+	  fscanf(infile, "%lg", &(lam_state->usum));
+	  fscanf(infile, "%lg", &(lam_state->A));
+	  fscanf(infile, "%lg", &(lam_state->B));
 
-  	fscanf(infile, "%ld", &(lam_state->count_tau));
+	  fscanf(infile, "%ld", &(lam_state->count_tau));
 
-  	fscanf(infile, "%d", &(lam_state->proc_init));
-  	fscanf(infile, "%d", &(lam_state->proc_tau));
+	  fscanf(infile, "%d", &(lam_state->proc_init));
+	  fscanf(infile, "%d", &(lam_state->proc_tau));
 
-
-
-
-
+	for(i=0; i<3; i++)
+		fscanf(infile, "%hu\n", &(rand[i]));
 
 
 
-  for(i=0; i<3; i++)
-	fscanf(infile, "%hu\n", &(rand[i]));
-
-  fclose(infile);
+#ifdef MPI
+	fscanf(infile, "%d", &(t_settings->covar_index));
+	fscanf(infile, "%d", &(t_settings->write_tune_stat));
+	fscanf(infile, "%d", &(t_settings->auto_stop_tune));
+#endif
+	fclose(infile);
 
 }
 
@@ -209,7 +205,9 @@ void StateWrite(char *statefile, double energy)
 	FILE           *outfile;                           /* state file pointer */
 	Opts           *options;                /* command line opts to be saved */
 	MoveState      *move_status;                    /* MoveState to be saved */
-	// double         *lamsave;                        /* Lam stats to be saved */
+#ifdef MPI
+	TuningSettings *t_settings;
+#endif
 	LamState       *lam_state;                        /* Lam stats to be saved */
 	unsigned short *prand;                    /* erand48() state to be saved */
 	double         *delta;            /* wallclock and user time to be saved */
@@ -231,6 +229,11 @@ void StateWrite(char *statefile, double energy)
 	prand       = GetERandState();
 	if ( options->time_flag )
 		delta     = GetTimes();
+
+#ifdef MPI
+	t_settings = GetTuningSettings();
+#endif
+
 
 	/* write the answer; now *fully* portable, no binary!!! */
 
@@ -327,16 +330,15 @@ void StateWrite(char *statefile, double energy)
 	fprintf(outfile, "%d", lam_state->proc_tau);
 
 
-
-
-
-
-
 	/* The three values to initialize ERand I guess */
 	for(i=0; i < 3; i++)
 		fprintf(outfile,"%d\n", prand[i]);
 
-
+#ifdef MPI
+	fprintf(outfile, "%d", t_settings->covar_index);
+	fprintf(outfile, "%d", t_settings->write_tune_stat);
+	fprintf(outfile, "%d", t_settings->auto_stop_tune);
+#endif
 
 	fclose(outfile);
 
@@ -344,8 +346,10 @@ void StateWrite(char *statefile, double energy)
 	free(lam_state);
 	if ( options->time_flag )
 		free(delta);
-	// free(options);
 
+#ifdef MPI
+	free(t_settings);
+#endif
 }
 
 

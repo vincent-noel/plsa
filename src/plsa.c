@@ -77,14 +77,19 @@ static char version[MAX_RECORD];                 /* version gets set below */
 /* other static variables */
 
 // static int    precision   = 16;                    /* precision for eqparms */
-static PArrPtr 	 	plsa_params;
-static DistParms	dist_params;
-static SAType		state;
+static PArrPtr 	 		plsa_params;
+static DistParms		dist_params;
+static SAType			state;
+
+#ifdef MPI
+static TuningSettings 	tuning_settings;
+#endif
+
 // static Opts			options;
-static StopStyle   	stop_flag;               /* type of stop criterion (see above) */
-static SALogs		logs;
-static int    		stateflag;                              /* state file or not? */
-static char *		statefile;                        /* name of the state file */
+static StopStyle   		stop_flag;      /* type of stop criterion (see above) */
+static SALogs			logs;
+static int    			stateflag;                      /* state file or not? */
+static char *			statefile;                  /* name of the state file */
 
 
 /* variables used for timing */
@@ -223,7 +228,12 @@ void SetDefaultOptions()
 	state.criterion = 0;
 #ifdef MPI
 	state.mix_interval = 10;
-	state.tuning = 0;
+	state.tuning = 1;
+
+	tuning_settings.covar_index     = 1;      /* covariance sample will be covar_index * tau */
+	tuning_settings.write_tune_stat = 1;         /* how many times do we write tuning stats? */
+	tuning_settings.auto_stop_tune  = 1;               /* auto stop tuning runs? default: on */
+	state.tuning_settings = &tuning_settings;
 #endif
 	state.gain_for_jump_size_control = 5;
 	state.interval = 100;
@@ -268,8 +278,6 @@ void PrintMyPid()
 
 PArrPtr * InitPLSAParameters(int nb_dimensions)
 {
-	// plsa_params = (PArrPtr *) malloc(sizeof(PArrPtr));
-
 	ParamList *p = (ParamList *) malloc(nb_dimensions * sizeof(ParamList));
 
 	plsa_params.size  = nb_dimensions;
@@ -298,7 +306,6 @@ SAType * InitPLSA(int * nb_procs, int * my_id)
 
 	SetDefaultOptions();
 
-
 	InitializePLSA();
 
 	return &state;
@@ -308,8 +315,7 @@ SAType * InitPLSA(int * nb_procs, int * my_id)
 
 /*** THE FINAL MOVE FUNCTION ***********************************************/
 
-/*** FinalMove: reads final energy and move count, then prints $version, ***
- *              $annealing_output and $eqparms sections and removes the    *
+/*** FinalMove: reads final energy and move count, then removes the  	   *
  *              state file                                                 *
  ***************************************************************************/
 
@@ -541,28 +547,33 @@ void RestoreState(char *statefile, double *p_chisq)
 	double 			energy;
 	Opts           *options;         /* used to restore command line options */
 	MoveState      *move_ptr;                       /* used to restore moves */
-	// double         *stats;                      /* used to restore Lam stats */
+	TuningSettings *t_tuning_settings;
 	LamState         *lam_state;                      /* used to restore Lam stats */
 	unsigned short *rand;                         /* used to restore ERand48 */
 	double         delta[2];                        /* used to restore times */
 
 	/* allocate memory for structures that will be returned (stats gets allo-  *
 	 * cated in StateRead(), since we need to know if we're tuning or not)     */
-	printf("> Restoring state...\n");
 	options = (Opts *)malloc(sizeof(Opts));
-	// options->inname    = (char *)calloc(MAX_RECORD, sizeof(char));
-	// options->outname   = (char *)calloc(MAX_RECORD, sizeof(char));
-
-	// stats    = (double *)calloc(33, sizeof(double));
 	lam_state = (LamState *) malloc(sizeof(LamState));
 	move_ptr = (MoveState *)malloc(sizeof(MoveState));
 	rand     = (unsigned short *)calloc(3, sizeof(unsigned short));
 
-	StateRead(statefile, options, move_ptr, lam_state, rand, delta);
+#ifdef MPI
+	t_tuning_settings = (TuningSettings *) malloc(sizeof(TuningSettings));
+#else
+	t_tuning_settings = NULL;
+#endif
+
+	StateRead(statefile, options, move_ptr, lam_state, rand, t_tuning_settings, delta);
 
 	/* restore options in plsa.c (and some in lsa.c) */
 
 	RestoreOptions(options);
+
+#ifdef MPI
+	RestoreTuningSettings(t_tuning_settings);
+#endif
 
 	/* initialize some Lam/Greening structures */
 
@@ -595,6 +606,7 @@ void StartPLSA()
 	/* if we restore a run from a state file: call RestoreState() */
 	double S_0;
 	double energy;
+
 #ifdef MPI
 	if (myid == 0)
 	{
@@ -669,7 +681,7 @@ void StartPLSA()
 #ifdef MPI
 	/* if we are in tuning mode: initialize/restore tuning structs */
 	if ( state.tuning )
-		InitTuning(state.mix_interval, (double) state.tau);
+		InitTuning(&state);
 #endif
 
 }
@@ -763,9 +775,6 @@ Opts *GetOptions(void)
 	options->quenchit    = state.quenchit;
 #ifdef MPI
 	options->tuning = state.tuning;
-	// options->covar_index     = covar_index;
-	// options->write_tune_stat = write_tune_stat;
-	// options->auto_stop_tune  = auto_stop_tune;
 #endif
 	options->max_iter = state.max_iter;
 	options->max_seconds = state.max_seconds;
@@ -791,9 +800,6 @@ void RestoreOptions(Opts * options)
 
 #ifdef MPI
 	state.tuning 	  = options->tuning;
-// 	covar_index     = options->covar_index;
-// 	write_tune_stat = options->write_tune_stat;
-// 	auto_stop_tune  = options->auto_stop_tune;
 #endif
 	state.max_iter = options->max_iter;
 	state.max_seconds = options->max_seconds;

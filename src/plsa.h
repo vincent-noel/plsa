@@ -30,19 +30,19 @@
  ******************************************************************************/
 #include "types.h"
 
-
-/* functions that communicate with state.c */
-
-/*** GetOptions: returns command line options to state.c ***************
- ***************************************************************************/
-
-Opts *GetOptions(void);
-
-/*** RestoreOptions: restores the values of the command line opt variables *
- ***************************************************************************/
-
-void RestoreOptions(Opts *options);
-
+//
+// /* functions that communicate with state.c */
+//
+// /*** GetOptions: returns command line options to state.c ***************
+//  ***************************************************************************/
+//
+// Opts *GetOptions(void);
+//
+// /*** RestoreOptions: restores the values of the command line opt variables *
+//  ***************************************************************************/
+//
+// void RestoreOptions(Opts *options);
+//
 
 
 

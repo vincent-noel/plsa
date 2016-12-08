@@ -858,52 +858,7 @@ LamState *GetLamstats(double energy)
 	lam_state->proc_tau = proc_tau;
 
 	return lam_state;
-	// double *stats;
-	//
-	// stats = (double *)calloc(33, sizeof(double));
-	//
-	// stats[0] = (double)counter;
-	//
-	// stats[1]  = old_mean;
-	// stats[2]  = energy;
-	//
-	// stats[3]  = mean;
-	// stats[4]  = vari;
-	// stats[5]  = estimate_mean;
-	// stats[6]  = estimate_sd;
-	//
-	// stats[7]  = S;
-	// stats[8]  = dS;
-	// stats[9]  = S_0;
-	//
-	// stats[10] = alpha;
-	// stats[11] = acc_ratio;
-	//
-	// stats[12] = w_b;
-	// stats[13] = vsyy;
-	// stats[14] = vsxy;
-	// stats[15] = vsxx;
-	// stats[16] = vsx;
-	// stats[17] = vsy;
-	// stats[18] = vsum;
-	// stats[19] = D;
-	// stats[20] = E;
-	//
-	// stats[21] = w_a;
-	// stats[22] = usyy;
-	// stats[23] = usxy;
-	// stats[24] = usxx;
-	// stats[25] = usx;
-	// stats[26] = usy;
-	// stats[27] = usum;
-	// stats[28] = A;
-	// stats[29] = B;
-	//
-	// stats[30] = (double)count_tau;
-	// stats[31] = (double)proc_init;
-	// stats[32] = (double)proc_tau;
 
-	// return(stats);
 }
 
 
@@ -958,8 +913,6 @@ double RestoreLamstats(LamState * lam_state)
 {
 	double energy;
 
-	// LamState * t_state = (LamState *) malloc(sizeof(LamState));
-
 	counter = lam_state->counter;
 
 	old_mean = lam_state->old_mean;
@@ -1003,56 +956,6 @@ double RestoreLamstats(LamState * lam_state)
 	proc_init = lam_state->proc_init;
 	proc_tau = lam_state->proc_tau;
 
-
-
-
-
-	//
-	//
-	// counter = (int)rint(stats[0]);
-	//
-	// old_mean      = stats[1];
-	// energy        = stats[2];
-	//
-	// mean          = stats[3];
-	// vari          = stats[4];
-	//
-	// estimate_mean = stats[5];
-	// estimate_sd   = stats[6];
-	//
-	// S             = stats[7];
-	// dS            = stats[8];
-	// S_0           = stats[9];
-	//
-	// alpha         = stats[10];
-	// acc_ratio     = stats[11];
-	//
-	// w_b           = stats[12];
-	// vsyy          = stats[13];
-	// vsxy          = stats[14];
-	// vsxx          = stats[15];
-	// vsx           = stats[16];
-	// vsy           = stats[17];
-	// vsum          = stats[18];
-	// D             = stats[19];
-	// E             = stats[20];
-	//
-	// w_a           = stats[21];
-	// usyy          = stats[22];
-	// usxy          = stats[23];
-	// usxx          = stats[24];
-	// usx           = stats[25];
-	// usy           = stats[26];
-	// usum          = stats[27];
-	// A             = stats[28];
-	// B             = stats[29];
-	//
-	// count_tau = (long)rint(stats[30]);
-	//
-	// proc_init = (int)rint(stats[31]);
-	// proc_tau = (int)rint(stats[32]);
-	//
-	// free(stats);
 	return energy;
 }
 

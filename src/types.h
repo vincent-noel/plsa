@@ -208,7 +208,13 @@ typedef struct
 
 } LamState;
 
+typedef struct
+{
+	int 	covar_index;
+	int		write_tune_stat;
+	int 	auto_stop_tune;
 
+} TuningSettings;
 /* following struct contains copies of the static variables of moves.c     *
  * together with the values of parameters undergoing annealing             */
 
@@ -225,6 +231,7 @@ typedef struct
 	int       nsweeps;                         /* number of completed sweeps */
 
 } MoveState;
+
 
 typedef struct
 {
@@ -262,6 +269,7 @@ typedef struct
 /* Parallel settings */
 	int    				mix_interval;
 	int 				tuning;
+	TuningSettings *	tuning_settings;
 #endif
 
 
