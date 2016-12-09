@@ -95,9 +95,7 @@ void RejectMove(void);
  *    e = new_e
  *    Avoid precision errors due floating number representation            *
  **************************************************************************/
-
-double GetNewEnergy(void);
-double GetOldEnergy(void);
+double GetNewEnergy();
 
 /* moves.c: functions for move generation */
 
@@ -114,7 +112,7 @@ double GetOldEnergy(void);
  *              it then returns the initial temperature to the caller      *
  ***************************************************************************/
 
-void InitMoves(SAType * state, PArrPtr * pl);
+double InitMoves(SAType * state, PArrPtr * pl);
 
 /* a function for finalizing a run */
 

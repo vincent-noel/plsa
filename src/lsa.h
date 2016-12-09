@@ -147,7 +147,7 @@
 
 /* Initializing functions */
 double InitializeLSA(SAType * state, PArrPtr * pl);
-
+AParms * FinalizeLSA();
 /*** InitialLoop: performs the two sets of initial moves: ******************
  *                   1. randomizing moves (not parallelized)               *
  *                   2. loop for initial collection of statistics          *

@@ -40,17 +40,21 @@
 #include <sys/time.h>
 
 #include "lsa.h"
+
 #include "moves.h"
-#include "score.h"
 #include "error.h"
 #include "random.h"
 #include "config.h"
 #include "state.h"
+
+
 #ifdef MPI
+
 #include <mpi.h>
 #include "MPI.h"
 #include "mixing.h"
 #include "tuning.h"
+
 #endif
 
 /* STATIC VARIABLES ********************************************************/
@@ -184,9 +188,7 @@ double InitializeLSA(SAType * state, PArrPtr * pl)
 {
 	double t_energy;
 	InitFilenames();
-	InitScoring(state);                   /* initializes facts and limits */
-	InitMoves(state, pl);     /* set initial temperature and */
-	t_energy = Score();
+	t_energy = InitMoves(state, pl);     /* set initial temperature and */
 
 	return t_energy;
 }
@@ -356,6 +358,7 @@ double InitialLoop(SAType * state, double s0)
 
 		else if ( (energy_change <= 0.0) || (exp(exp_arg) > RandomReal()) ){
 			energy = GetNewEnergy();
+			// energy += energy_change;
 			AcceptMove();
 		}
 		else
@@ -397,6 +400,7 @@ double InitialLoop(SAType * state, double s0)
 		else if ( (energy_change <= 0.0) || (exp(exp_arg) > RandomReal()) )
 		{
 			energy = GetNewEnergy();
+			// energy += energy_change;
 			AcceptMove();
 			success++;
 		}
@@ -646,6 +650,12 @@ void WriteScoreTrace(double t_energy, int acceptance)
 	fclose(trace_energy);
 }
 
+AParms * FinalizeLSA()
+{
+	free(logfile);
+	return GetFinalInfo();
+}
+
 /*** Loop: loops (making moves, updating stats etc.) until the system is ***
  *         considered frozen according to the stop criterion               *
  ***************************************************************************/
@@ -709,9 +719,13 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 				RejectMove();
 			} else if ( (energy_change <= 0.0) ||
 					  ( (!state->quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
-				AcceptMove();
+				// energy += energy_change;
 				energy = GetNewEnergy();
 
+				// if (fabs(energy - GetNewEnergy()) > 1e-6)
+					// printf("energy = %g, GetNewEnergy() = %g, energy_change = %g\n", energy, GetNewEnergy(), energy_change);
+
+				AcceptMove();
 				success++;
 				acceptance_result = 1;
 #ifdef MPI
@@ -722,7 +736,7 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 				RejectMove();
 
 			if (logTraceScore() > 0)
-				WriteScoreTrace(GetNewEnergy(), acceptance_result);
+				WriteScoreTrace(energy, acceptance_result);
 
 			/* update statistics */
 			mean    += energy;
@@ -761,7 +775,7 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 		 * libration runs exit below */
 
 		if (state->max_iter > 0 && count_tau >= state->max_iter)
-			return GetFinalInfo();
+			return FinalizeLSA();
 
 		if (state->max_seconds > 0)
 		{
@@ -770,12 +784,12 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 			int duration = ((int) tp.tv_sec) - start_time_seconds;
 
 			if (duration > state->max_seconds)
-				return GetFinalInfo();
+				return FinalizeLSA();
 
 		}
 
 		if ( Frozen(state, state->stop_flag) )
-			return GetFinalInfo();
+			return FinalizeLSA();
 
 		/* update Lam stats: estimators for mean, sd and alpha from acc_ratio (we  *
 		 * don't need this in quenchit mode since the temperature is fixed to 0)   */
@@ -792,7 +806,7 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 			UpdateLParameter(S);
 
 			if (UpdateTuning(logfile))
-				return GetFinalInfo();//FinalMove(state);
+				return FinalizeLSA();//FinalMove(state);
 		}
 
 		/* at each mix_interval: do some mixing */

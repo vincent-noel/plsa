@@ -250,9 +250,6 @@ void StateWrite(char *statefile, double energy)
 	fprintf(outfile, "%d\n",    options->quenchit);
 #ifdef MPI
 	fprintf(outfile, "%d\n", 	options->tuning);
-	fprintf(outfile, "%d\n",    options->covar_index);
-	fprintf(outfile, "%d\n",    options->write_tune_stat);
-	fprintf(outfile, "%d\n",    options->auto_stop_tune);
 #endif
 
 	if ( options->time_flag )
@@ -341,11 +338,12 @@ void StateWrite(char *statefile, double energy)
 #endif
 
 	fclose(outfile);
-
 	free(move_status);
 	free(lam_state);
 	if ( options->time_flag )
 		free(delta);
+	free(options);
+
 
 #ifdef MPI
 	free(t_settings);

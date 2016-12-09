@@ -253,8 +253,7 @@ void SetDefaultOptions()
 	state.printFunction = NULL;
 
 	/* create time file name by appending .times to input file name */
-	logs.dir = (char *)calloc(MAX_RECORD, sizeof(char));
-	logs.dir = strcpy(logs.dir, "logs");
+	logs.dir = "logs";
 	logs.trace_score = 0;
 	logs.trace_params = 0;
 	logs.params = 0;
@@ -753,7 +752,7 @@ PLSARes * runPLSA()
 
 	free(cpu_start);
 	free(cpu_finish);
-
+	free(statefile);
 #ifdef MPI
 	// terminates MPI execution environment
 	MPI_Finalize();

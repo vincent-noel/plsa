@@ -54,13 +54,13 @@ test: examples
 	make clean_examples
 
 run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
-	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -o run-funnel-serial
+	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -O3 -o run-funnel-serial
 
 main-funnel-serial.o: examples/funnel/main.c
 	$(CC) $(FLAGS) -c examples/funnel/main.c -o main-funnel-serial.o
 
 run-funnel-parallel: main-funnel-parallel.o $(OBJ) $(POBJ)
-	$(MPICC) main-funnel-parallel.o $(OBJ) $(POBJ) -lm -o run-funnel-parallel
+	$(MPICC) main-funnel-parallel.o $(OBJ) $(POBJ) -lm -O3 -o run-funnel-parallel
 
 main-funnel-parallel.o:	examples/funnel/main.c
 	$(MPICC) $(FLAGS) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o

@@ -99,6 +99,8 @@ int 	main (int argc, char ** argv)
 
 	free(res->params);
 	free(res);
+	free(params->array);
+	// free(params);
 
 	return 0;
 }

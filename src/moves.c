@@ -85,7 +85,7 @@ static long      *success;         /* used for pooling number of successes */
 static long      *tmp;             /* temp array for MPI_Allreduce sendbuf */
 #endif
 
-
+double GetNewEnergy(){return new_energy;}
 
 
 
@@ -105,10 +105,10 @@ static long      *tmp;             /* temp array for MPI_Allreduce sendbuf */
  ***************************************************************************/
 
 
-void InitMoves(SAType * state, PArrPtr * pl)
+double InitMoves(SAType * state, PArrPtr * pl)
 {
 	int            i;                                  /* local loop counter */
-
+	double initial_energy;
 	/* following is used to initialize erand48() */
 
 	long           seedval;         /* contains random number generator seed */
@@ -121,6 +121,8 @@ void InitMoves(SAType * state, PArrPtr * pl)
 	xsubj = (unsigned short *)calloc(3, sizeof(unsigned short));
 
 	InitDistribution(state->dist_params);
+	InitScoring(state);                   /* initializes facts and limits */
+	initial_energy = Score();
 
 
 
@@ -179,8 +181,8 @@ void InitMoves(SAType * state, PArrPtr * pl)
 
 #endif
 
-	/* Finally, return the start temperature. */
-	return;// ap.start_tempr;
+	/* Finally, return the initial energy. */
+	return initial_energy;
 }
 
 
@@ -220,6 +222,16 @@ void RestoreMoves(MoveState *MovePtr)
 
 AParms * GetFinalInfo(void)
 {
+	free(acc_tab);
+
+#ifdef MPI
+
+	free(hits);
+	free(success);
+	free(tmp);
+
+#endif
+
 	ap.stop_energy = old_energy;
 	ap.max_count   = nhits;
 
@@ -433,25 +445,6 @@ void RejectMove(void)
 	*(ptab[idx].param) = pretweak;
 }
 
-/*** GetEnergy: returned the last computed value of the scoring function   *
- *    To avoid computing e = old_e + (new e - old e), and using directly   *
- *    e = new_e
- *    Avoid precision errors due floating number representation            *
- **************************************************************************/
-
-double GetNewEnergy(void)
-{
-	return new_energy;
-}
-
-/*** GetEnergy: returned the last accepted value of the scoring function   *
- *                                                                         *
- **************************************************************************/
-
-double GetOldEnergy(void)
-{
-	return old_energy;
-}
 /*** MOVE GENERATION - PART 2: FUNCS NEEDED IN MOVES.C (BUT NOT LSA.C) *****/
 
 /*** MoveSave: returns a MoveState struct in which the current state of ****
