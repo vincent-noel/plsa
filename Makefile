@@ -41,16 +41,18 @@ uninstall:
 clean:
 	rm -f *.o *.so
 
-examples: run-funnel-serial run-funnel-parallel
+examples: run-funnel-serial run-funnel-parallel run-sigmoid-serial run-sigmoid-parallel
 	rm *.o
 
 clean_examples:
-	rm -f *.o *.so run-funnel-serial run-funnel-parallel
+	rm -f *.o *.so run-funnel-serial run-funnel-parallel run-sigmoid-serial run-sigmoid-parallel
 	rm -fr logs/ final_score plsa.log *.state input output
 
 test: examples
 	./run-funnel-serial
 	mpirun -np 2 ./run-funnel-parallel
+	./run-sigmoid-serial
+	mpirun -np 2 ./run-sigmoid-parallel
 	make clean_examples
 
 run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
@@ -65,6 +67,19 @@ run-funnel-parallel: main-funnel-parallel.o $(OBJ) $(POBJ)
 main-funnel-parallel.o:	examples/funnel/main.c
 	$(MPICC) $(FLAGS) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
 
+
+
+run-sigmoid-serial: main-sigmoid-serial.o $(OBJ) $(SOBJ)
+	$(CC) main-sigmoid-serial.o $(OBJ) $(SOBJ) -lm -O3 -o run-sigmoid-serial
+
+main-sigmoid-serial.o: examples/sigmoid/main.c
+	$(CC) $(FLAGS) -c examples/sigmoid/main.c -o main-sigmoid-serial.o
+
+run-sigmoid-parallel: main-sigmoid-parallel.o $(OBJ) $(POBJ)
+	$(MPICC) main-sigmoid-parallel.o $(OBJ) $(POBJ) -lm -O3 -o run-sigmoid-parallel
+
+main-sigmoid-parallel.o:	examples/sigmoid/main.c
+	$(MPICC) $(FLAGS) -c examples/sigmoid/main.c -DMPI -o main-sigmoid-parallel.o
 
 # Shared objects
 libplsa-serial.so:	$(OBJ) $(SOBJ)

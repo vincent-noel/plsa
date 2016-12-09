@@ -214,19 +214,19 @@ void SetDefaultOptions()
 	state.state_write     = 100;        /* default freq for writing to state file */
 	state.time_flag = 0;
 
-	state.initial_temp = 1000;
+	state.initial_temp = 1;
 
-	state.lambda = 0.001;
+	state.lambda = 0.01;
 	state.lambda_mem_length_u = 200;
 	state.lambda_mem_length_v = 1000;
 
-	state.initial_moves = 200;
+	state.initial_moves = 1000;
 	state.tau = 100;
 	state.freeze_count = 100;
 
 	state.update_S_skip = 1;
 	state.control = 1;
-	state.criterion = 0;
+	state.criterion = 0.01;
 #ifdef MPI
 	state.mix_interval = 10;
 	state.tuning = 0;
@@ -361,6 +361,7 @@ double FinalMove(AParms * ap)
 	}
 
 	final_score = minyet;
+	free(final_e);
 #else
 	final_score = ap->stop_energy;
 #endif
@@ -385,7 +386,7 @@ double FinalMove(AParms * ap)
 			*(plsa_params.array[ii].param) = res_params[ii];
 
 	}
-
+	free(res_params);
 
 	/* Then we write result logs */
 	if (myid == winner)

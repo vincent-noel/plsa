@@ -95,7 +95,8 @@ void RejectMove(void);
  *    e = new_e
  *    Avoid precision errors due floating number representation            *
  **************************************************************************/
-double GetNewEnergy();
+ double GetNewEnergy();
+ double GetOldEnergy();
 
 /* moves.c: functions for move generation */
 

@@ -86,6 +86,7 @@ static long      *tmp;             /* temp array for MPI_Allreduce sendbuf */
 #endif
 
 double GetNewEnergy(){return new_energy;}
+double GetOldEnergy(){return old_energy;}
 
 
 
@@ -394,7 +395,6 @@ double GenerateMove(void)
 	// double     delta_e;           /* energy difference before and after move */
 
 	/* for first call: check for valid parameters */
-
 	if (old_energy == -999.)
 	{
 		old_energy = Score();
@@ -415,12 +415,19 @@ double GenerateMove(void)
 	new_energy = Score();
 
 	if (logTraceParams() > 0)
-	  WriteParamsTrace();
+		WriteParamsTrace();
+
+
+
 
 	if (new_energy == FORBIDDEN_MOVE)
 		return FORBIDDEN_MOVE;
 
-	else return (new_energy - old_energy);
+	else
+	{
+		// printf("Generated Move : %.30f -> %.30f (%.30f)\n", old_energy, new_energy, (new_energy - old_energy));
+		return (new_energy - old_energy);
+	}
 }
 
 

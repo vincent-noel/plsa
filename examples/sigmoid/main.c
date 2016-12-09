@@ -35,30 +35,62 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../../src/sa.h"
+#include <plsa/sa.h>
 #include <math.h>
 
 
 //////////////////////////////////////////////////////////////////////////////
 // Problem definition :
+int nb_inputs = 13;
+double ras_input[13] = {0.27473296046875062, 0.75856928418982039,
+							0.92019179219384561, 1.0010676507878311,
+							1.0496138592497219, 1.0819866250315191,
+							1.1051142559845317, 1.1359565780285732,
+							1.1555867723155182, 1.1867693559230004,
+							1.1976600204978742, 1.2125920395855168,
+							1.2202407154431443};
+double solution[13] = {0.15243705991527873, 0.15900202466660762,
+						 0.24715087493852866, 0.43688580407507915,
+						0.65242365783591083, 0.84597284362150726,
+						1.0056920670435818, 1.2376189221670717,
+						1.3902345246714087, 1.6285371043491492,
+						1.7081269468499927, 1.812622261520743,
+						1.8637588068489317};
 
-// One parameter, one solution
-double param = 1e-8;
-double solution = 45651632.4203623;
+double k = 1e-6;
+double n = 1e-6;
+double theta = 1e-6;
+double ras_basal = 1e-6;
+
+
 
 // And the function is the distance to the solution
 double 	score_function()
 {
-	return pow((solution-param),2);
+	int i;
+	double score, t_score;
+	score = 0;
+	for (i=0; i < nb_inputs; i++)
+	{
+		t_score = k*pow(ras_input[i], n)/(pow(ras_input[i], n) + pow(theta,n)) + ras_basal;
+		score += fabs((t_score-solution[i])/solution[i]);
+	}
+	return score;
 }
 
 // And we print it for each new best score
 void 	print_function()
 {
-	printf("New best score : %.5g (param = %10.7f)\n",
-			score_function(),
-			param
-	);
+	int i;
+	double t_score;
+	for (i=0; i < nb_inputs; i++)
+	{
+		t_score = k*pow(ras_input[i], n)/(pow(ras_input[i], n) + pow(theta,n)) + ras_basal;
+		printf("%g", t_score);
+		if (i < (nb_inputs-1))
+			printf(", ");
+	}
+	printf("\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -68,31 +100,40 @@ int 	main (int argc, char ** argv)
 {
 
 	int nnodes, myid;
+
 	// define the optimization settings
-
 	SAType * t_sa = InitPLSA(&nnodes, &myid);
-
-
 	t_sa->scoreFunction = &score_function;
-	t_sa->printFunction = &print_function;
-
+	t_sa->lambda = 0.0001;
+	t_sa->initial_moves = 2000;
+	t_sa->tau = 1000;
 
 	// define the optimization parameters
-	PArrPtr * params = InitPLSAParameters(1);
-	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}, "k"};
-
+	PArrPtr * params = InitPLSAParameters(4);
+	params->array[0] = (ParamList) { &k, (Range) {0,1e+16}, "k"};
+	params->array[1] = (ParamList) { &n, (Range) {0,1e+16}, "n"};
+	params->array[2] = (ParamList) { &theta, (Range) {0,1e+16}, "theta"};
+	params->array[3] = (ParamList) { &ras_basal, (Range) {0,1e+16}, "ras_basal"};
 
 	// run the optimization
 	PLSARes * res = runPLSA();
-
 
 	// print final parameter value and score
 #ifdef MPI
 	if (myid == 0)
 	{
 #endif
-		printf("final value : %10.7f\n", res->params[0]);
 		printf("final score : %g\n", res->score);
+
+		// int i;
+		// for (i=0; i < nb_inputs; i++)
+		// {
+		// 	printf("%g", solution[i]);
+		// 	if (i < (nb_inputs-1))
+		// 		printf(", ");
+		// }
+		// printf("\n");
+		// print_function();
 #ifdef MPI
 	}
 #endif
@@ -100,7 +141,6 @@ int 	main (int argc, char ** argv)
 	free(res->params);
 	free(res);
 	free(params->array);
-	// free(params);
 
 	return 0;
 }

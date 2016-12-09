@@ -186,11 +186,11 @@ void InitFilenames(void)
 
 double InitializeLSA(SAType * state, PArrPtr * pl)
 {
-	double t_energy;
+	// double t_energy;
 	InitFilenames();
-	t_energy = InitMoves(state, pl);     /* set initial temperature and */
+	energy = InitMoves(state, pl);     /* set initial temperature and */
 
-	return t_energy;
+	return energy;
 }
 
 /*** InitializeWeights: initialize weights a and b for calculating Lam *****
@@ -358,7 +358,6 @@ double InitialLoop(SAType * state, double s0)
 
 		else if ( (energy_change <= 0.0) || (exp(exp_arg) > RandomReal()) ){
 			energy = GetNewEnergy();
-			// energy += energy_change;
 			AcceptMove();
 		}
 		else
@@ -400,7 +399,6 @@ double InitialLoop(SAType * state, double s0)
 		else if ( (energy_change <= 0.0) || (exp(exp_arg) > RandomReal()) )
 		{
 			energy = GetNewEnergy();
-			// energy += energy_change;
 			AcceptMove();
 			success++;
 		}
@@ -719,12 +717,7 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 				RejectMove();
 			} else if ( (energy_change <= 0.0) ||
 					  ( (!state->quenchit) && (exp(exp_arg) > RandomReal()) ) ) {
-				// energy += energy_change;
 				energy = GetNewEnergy();
-
-				// if (fabs(energy - GetNewEnergy()) > 1e-6)
-					// printf("energy = %g, GetNewEnergy() = %g, energy_change = %g\n", energy, GetNewEnergy(), energy_change);
-
 				AcceptMove();
 				success++;
 				acceptance_result = 1;
