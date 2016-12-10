@@ -34,25 +34,29 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+#ifdef MPI
+	#include <mpi.h>
+#endif
 
 #include "../../src/sa.h"
-#include <math.h>
-#include <stdlib.h>
-#include <time.h>
 
 
 //////////////////////////////////////////////////////////////////////////////
 // Problem definition :
 int nb_inputs = 6;
-double ras_input[6] = {0.50000, 0.80000, 1.10000, 1.40000, 1.70000, 2.00000};
+double input[6] = {0.50000, 0.80000, 1.10000, 1.40000, 1.70000, 2.00000};
 double solution[6] = {0.15246, 0.16622, 0.96904, 2.54871, 2.71236, 2.72350};
 
-double k = 1e-16;
-double n = 1e-16;
-double theta = 1e-16;
-double basal = 1e-16;
+double k;
+double n;
+double theta;
+double basal;
+long seed;
 
-
+int nb_tests = 200;
 
 // And the function is the distance to the solution
 double 	score_function()
@@ -62,7 +66,7 @@ double 	score_function()
 	score = 0;
 	for (i=0; i < nb_inputs; i++)
 	{
-		t_score = k*pow(ras_input[i], n)/(pow(ras_input[i], n) + pow(theta,n)) + basal;
+		t_score = k*pow(input[i], n)/(pow(input[i], n) + pow(theta,n)) + basal;
 		score += fabs((t_score-solution[i])/solution[i]);
 	}
 	return score;
@@ -75,7 +79,7 @@ void 	print_function()
 	double t_score;
 	for (i=0; i < nb_inputs; i++)
 	{
-		t_score = k*pow(ras_input[i], n)/(pow(ras_input[i], n) + pow(theta,n)) + basal;
+		t_score = k*pow(input[i], n)/(pow(input[i], n) + pow(theta,n)) + basal;
 		printf("%g", t_score);
 		if (i < (nb_inputs-1))
 			printf(", ");
@@ -89,31 +93,58 @@ void 	print_function()
 int 	main (int argc, char ** argv)
 {
 
+#ifdef MPI
+	// MPI initialization steps
 	int nnodes, myid;
 
-	// for (i=0; i < 2; i++)
-	// {
-		long seed;
+	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
+	if (rc != MPI_SUCCESS)
+		printf (" > Error starting MPI program. \n");
+
+	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);        /* number of processors? */
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);         /* ID of local processor? */
+
+
+#endif
+
+
+	int i, success;
+	success = 0;
+	for (i=0; i < nb_tests; i++)
+	{
+
+		k = 1;
+		n = 1;
+		theta = 1;
+		basal = 1;
+
 		srand ( time(NULL) );
 		seed = rand();
 		seed *= rand();
 
 
 		// define the optimization settings
-		SAType * t_sa = InitPLSA(&nnodes, &myid);
+#ifdef MPI
+		SAType * t_sa = InitPLSA(nnodes, myid);
+
+#else
+		SAType * t_sa = InitPLSA();
+
+#endif
 		t_sa->seed = seed;
 		t_sa->scoreFunction = &score_function;
 		t_sa->initial_temp = 1;
-		t_sa->lambda = 0.00001;
-		t_sa->initial_moves = 2000;
-		t_sa->tau = 1000;
-		t_sa->criterion = 1e-3;
+		t_sa->lambda = 0.0001;
+		t_sa->initial_moves = 20000;
+		t_sa->tau = 10000;
+		t_sa->interval = 1000;
+		t_sa->criterion = 1e-4;
 		// define the optimization parameters
 		PArrPtr * params = InitPLSAParameters(4);
 		params->array[0] = (ParamList) { &k, (Range) {0,1e+16}, "k"};
 		params->array[1] = (ParamList) { &n, (Range) {0,1e+16}, "n"};
 		params->array[2] = (ParamList) { &theta, (Range) {0,1e+16}, "theta"};
-		params->array[3] = (ParamList) { &basal, (Range) {0,1e+16}, "ras_basal"};
+		params->array[3] = (ParamList) { &basal, (Range) {0,1e+16}, "basal"};
 
 		// run the optimization
 		PLSARes * res = runPLSA();
@@ -123,28 +154,33 @@ int 	main (int argc, char ** argv)
 		if (myid == 0)
 		{
 	#endif
+
 			printf("final score : %g\n", res->score);
-			// printf("k : %g\n", k);
-			// printf("n : %g\n", n);
-			// printf("theta : %g\n", theta);
-			// printf("basal : %g\n", basal);
-			//
-			// int i;
-			// for (i=0; i < nb_inputs; i++)
-			// {
-			// 	printf("%g", solution[i]);
-			// 	if (i < (nb_inputs-1))
-			// 		printf(", ");
-			// }
-			// printf("\n");
-			// print_function();
+
 	#ifdef MPI
 		}
 	#endif
 
-		free(res->params);
-		free(res);
+		if (res->score < 1e-4)
+			success++;
+
+
 		free(params->array);
-	// }
+		free(res->params);
+		// free(params);
+		free(res);
+	}
+#ifdef MPI
+	if (myid == 0)
+	{
+#endif
+		printf("> Success = %2.0f%%\n", (double) success*100/nb_tests);
+#ifdef MPI
+	}
+
+	// terminates MPI execution environment
+	MPI_Finalize();
+#endif
+
 	return 0;
 }

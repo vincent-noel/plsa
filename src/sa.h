@@ -39,8 +39,13 @@
 
 
 /*** InitPLSA: Initialize the settings variable, are returns it               */
-SAType * 	InitPLSA				(int * nb_procs, int * my_id);
+#ifdef MPI
+SAType * 	InitPLSA				(int nb_procs, int my_id);
 
+#else
+SAType * 	InitPLSA				();
+
+#endif
 
 /*** InitPLSAParameters: Initialize the parameters variable, are returns it   */
 PArrPtr * 	InitPLSAParameters		(int nb_dimensions);

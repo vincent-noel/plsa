@@ -343,7 +343,7 @@ void StateWrite(char *statefile, double energy)
 	if ( options->time_flag )
 		free(delta);
 	free(options);
-
+	
 
 #ifdef MPI
 	free(t_settings);
@@ -362,5 +362,5 @@ void StateRm(void)
   if ( remove(filename) )
 	warning("StateRm: could not delete %s", filename);
 
-  free(filename);
+  // free(filename);
 }

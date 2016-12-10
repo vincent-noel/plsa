@@ -237,7 +237,7 @@ void SetDefaultOptions()
 	state.tuning_settings = &tuning_settings;
 #endif
 	state.gain_for_jump_size_control = 5;
-	state.interval = 1000;
+	state.interval = 100;
 
 	state.max_iter = -1;
 	state.max_seconds = -1;
@@ -286,23 +286,25 @@ PArrPtr * InitPLSAParameters(int nb_dimensions)
 	return &plsa_params;
 }
 
-
-SAType * InitPLSA(int * nb_procs, int * my_id)
-{
-
 #ifdef MPI
-	// MPI initialization steps
-
-	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
-	if (rc != MPI_SUCCESS)
-		printf (" > Error starting MPI program. \n");
-
-	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
-	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
-
-	nnodes = *nb_procs;
-	myid = *my_id;
-#endif
+SAType * InitPLSA(int nb_procs, int my_id)
+{
+	nnodes = nb_procs;
+	myid = my_id;
+//
+// #ifdef MPI
+// 	// MPI initialization steps
+//
+// 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
+// 	if (rc != MPI_SUCCESS)
+// 		printf (" > Error starting MPI program. \n");
+//
+// 	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
+// 	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
+//
+// 	nnodes = *nb_procs;
+// 	myid = *my_id;
+// #endif
 
 	SetDefaultOptions();
 
@@ -310,9 +312,32 @@ SAType * InitPLSA(int * nb_procs, int * my_id)
 
 	return &state;
 }
+#else
 
+SAType * InitPLSA()
+{
+//
+// #ifdef MPI
+// 	// MPI initialization steps
+//
+// 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
+// 	if (rc != MPI_SUCCESS)
+// 		printf (" > Error starting MPI program. \n");
+//
+// 	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
+// 	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
+//
+// 	nnodes = *nb_procs;
+// 	myid = *my_id;
+// #endif
 
+	SetDefaultOptions();
 
+	InitializePLSA();
+
+	return &state;
+}
+#endif
 /*** THE FINAL MOVE FUNCTION ***********************************************/
 
 /*** FinalMove: reads final energy and move count, then removes the  	   *
@@ -754,10 +779,7 @@ PLSARes * runPLSA()
 	free(cpu_start);
 	free(cpu_finish);
 	free(statefile);
-#ifdef MPI
-	// terminates MPI execution environment
-	MPI_Finalize();
-#endif
+
 
 	return res;
 

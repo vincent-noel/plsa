@@ -35,6 +35,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef MPI
+#include <mpi.h>
+#endif
+
 #include "../../src/sa.h"
 #include <math.h>
 
@@ -67,15 +71,32 @@ void 	print_function()
 int 	main (int argc, char ** argv)
 {
 
-	int nnodes, myid;
-	// define the optimization settings
 
-	SAType * t_sa = InitPLSA(&nnodes, &myid);
+#ifdef MPI
+	// MPI initialization steps
+	int nnodes, myid;
+
+	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
+	if (rc != MPI_SUCCESS)
+		printf (" > Error starting MPI program. \n");
+
+	MPI_Comm_size(MPI_COMM_WORLD, &nnodes);        /* number of processors? */
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);         /* ID of local processor? */
+
+
+	SAType * t_sa = InitPLSA(nnodes, myid);
+
+#else
+	SAType * t_sa = InitPLSA();
+
+#endif	// define the optimization settings
+
 
 
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
 
+	t_sa->criterion = 1e-17;
 
 	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(1);
@@ -101,6 +122,11 @@ int 	main (int argc, char ** argv)
 	free(res);
 	free(params->array);
 	// free(params);
+
+#ifdef MPI
+	// terminates MPI execution environment
+	MPI_Finalize();
+#endif
 
 	return 0;
 }
