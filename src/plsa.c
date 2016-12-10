@@ -237,7 +237,7 @@ void SetDefaultOptions()
 	state.tuning_settings = &tuning_settings;
 #endif
 	state.gain_for_jump_size_control = 5;
-	state.interval = 100;
+	state.interval = 1000;
 
 	state.max_iter = -1;
 	state.max_seconds = -1;
