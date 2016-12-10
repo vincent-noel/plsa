@@ -49,10 +49,10 @@ clean_examples:
 	rm -fr logs/ final_score plsa.log *.state input output
 
 test: examples
-	./run-funnel-serial
-	mpirun -np 2 ./run-funnel-parallel
-	./run-sigmoid-serial
-	mpirun -np 2 ./run-sigmoid-parallel
+	time ./run-funnel-serial
+	time mpirun -np 2 ./run-funnel-parallel
+	time ./run-sigmoid-serial
+	time mpirun -np 2 ./run-sigmoid-parallel
 	make clean_examples
 
 run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)

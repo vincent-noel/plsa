@@ -55,10 +55,10 @@ double 	score_function()
 // And we print it for each new best score
 void 	print_function()
 {
-	printf("New best score : %.5g (param = %10.7f)\n",
-			score_function(),
-			param
-	);
+	// printf("New best score : %.5g (param = %10.7f)\n",
+	// 		score_function(),
+	// 		param
+	// );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ int 	main (int argc, char ** argv)
 	if (myid == 0)
 	{
 #endif
-		printf("final value : %10.7f\n", res->params[0]);
+		// printf("final value : %10.7f\n", res->params[0]);
 		printf("final score : %g\n", res->score);
 #ifdef MPI
 	}

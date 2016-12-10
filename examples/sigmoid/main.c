@@ -107,6 +107,7 @@ int 	main (int argc, char ** argv)
 	t_sa->lambda = 0.0001;
 	t_sa->initial_moves = 2000;
 	t_sa->tau = 1000;
+	t_sa->criterion = 0;
 
 	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(4);
@@ -124,7 +125,11 @@ int 	main (int argc, char ** argv)
 	{
 #endif
 		printf("final score : %g\n", res->score);
-
+		// printf("k : %g\n", k);
+		// printf("n : %g\n", n);
+		// printf("theta : %g\n", theta);
+		// printf("ras_basal : %g\n", ras_basal);
+		//
 		// int i;
 		// for (i=0; i < nb_inputs; i++)
 		// {
