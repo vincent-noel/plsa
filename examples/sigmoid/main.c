@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <../../src/sa.h>
+#include "../../src/sa.h"
 #include <math.h>
 
 
