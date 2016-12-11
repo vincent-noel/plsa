@@ -56,7 +56,7 @@ double theta;
 double basal;
 long seed;
 
-int nb_tests = 10;
+int nb_tests = 4;
 
 // And the function is the distance to the solution
 double 	score_function()
@@ -107,27 +107,7 @@ int 	main (int argc, char ** argv)
 
 #endif
 
-	FILE * f;
 
-// #ifdef MPI
-// 	if (myid == 0)
-// 	{
-// 		f = fopen("res-parallel", "a");
-//
-// #else
-// 		f = fopen("res-serial", "a");
-//
-// #endif
-//
-// 		fprintf(f, "{data:{");
-// 		fclose(f);
-//
-// #ifdef MPI
-// 	}
-// #endif
-
-	struct timeval tv;
-	unsigned long long start, stop;
 	int i, success;
 
 	success = 0;
@@ -142,10 +122,6 @@ int 	main (int argc, char ** argv)
 		srand ( time(NULL) );
 		seed = rand();
 		seed *= rand();
-
-		gettimeofday(&tv, NULL);
-		start =	(unsigned long long)(tv.tv_sec) * 1000 +
-				(unsigned long long)(tv.tv_usec) / 1000;
 
 		// define the optimization settings
 #ifdef MPI
@@ -173,67 +149,31 @@ int 	main (int argc, char ** argv)
 		// run the optimization
 		PLSARes * res = runPLSA();
 
-		gettimeofday(&tv, NULL);
-		stop =	(unsigned long long)(tv.tv_sec) * 1000 +
-				(unsigned long long)(tv.tv_usec) / 1000;
-
-		// print final parameter value and score
-	#ifdef MPI
-		if (myid == 0)
-		{
-			f = fopen("res-parallel", "a");
-
-	#else
-			f = fopen("res-serial", "a");
-
-	#endif
-
-			fprintf(f, "{x: %.2f, y:%g},\n", ((double) (stop-start))/1000.0, res->score);
-			fclose(f);
-
-	#ifdef MPI
-		}
-	#endif
-
 		if (res->score < 1e-3)
 			success++;
 
+// #ifdef MPI
+// 		if (myid == 0)
+// 		{
+// #endif
+// 			printf("score = %2g\n", res->score);
+// #ifdef MPI
+// 		}
+// #endif
 
 		free(params->array);
 		free(res->params);
-		// free(params);
 		free(res);
 	}
+
 #ifdef MPI
-	if (myid == 0)
-	{
-#endif
-		printf("> Success = %2.0f%%\n", (double) success*100/nb_tests);
-#ifdef MPI
-	}
-
-
-// #ifdef MPI
-// 	if (myid == 0)
-// 	{
-// 		f = fopen("res-parallel", "a");
-//
-// #else
-// 		f = fopen("res-serial", "a");
-//
-// #endif
-//
-// 		fprintf(f, "}}\n");
-// 		fclose(f);
-//
-// 	#ifdef MPI
-// 		}
-// 	#endif
-
 
 	// terminates MPI execution environment
 	MPI_Finalize();
 #endif
 
-	return 0;
+	if (success >= nb_tests*0.75)
+		return 0;
+	else
+		return 1;
 }

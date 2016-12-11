@@ -119,7 +119,6 @@ int 	main (int argc, char ** argv)
 #endif
 
 	free(res->params);
-	free(res);
 	free(params->array);
 	// free(params);
 
@@ -128,5 +127,14 @@ int 	main (int argc, char ** argv)
 	MPI_Finalize();
 #endif
 
-	return 0;
+	if (res->score < 1e-16)
+	{
+		free(res);
+		return 0;
+	}
+	else
+	{
+		free(res);
+		return 1;		
+	}
 }
