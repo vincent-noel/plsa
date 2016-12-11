@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
-
+#include <sys/time.h>
 #ifdef MPI
 	#include <mpi.h>
 #endif
@@ -56,7 +56,7 @@ double theta;
 double basal;
 long seed;
 
-int nb_tests = 200;
+int nb_tests = 10;
 
 // And the function is the distance to the solution
 double 	score_function()
@@ -107,8 +107,29 @@ int 	main (int argc, char ** argv)
 
 #endif
 
+	FILE * f;
 
+// #ifdef MPI
+// 	if (myid == 0)
+// 	{
+// 		f = fopen("res-parallel", "a");
+//
+// #else
+// 		f = fopen("res-serial", "a");
+//
+// #endif
+//
+// 		fprintf(f, "{data:{");
+// 		fclose(f);
+//
+// #ifdef MPI
+// 	}
+// #endif
+
+	struct timeval tv;
+	unsigned long long start, stop;
 	int i, success;
+
 	success = 0;
 	for (i=0; i < nb_tests; i++)
 	{
@@ -122,6 +143,9 @@ int 	main (int argc, char ** argv)
 		seed = rand();
 		seed *= rand();
 
+		gettimeofday(&tv, NULL);
+		start =	(unsigned long long)(tv.tv_sec) * 1000 +
+				(unsigned long long)(tv.tv_usec) / 1000;
 
 		// define the optimization settings
 #ifdef MPI
@@ -134,7 +158,7 @@ int 	main (int argc, char ** argv)
 		t_sa->seed = seed;
 		t_sa->scoreFunction = &score_function;
 		t_sa->initial_temp = 1;
-		t_sa->lambda = 0.0001;
+		t_sa->lambda = 0.00001;
 		t_sa->initial_moves = 20000;
 		t_sa->tau = 10000;
 		t_sa->interval = 1000;
@@ -149,19 +173,29 @@ int 	main (int argc, char ** argv)
 		// run the optimization
 		PLSARes * res = runPLSA();
 
+		gettimeofday(&tv, NULL);
+		stop =	(unsigned long long)(tv.tv_sec) * 1000 +
+				(unsigned long long)(tv.tv_usec) / 1000;
+
 		// print final parameter value and score
 	#ifdef MPI
 		if (myid == 0)
 		{
+			f = fopen("res-parallel", "a");
+
+	#else
+			f = fopen("res-serial", "a");
+
 	#endif
 
-			printf("final score : %g\n", res->score);
+			fprintf(f, "{x: %.2f, y:%g},\n", ((double) (stop-start))/1000.0, res->score);
+			fclose(f);
 
 	#ifdef MPI
 		}
 	#endif
 
-		if (res->score < 1e-4)
+		if (res->score < 1e-3)
 			success++;
 
 
@@ -177,6 +211,25 @@ int 	main (int argc, char ** argv)
 		printf("> Success = %2.0f%%\n", (double) success*100/nb_tests);
 #ifdef MPI
 	}
+
+
+// #ifdef MPI
+// 	if (myid == 0)
+// 	{
+// 		f = fopen("res-parallel", "a");
+//
+// #else
+// 		f = fopen("res-serial", "a");
+//
+// #endif
+//
+// 		fprintf(f, "}}\n");
+// 		fclose(f);
+//
+// 	#ifdef MPI
+// 		}
+// 	#endif
+
 
 	// terminates MPI execution environment
 	MPI_Finalize();

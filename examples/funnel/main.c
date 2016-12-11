@@ -113,7 +113,7 @@ int 	main (int argc, char ** argv)
 	{
 #endif
 		// printf("final value : %10.7f\n", res->params[0]);
-		printf("final score : %g\n", res->score);
+		// printf("final score : %g\n", res->score);
 #ifdef MPI
 	}
 #endif

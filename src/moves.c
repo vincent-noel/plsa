@@ -76,7 +76,7 @@ static int       nsweeps;     /* number of sweeps since start of execution */
 
 static double    pretweak; /* used to restore param. value after rejection */
 
-static double    old_energy = -999.;  /* two static vars used by Generate- */
+static double    old_energy; 		  /* two static vars used by Generate- */
 static double    new_energy;                  /* Move to calculate delta_e */
 
 #ifdef MPI
@@ -109,7 +109,7 @@ double GetOldEnergy(){return old_energy;}
 double InitMoves(SAType * state, PArrPtr * pl)
 {
 	int            i;                                  /* local loop counter */
-	double initial_energy;
+
 	/* following is used to initialize erand48() */
 
 	long           seedval;         /* contains random number generator seed */
@@ -123,10 +123,10 @@ double InitMoves(SAType * state, PArrPtr * pl)
 
 	InitDistribution(state->dist_params);
 	InitScoring(state);                   /* initializes facts and limits */
-	initial_energy = Score();
-
-
-
+	
+	old_energy = Score();
+	if (old_energy == FORBIDDEN_MOVE)
+		error("GenerateMove: 1st call gave forbidden move");
 	/* read annealing paramters and parameters-to-be-tweaked */
 
 	ap.max_count = 0;
@@ -183,7 +183,7 @@ double InitMoves(SAType * state, PArrPtr * pl)
 #endif
 
 	/* Finally, return the initial energy. */
-	return initial_energy;
+	return old_energy;
 }
 
 
@@ -395,13 +395,13 @@ double GenerateMove(void)
 	// double     delta_e;           /* energy difference before and after move */
 
 	/* for first call: check for valid parameters */
-	if (old_energy == -999.)
-	{
-		old_energy = Score();
-
-		if (old_energy == FORBIDDEN_MOVE)
-			error("GenerateMove: 1st call gave forbidden move");
-	}
+	// if (old_energy == -999.)
+	// {
+	// 	old_energy = Score();
+	//
+	// 	if (old_energy == FORBIDDEN_MOVE)
+	// 		error("GenerateMove: 1st call gave forbidden move");
+	// }
 
 	/* make a move, score and return either FORBIDDEN_MOVE or delta_e */
 	int res;
