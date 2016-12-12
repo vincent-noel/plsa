@@ -536,8 +536,6 @@ double DoMix(double energy, double estimate_mean, double S, int tuning)
 	MPI_Status    *status;       /* status array of the MPI_Waitall function */
 	MPI_Request   *request;           /* handle array for receiving messages */
 
-
-
 	/* allocate probability array and arrays for MPI_Waitall below */
 
 	node_prob = (double *)calloc(nnodes, sizeof(double));
@@ -547,11 +545,13 @@ double DoMix(double energy, double estimate_mean, double S, int tuning)
 
 	/* initialize probability & dance partner arrays */
 
+
 	for (i=0; i<nnodes; i++)
 	{
 		dance_partner[i] = 0;       /* static to lsa.c since needed for tuning */
 		node_prob[i]     = 0.;
 	}
+
 
 	/* update mix counter (used by tuning code only) */
 
@@ -568,6 +568,7 @@ double DoMix(double energy, double estimate_mean, double S, int tuning)
 		prob = DBL_MIN;
 	else if (prob >= HUGE_VAL)
 		prob = DBL_MAX/nnodes;
+
 
 	/* sum up probabilities from all nodes for normalization, then normalize */
 

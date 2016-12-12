@@ -21,11 +21,11 @@ LIBS = -lm
 
 all: run-serial run-parallel
 
-run-serial:	main-serial.o problem.o ../../libplsa-serial.so
-	$(CC) main-serial.o problem.o ../../libplsa-serial.so $(LIBS) -o run-serial
+run-serial:	main-serial.o problem.o ../libplsa-serial.so
+	$(CC) main-serial.o problem.o ../libplsa-serial.so $(LIBS) -o run-serial
 
-run-parallel:	main-parallel.o problem.o ../../libplsa-parallel.so
-	$(MPICC) main-parallel.o problem.o ../../libplsa-parallel.so $(LIBS) -o run-parallel
+run-parallel:	main-parallel.o problem.o ../libplsa-parallel.so
+	$(MPICC) main-parallel.o problem.o ../libplsa-parallel.so $(LIBS) -o run-parallel
 
 main-serial.o:	main.c
 	$(CC) $(FLAGS) -c main.c -o main-serial.o
@@ -33,11 +33,11 @@ main-serial.o:	main.c
 main-parallel.o: main.c
 	$(MPICC) $(FLAGS) -c main.c -DMPI -o main-parallel.o
 
-../../libplsa-serial.so:
-	make -C ../../ libplsa-serial.so
+../libplsa-serial.so:
+	make -C .. libplsa-serial.so
 
-../../libplsa-parallel.so:
-	make -C ../../ libplsa-parallel.so
+../libplsa-parallel.so:
+	make -C .. libplsa-parallel.so
 
 problem.o: problem.h problem.c
 	$(CC) $(FLAGS) -c problem.c

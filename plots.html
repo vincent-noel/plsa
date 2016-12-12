@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+		<title> Results</title>
+		<!-- Bootstrap core CSS -->
+
+		<!-- Custom styles for this template -->
+
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+
+	</head>
+
+	<body>
+
+
+	<ul class="nav nav-tabs text-center">
+		<li class="active"><a data-toggle="tab" href="#scorevstime">Score vs Time</a></li>
+		<li><a data-toggle="tab" href="#scoredist">Scores distribution</a></li>
+		<li><a data-toggle="tab" href="#timedist">Times distribution</a></li>
+		<li><a data-toggle="tab" href="#scorehistory">Score evolution</a></li>
+	</ul>
+	<div class="tab-content">
+	  <div id="scorevstime" class="tab-pane fade in active">
+		  <div class="container">
+			  <canvas id="canvas"></canvas>
+		  </div>
+
+	  </div>
+	  <div id="scoredist" class="tab-pane fade in active">
+		  <div class="container">
+			  <canvas id="canvas"></canvas>
+		  </div>
+
+	  </div>
+	  <div id="timedist" class="tab-pane fade in active">
+		  <div class="container">
+			  <canvas id="canvas"></canvas>
+		  </div>
+
+	  </div>
+	  <div id="scorehistory" class="tab-pane fade in active">
+		  <div class="container">
+			  <canvas id="canvas"></canvas>
+		  </div>
+
+	  </div>
+	</div>
+
+
+	<script>
+		var config =
+		{
+			type: 'bubble',
+			data:
+			{
+				datasets:
+				[{
+					label: 'Score vs Time serial',
+					data: [
+
+
+					],
+					backgroundColor:"#7AC142",
+				},
+				// {
+				// 	label: 'Score vs Time parallel',
+				// 	data: [
+				//
+				// 	],
+				// 	backgroundColor:"#C17A42",
+				]
+			},
+
+
+			options:
+			{
+				scales:
+				{
+					xAxes:
+					[{
+						type: 'linear',
+						ticks: {
+							beginAtZero: true,
+						}
+
+					}],
+
+					yAxes:
+					[{
+						type: 'linear',
+					}],
+
+				}
+			},
+		};
+
+
+		function readResultFile()
+		{
+			var textfile;
+			var raw_text = "";
+
+			if (window.XMLHttpRequest)
+			{
+				textfile = new XMLHttpRequest();
+			}
+			textfile.onreadystatechange = function ()
+			{
+				if (textfile.readyState == 4 && textfile.status == 200)
+				{
+					raw_text = textfile.responseText;
+					data = parseResultFile(raw_text);
+					plotResults(data);
+				}
+			}
+			textfile.open("GET", "measurements/res", true);
+			textfile.overrideMimeType('text/plain');
+			textfile.send();
+		}
+
+		function parseResultFile(raw_data)
+		{
+			var data = [];
+			var array = new Array();
+			array = raw_data.split('\n');
+			$.each( array, function( id, value )
+			{
+				vals = value.split(',');
+				i_data = {};
+				i_data['x'] = vals[2]/1000;
+				i_data['y'] = vals[0];
+				data.push(i_data);
+			});
+
+			console.log(data);
+			console.log(data[0]);
+			return data;
+
+		}
+
+		function plotResults(data)
+		{
+			var ctx = document.getElementById("canvas").getContext("2d");
+			ctx.canvas.height = ctx.canvas.width*0.5;
+			config.data.datasets[0].data = data;
+			window.myLine = new Chart(ctx, config);
+		}
+
+		$(window).on('load', function()
+		{
+			readResultFile();
+		});
+	</script>
+
+  </body>
+</html>

@@ -23,8 +23,15 @@ LIBS = -lm
 
 OBJ = config.o error.o distributions.o random.o
 SOBJ = plsa.o lsa.o moves.o state.o score.o
-POBJ = plsa_p.o lsa_p.o moves_p.o savestate_p.o score_p.o mixing_p.o tuning_p.o
+POBJ = plsa_p.o lsa_p.o moves_p.o state_p.o score_p.o mixing_p.o tuning_p.o
 
+
+test: examples
+	@time -f "elapsed : %E (%P CPU)" ./run-funnel-serial
+	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-funnel-parallel
+	@time -f "elapsed : %E (%P CPU)" ./run-sigmoid-serial
+	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-sigmoid-parallel
+	make clean_examples
 
 all: libplsa-serial.so libplsa-parallel.so
 
@@ -48,38 +55,39 @@ clean_examples:
 	rm -f *.o *.so run-funnel-serial run-funnel-parallel run-sigmoid-serial run-sigmoid-parallel
 	rm -fr logs/ final_score plsa.log *.state input output
 
-test: examples
-	@time -f "%Eelapsed %PCPU" ./run-funnel-serial
-	@time -f "%Eelapsed %PCPU" mpirun -np 2 ./run-funnel-parallel
-	@time -f "%Eelapsed %PCPU" ./run-sigmoid-serial
-	@time -f "%Eelapsed %PCPU" mpirun -np 2 ./run-sigmoid-parallel
-	make clean_examples
-
-run-funnel-serial: main-funnel-serial.o $(OBJ) $(SOBJ)
-	$(CC) main-funnel-serial.o $(OBJ) $(SOBJ) -lm -O3 -o run-funnel-serial
+run-funnel-serial: main-funnel-serial.o problem-funnel.o $(OBJ) $(SOBJ)
+	$(CC) main-funnel-serial.o problem-funnel.o $(OBJ) $(SOBJ) -lm -O3 -o run-funnel-serial
 
 main-funnel-serial.o: examples/funnel/main.c
 	$(CC) $(FLAGS) -c examples/funnel/main.c -o main-funnel-serial.o
 
-run-funnel-parallel: main-funnel-parallel.o $(OBJ) $(POBJ)
-	$(MPICC) main-funnel-parallel.o $(OBJ) $(POBJ) -lm -O3 -o run-funnel-parallel
+run-funnel-parallel: main-funnel-parallel.o problem-funnel.o $(OBJ) $(POBJ)
+	$(MPICC) main-funnel-parallel.o problem-funnel.o $(OBJ) $(POBJ) -lm -O3 -o run-funnel-parallel
 
 main-funnel-parallel.o:	examples/funnel/main.c
 	$(MPICC) $(FLAGS) -c examples/funnel/main.c -DMPI -o main-funnel-parallel.o
 
+problem-funnel.o: examples/funnel/problem.c examples/funnel/problem.h
+	$(CC) $(FLAGS) -c examples/funnel/problem.c -o problem-funnel.o
 
 
-run-sigmoid-serial: main-sigmoid-serial.o $(OBJ) $(SOBJ)
-	$(CC) main-sigmoid-serial.o $(OBJ) $(SOBJ) -lm -O3 -o run-sigmoid-serial
+
+run-sigmoid-serial: main-sigmoid-serial.o problem-sigmoid.o $(OBJ) $(SOBJ)
+	$(CC) main-sigmoid-serial.o problem-sigmoid.o $(OBJ) $(SOBJ) -lm -O3 -o run-sigmoid-serial
 
 main-sigmoid-serial.o: examples/sigmoid/main.c
 	$(CC) $(FLAGS) -c examples/sigmoid/main.c -o main-sigmoid-serial.o
 
-run-sigmoid-parallel: main-sigmoid-parallel.o $(OBJ) $(POBJ)
-	$(MPICC) main-sigmoid-parallel.o $(OBJ) $(POBJ) -lm -O3 -o run-sigmoid-parallel
+run-sigmoid-parallel: main-sigmoid-parallel.o problem-sigmoid.o $(OBJ) $(POBJ)
+	$(MPICC) main-sigmoid-parallel.o problem-sigmoid.o $(OBJ) $(POBJ) -lm -O3 -o run-sigmoid-parallel
 
-main-sigmoid-parallel.o:	examples/sigmoid/main.c
+main-sigmoid-parallel.o: examples/sigmoid/main.c
 	$(MPICC) $(FLAGS) -c examples/sigmoid/main.c -DMPI -o main-sigmoid-parallel.o
+
+problem-sigmoid.o: examples/sigmoid/problem.c examples/sigmoid/problem.h
+	$(CC) $(FLAGS) -c examples/sigmoid/problem.c -o problem-sigmoid.o
+
+
 
 # Shared objects
 libplsa-serial.so:	$(OBJ) $(SOBJ)
@@ -100,8 +108,8 @@ lsa_p.o: $(SRCDIR)/lsa.c
 moves_p.o: $(SRCDIR)/moves.c $(SRCDIR)/moves.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o moves_p.o -c $(SRCDIR)/moves.c
 
-savestate_p.o: $(SRCDIR)/state.c
-	$(MPICC) $(FLAGS) -fpic -DMPI -o savestate_p.o -c $(SRCDIR)/state.c
+state_p.o: $(SRCDIR)/state.c
+	$(MPICC) $(FLAGS) -fpic -DMPI -o state_p.o -c $(SRCDIR)/state.c
 
 score_p.o: $(SRCDIR)/score.c $(SRCDIR)/score.h
 	$(MPICC) $(FLAGS) -fpic -DMPI -o score_p.o -c $(SRCDIR)/score.c

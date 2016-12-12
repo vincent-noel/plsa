@@ -40,11 +40,11 @@
 	#include <mpi.h>
 #endif
 
-#include "../../src/sa.h"
-#include "problem.h"
+#include "../src/sa.h"
+#include "../examples/sigmoid/problem.h"
 
 long seed;
-int nb_tests = 4;
+int nb_tests = 100;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -66,53 +66,92 @@ int 	main (int argc, char ** argv)
 
 
 #endif
+	FILE * f_res;
 
+	int i, success;
 
-	k = 1;
-	n = 1;
-	theta = 1;
-	basal = 1;
+	success = 0;
+	for (i=0; i < nb_tests; i++)
+	{
 
-	srand ( time(NULL) );
-	seed = rand();
-	seed *= rand();
+		k = 1;
+		n = 1;
+		theta = 1;
+		basal = 1;
 
-	// define the optimization settings
+		srand ( time(NULL) );
+		seed = rand();
+		seed *= rand();
+
+		// define the optimization settings
 #ifdef MPI
-	SAType * t_sa = InitPLSA(nnodes, myid);
+		SAType * t_sa = InitPLSA(nnodes, myid);
 
 #else
-	SAType * t_sa = InitPLSA();
+		SAType * t_sa = InitPLSA();
 
 #endif
-	t_sa->seed = seed;
-	t_sa->scoreFunction = &score_function;
-	t_sa->initial_temp = 1;
-	t_sa->lambda = 0.00001;
-	t_sa->initial_moves = 20000;
-	t_sa->tau = 10000;
-	t_sa->interval = 1000;
-	t_sa->criterion = 1e-4;
-	// define the optimization parameters
-	PArrPtr * params = InitPLSAParameters(4);
-	params->array[0] = (ParamList) { &k, (Range) {0,1e+16}, "k"};
-	params->array[1] = (ParamList) { &n, (Range) {0,1e+16}, "n"};
-	params->array[2] = (ParamList) { &theta, (Range) {0,1e+16}, "theta"};
-	params->array[3] = (ParamList) { &basal, (Range) {0,1e+16}, "basal"};
+		t_sa->seed = seed;
+		t_sa->scoreFunction = &score_function;
+		t_sa->initial_temp = 1;
+		t_sa->lambda = 0.0001;
+		t_sa->initial_moves = 20000;
+		t_sa->tau = 10000;
+		t_sa->interval = 1000;
+		t_sa->criterion = 1e-4;
+		// define the optimization parameters
+		PArrPtr * params = InitPLSAParameters(4);
+		params->array[0] = (ParamList) { &k, (Range) {0,1e+16}, "k"};
+		params->array[1] = (ParamList) { &n, (Range) {0,1e+16}, "n"};
+		params->array[2] = (ParamList) { &theta, (Range) {0,1e+16}, "theta"};
+		params->array[3] = (ParamList) { &basal, (Range) {0,1e+16}, "basal"};
 
-	// run the optimization
-	PLSARes * res = runPLSA();
+		// run the optimization
+		PLSARes * res = runPLSA();
 
-	free(params->array);
-	free(res->params);
-	free(res);
+		if (res->score < 1e-3)
+			success++;
+
+#ifdef MPI
+		if (myid == 0)
+		{
+#endif
+			f_res = fopen("res", "a");
+
+			fprintf(f_res, "%g, %ld, %lu\n", res->score, res->niters, res->duration);
+			fclose(f_res);
+
 
 
 #ifdef MPI
+		}
+#endif
+
+
+
+
+		free(params->array);
+		free(res->params);
+		free(res);
+	}
+
+#ifdef MPI
+	if (myid == 0)
+	{
+#endif
+
+
+
+
+#ifdef MPI
+	}
 
 	// terminates MPI execution environment
 	MPI_Finalize();
 #endif
 
-	return 0;
+	if (success >= nb_tests*0.75)
+		return 0;
+	else
+		return 1;
 }

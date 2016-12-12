@@ -287,24 +287,12 @@ PArrPtr * InitPLSAParameters(int nb_dimensions)
 }
 
 #ifdef MPI
+// Version parallel : we need to provice the number of total cores
+// and our code id
 SAType * InitPLSA(int nb_procs, int my_id)
 {
 	nnodes = nb_procs;
 	myid = my_id;
-//
-// #ifdef MPI
-// 	// MPI initialization steps
-//
-// 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
-// 	if (rc != MPI_SUCCESS)
-// 		printf (" > Error starting MPI program. \n");
-//
-// 	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
-// 	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
-//
-// 	nnodes = *nb_procs;
-// 	myid = *my_id;
-// #endif
 
 	SetDefaultOptions();
 
@@ -313,23 +301,9 @@ SAType * InitPLSA(int nb_procs, int my_id)
 	return &state;
 }
 #else
-
+// Serial version, we need nothing else
 SAType * InitPLSA()
 {
-//
-// #ifdef MPI
-// 	// MPI initialization steps
-//
-// 	int rc = MPI_Init(NULL, NULL); 	     /* initializes the MPI environment */
-// 	if (rc != MPI_SUCCESS)
-// 		printf (" > Error starting MPI program. \n");
-//
-// 	MPI_Comm_size(MPI_COMM_WORLD, nb_procs);        /* number of processors? */
-// 	MPI_Comm_rank(MPI_COMM_WORLD, my_id);         /* ID of local processor? */
-//
-// 	nnodes = *nb_procs;
-// 	myid = *my_id;
-// #endif
 
 	SetDefaultOptions();
 
@@ -344,14 +318,14 @@ SAType * InitPLSA()
  *              state file                                                 *
  ***************************************************************************/
 
-double FinalMove(AParms * ap)
+void FinalMove(AParms * ap)
 {
 #ifdef MPI
 	int      i;                                              /* loop counter */
 #endif
 
 	// AParms   ap;
-	double 	 final_score = DBL_MAX;
+	// double 	 final_score = DBL_MAX;
 #ifdef MPI
 	int      winner = 0;                           /* id of the winning node */
 	double   minyet = DBL_MAX;         /* minimum score, used to find winner */
@@ -367,7 +341,7 @@ double FinalMove(AParms * ap)
 
 
 #ifdef MPI
-
+	// Here we broadcast the best result, and update ap.stop_energy for each core
 	/* parallel code: find the node with the lowest score */
 
 	for(i=0; i<nnodes; i++)                   /* initialize the energy array */
@@ -385,13 +359,11 @@ double FinalMove(AParms * ap)
 		}
 	}
 
-	final_score = minyet;
+	// final_score = minyet;
+	ap->stop_energy = minyet;
 	free(final_e);
-#else
-	final_score = ap->stop_energy;
-#endif
-
-#ifdef MPI
+// #else
+// 	final_score = ap->stop_energy;
 
 	/* First we share the final parameters values */
 	double * res_params = malloc(sizeof(double)*plsa_params.size);
@@ -463,7 +435,7 @@ double FinalMove(AParms * ap)
 #endif
 	StateRm();
 
-	return final_score;
+	// return ap;
 }
 
 
@@ -724,7 +696,7 @@ void StartPLSA()
 PLSARes * runPLSA()
 {
 	double *delta;                            /* used to store elapsed times */
-	double final_score;
+	// double final_score;
 	/* code for timing: wallclock and user times */
 
 	// printf("calling initializelogs : %s\n", logs.dir);
@@ -752,7 +724,7 @@ PLSARes * runPLSA()
 
 	AParms * results;
 	results = Loop(&state, statefile, stop_flag);
-	final_score = FinalMove(results);
+	FinalMove(results);
 
 	/* code for timing */
 
@@ -772,9 +744,11 @@ PLSARes * runPLSA()
 	int ii;
 	for (ii=0; ii < plsa_params.size; ii++)
 		res->params[ii] = *plsa_params.array[ii].param;
-	res->flag = 0;
-	res->score = final_score;
 
+	res->flag = 0;
+	res->score = results->stop_energy;
+	res->niters = results->max_count;
+	res->duration = results->duration;
 
 	free(cpu_start);
 	free(cpu_finish);

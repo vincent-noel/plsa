@@ -44,6 +44,7 @@ typedef struct
   double stop_energy;                /* the final energy of the answer OUT */
   int    max_count;                      /* total number of iterations OUT */
   int    interval;       /* number of sweeps between updating theta_bar RO */
+  unsigned long duration;                      /* Duration in milliseconds */
 /*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
   // int    log_params;
 } AParms;
@@ -238,6 +239,8 @@ typedef struct
 	int 	flag;
 	double 	score;
 	double *params;
+	long 	niters;
+	unsigned long duration;                      /* Duration in milliseconds */
 
 } PLSARes;
 

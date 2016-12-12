@@ -88,13 +88,13 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   fscanf(infile, "%d\n",  &(options->time_flag));
   fscanf(infile, "%ld\n", &(options->state_write));
   fscanf(infile, "%ld\n", &(options->print_freq));
-
   fscanf(infile, "%d\n",  &(options->quenchit));
+
 #ifdef MPI
   fscanf(infile, "%d\n",  &(options->tuning));
-  fscanf(infile, "%d\n",  &(options->covar_index));
-  fscanf(infile, "%d\n",  &(options->write_tune_stat));
-  fscanf(infile, "%d\n",  &(options->auto_stop_tune));
+  // fscanf(infile, "%d\n",  &(options->covar_index));
+  // fscanf(infile, "%d\n",  &(options->write_tune_stat));
+  // fscanf(infile, "%d\n",  &(options->auto_stop_tune));
 #endif
 
   if ( options->time_flag ) {
@@ -133,59 +133,58 @@ void StateRead(char *statefile, Opts *options, MoveState *move_ptr,
   // for(i=0; i<33; i++)
   // scanf(infile, "%lg\n", &(stats[i]));
 
-	  fscanf(infile, "%d", &(lam_state->counter));
+	fscanf(infile, "%d\n", &(lam_state->counter));
 
-	  fscanf(infile, "%lg", &(lam_state->old_mean));
-	  fscanf(infile, "%lg", &(lam_state->energy));
+	fscanf(infile, "%lg\n", &(lam_state->old_mean));
+	fscanf(infile, "%lg\n", &(lam_state->energy));
 
-	  fscanf(infile, "%lg", &(lam_state->mean));
-	  fscanf(infile, "%lg", &(lam_state->vari));
+	fscanf(infile, "%lg\n", &(lam_state->mean));
+	fscanf(infile, "%lg\n", &(lam_state->vari));
 
-	  fscanf(infile, "%lg", &(lam_state->estimate_mean));
-	  fscanf(infile, "%lg", &(lam_state->estimate_sd));
+	fscanf(infile, "%lg\n", &(lam_state->estimate_mean));
+	fscanf(infile, "%lg\n", &(lam_state->estimate_sd));
 
-	  fscanf(infile, "%lg", &(lam_state->S));
-	  fscanf(infile, "%lg", &(lam_state->dS));
-	  fscanf(infile, "%lg", &(lam_state->S_0));
+	fscanf(infile, "%lg\n", &(lam_state->S));
+	fscanf(infile, "%lg\n", &(lam_state->dS));
+	fscanf(infile, "%lg\n", &(lam_state->S_0));
 
-	  fscanf(infile, "%lg", &(lam_state->alpha));
-	  fscanf(infile, "%lg", &(lam_state->acc_ratio));
+	fscanf(infile, "%lg\n", &(lam_state->alpha));
+	fscanf(infile, "%lg\n", &(lam_state->acc_ratio));
 
-	  fscanf(infile, "%lg", &(lam_state->w_b));
-	  fscanf(infile, "%lg", &(lam_state->vsyy));
-	  fscanf(infile, "%lg", &(lam_state->vsxy));
-	  fscanf(infile, "%lg", &(lam_state->vsxx));
-	  fscanf(infile, "%lg", &(lam_state->vsx));
-	  fscanf(infile, "%lg", &(lam_state->vsy));
-	  fscanf(infile, "%lg", &(lam_state->vsum));
-	  fscanf(infile, "%lg", &(lam_state->D));
-	  fscanf(infile, "%lg", &(lam_state->E));
+	fscanf(infile, "%lg\n", &(lam_state->w_b));
+	fscanf(infile, "%lg\n", &(lam_state->vsyy));
+	fscanf(infile, "%lg\n", &(lam_state->vsxy));
+	fscanf(infile, "%lg\n", &(lam_state->vsxx));
+	fscanf(infile, "%lg\n", &(lam_state->vsx));
+	fscanf(infile, "%lg\n", &(lam_state->vsy));
+	fscanf(infile, "%lg\n", &(lam_state->vsum));
+	fscanf(infile, "%lg\n", &(lam_state->D));
+	fscanf(infile, "%lg\n", &(lam_state->E));
 
-	  fscanf(infile, "%lg", &(lam_state->w_a));
-	  fscanf(infile, "%lg", &(lam_state->usyy));
-	  fscanf(infile, "%lg", &(lam_state->usxy));
-	  fscanf(infile, "%lg", &(lam_state->usxx));
-	  fscanf(infile, "%lg", &(lam_state->usx));
-	  fscanf(infile, "%lg", &(lam_state->usy));
-	  fscanf(infile, "%lg", &(lam_state->usum));
-	  fscanf(infile, "%lg", &(lam_state->A));
-	  fscanf(infile, "%lg", &(lam_state->B));
+	fscanf(infile, "%lg\n", &(lam_state->w_a));
+	fscanf(infile, "%lg\n", &(lam_state->usyy));
+	fscanf(infile, "%lg\n", &(lam_state->usxy));
+	fscanf(infile, "%lg\n", &(lam_state->usxx));
+	fscanf(infile, "%lg\n", &(lam_state->usx));
+	fscanf(infile, "%lg\n", &(lam_state->usy));
+	fscanf(infile, "%lg\n", &(lam_state->usum));
+	fscanf(infile, "%lg\n", &(lam_state->A));
+	fscanf(infile, "%lg\n", &(lam_state->B));
 
-	  fscanf(infile, "%ld", &(lam_state->count_tau));
+	fscanf(infile, "%ld\n", &(lam_state->count_tau));
 
-	  fscanf(infile, "%d", &(lam_state->proc_init));
-	  fscanf(infile, "%d", &(lam_state->proc_tau));
+	fscanf(infile, "%d\n", &(lam_state->proc_init));
+	fscanf(infile, "%d\n", &(lam_state->proc_tau));
 
 	for(i=0; i<3; i++)
 		fscanf(infile, "%hu\n", &(rand[i]));
 
-
-
 #ifdef MPI
-	fscanf(infile, "%d", &(t_settings->covar_index));
-	fscanf(infile, "%d", &(t_settings->write_tune_stat));
-	fscanf(infile, "%d", &(t_settings->auto_stop_tune));
+	fscanf(infile, "%d\n", &(t_settings->covar_index));
+	fscanf(infile, "%d\n", &(t_settings->write_tune_stat));
+	fscanf(infile, "%d\n", &(t_settings->auto_stop_tune));
 #endif
+
 	fclose(infile);
 
 }
@@ -283,58 +282,59 @@ void StateWrite(char *statefile, double energy)
 
 	/* LAM stats*/
 
-	fprintf(outfile, "%d", lam_state->counter);
+	fprintf(outfile, "%d\n", lam_state->counter);
 
-	fprintf(outfile, "%.16g", lam_state->old_mean);
-	fprintf(outfile, "%.16g", lam_state->energy);
+	fprintf(outfile, "%.16g\n", lam_state->old_mean);
+	fprintf(outfile, "%.16g\n", lam_state->energy);
 
-	fprintf(outfile, "%.16g", lam_state->mean);
-	fprintf(outfile, "%.16g", lam_state->vari);
+	fprintf(outfile, "%.16g\n", lam_state->mean);
+	fprintf(outfile, "%.16g\n", lam_state->vari);
 
-	fprintf(outfile, "%.16g", lam_state->estimate_mean);
-	fprintf(outfile, "%.16g", lam_state->estimate_sd);
+	fprintf(outfile, "%.16g\n", lam_state->estimate_mean);
+	fprintf(outfile, "%.16g\n", lam_state->estimate_sd);
 
-	fprintf(outfile, "%.16g", lam_state->S);
-	fprintf(outfile, "%.16g", lam_state->dS);
-	fprintf(outfile, "%.16g", lam_state->S_0);
+	fprintf(outfile, "%.16g\n", lam_state->S);
+	fprintf(outfile, "%.16g\n", lam_state->dS);
+	fprintf(outfile, "%.16g\n", lam_state->S_0);
 
-	fprintf(outfile, "%.16g", lam_state->alpha);
-	fprintf(outfile, "%.16g", lam_state->acc_ratio);
+	fprintf(outfile, "%.16g\n", lam_state->alpha);
+	fprintf(outfile, "%.16g\n", lam_state->acc_ratio);
 
-	fprintf(outfile, "%.16g", lam_state->w_b);
-	fprintf(outfile, "%.16g", lam_state->vsyy);
-	fprintf(outfile, "%.16g", lam_state->vsxy);
-	fprintf(outfile, "%.16g", lam_state->vsxx);
-	fprintf(outfile, "%.16g", lam_state->vsx);
-	fprintf(outfile, "%.16g", lam_state->vsy);
-	fprintf(outfile, "%.16g", lam_state->vsum);
-	fprintf(outfile, "%.16g", lam_state->D);
-	fprintf(outfile, "%.16g", lam_state->E);
+	fprintf(outfile, "%.16g\n", lam_state->w_b);
+	fprintf(outfile, "%.16g\n", lam_state->vsyy);
+	fprintf(outfile, "%.16g\n", lam_state->vsxy);
+	fprintf(outfile, "%.16g\n", lam_state->vsxx);
+	fprintf(outfile, "%.16g\n", lam_state->vsx);
+	fprintf(outfile, "%.16g\n", lam_state->vsy);
+	fprintf(outfile, "%.16g\n", lam_state->vsum);
+	fprintf(outfile, "%.16g\n", lam_state->D);
+	fprintf(outfile, "%.16g\n", lam_state->E);
 
-	fprintf(outfile, "%.16g", lam_state->w_a);
-	fprintf(outfile, "%.16g", lam_state->usyy);
-	fprintf(outfile, "%.16g", lam_state->usxy);
-	fprintf(outfile, "%.16g", lam_state->usxx);
-	fprintf(outfile, "%.16g", lam_state->usx);
-	fprintf(outfile, "%.16g", lam_state->usy);
-	fprintf(outfile, "%.16g", lam_state->usum);
-	fprintf(outfile, "%.16g", lam_state->A);
-	fprintf(outfile, "%.16g", lam_state->B);
+	fprintf(outfile, "%.16g\n", lam_state->w_a);
+	fprintf(outfile, "%.16g\n", lam_state->usyy);
+	fprintf(outfile, "%.16g\n", lam_state->usxy);
+	fprintf(outfile, "%.16g\n", lam_state->usxx);
+	fprintf(outfile, "%.16g\n", lam_state->usx);
+	fprintf(outfile, "%.16g\n", lam_state->usy);
+	fprintf(outfile, "%.16g\n", lam_state->usum);
+	fprintf(outfile, "%.16g\n", lam_state->A);
+	fprintf(outfile, "%.16g\n", lam_state->B);
 
-	fprintf(outfile, "%.ld", lam_state->count_tau);
+	fprintf(outfile, "%.ld\n", lam_state->count_tau);
 
-	fprintf(outfile, "%d", lam_state->proc_init);
-	fprintf(outfile, "%d", lam_state->proc_tau);
+	fprintf(outfile, "%d\n", lam_state->proc_init);
+	fprintf(outfile, "%d\n", lam_state->proc_tau);
 
 
 	/* The three values to initialize ERand I guess */
 	for(i=0; i < 3; i++)
 		fprintf(outfile,"%d\n", prand[i]);
 
+
 #ifdef MPI
-	fprintf(outfile, "%d", t_settings->covar_index);
-	fprintf(outfile, "%d", t_settings->write_tune_stat);
-	fprintf(outfile, "%d", t_settings->auto_stop_tune);
+	fprintf(outfile, "%d\n", t_settings->covar_index);
+	fprintf(outfile, "%d\n", t_settings->write_tune_stat);
+	fprintf(outfile, "%d\n", t_settings->auto_stop_tune);
 #endif
 
 	fclose(outfile);
@@ -343,7 +343,7 @@ void StateWrite(char *statefile, double energy)
 	if ( options->time_flag )
 		free(delta);
 	free(options);
-	
+
 
 #ifdef MPI
 	free(t_settings);

@@ -65,7 +65,8 @@ int write_llog;                        /* flag for writing local log files */
 
 // static char   *statefile;                        /* name of the state file */
 static char   *logfile;                    /* name of the global .log file */
-static int         	start_time_seconds;
+static unsigned int start_time_seconds;
+static unsigned long start_time_milliseconds;
 
 /* some energy-related variables *******************************************/
 
@@ -316,7 +317,7 @@ double InitialLoop(SAType * state, double s0)
 
 #ifdef MPI
 	double * 		total;
-	InitializeMixing();
+	// InitializeMixing();
 
 	proc_tau  = state->tau / nnodes;               /* local copy of tau */
 	proc_init = state->initial_moves / nnodes;    /* # of initial moves */
@@ -329,7 +330,11 @@ double InitialLoop(SAType * state, double s0)
 
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
-	start_time_seconds = (int) tp.tv_sec;
+	start_time_seconds = (unsigned int) tp.tv_sec;
+	start_time_milliseconds = (unsigned long) tp.tv_sec*1000 +
+								(unsigned long)(tp.tv_usec) / 1000;
+
+
 	/* randomize initial state; throw out results; DO NOT PARALLELIZE! */
 
 	for (i=0; i<state->initial_moves; i++)
@@ -651,7 +656,14 @@ void WriteScoreTrace(double t_energy, int acceptance)
 AParms * FinalizeLSA()
 {
 	free(logfile);
-	return GetFinalInfo();
+	AParms * res = GetFinalInfo();
+
+	struct timeval tp;
+	gettimeofday(&tp, NULL);
+	unsigned long stop_time_milliseconds = (unsigned long) (tp.tv_sec) * 1000
+											+ (unsigned long) (tp.tv_usec) /1000;
+	res->duration = stop_time_milliseconds - start_time_milliseconds;
+	return res;
 }
 
 /*** Loop: loops (making moves, updating stats etc.) until the system is ***
@@ -666,6 +678,8 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 	double d;                /* difference between energy and estimated mean */
 
 #ifdef MPI
+	InitializeMixing();
+
 	/* if we are in tuning mode: initialize/restore tuning structs */
 	if ( state->tuning )
 		InitTuning(state);
@@ -774,7 +788,7 @@ AParms * Loop(SAType * state, char * statefile, StopStyle stop_flag)
 		{
 			struct timeval tp;
 			gettimeofday(&tp, NULL);
-			int duration = ((int) tp.tv_sec) - start_time_seconds;
+			int duration = (int) ((unsigned int) tp.tv_sec) - start_time_seconds;
 
 			if (duration > state->max_seconds)
 				return FinalizeLSA();
