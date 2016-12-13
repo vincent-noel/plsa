@@ -44,7 +44,6 @@
 #include "problem.h"
 
 long seed;
-int nb_tests = 4;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -68,10 +67,10 @@ int 	main (int argc, char ** argv)
 #endif
 
 
-	k = 1;
-	n = 1;
-	theta = 1;
-	basal = 1;
+	k = 1e-6;
+	n = 1e-6;
+	theta = 1e-6;
+	basal = 1e-6;
 
 	srand ( time(NULL) );
 	seed = rand();
@@ -87,9 +86,9 @@ int 	main (int argc, char ** argv)
 #endif
 	t_sa->seed = seed;
 	t_sa->scoreFunction = &score_function;
-	t_sa->initial_temp = 1;
+	t_sa->initial_temp = 100;
 	t_sa->lambda = 0.00001;
-	t_sa->initial_moves = 20000;
+	t_sa->initial_moves = 2000000;
 	t_sa->tau = 10000;
 	t_sa->interval = 1000;
 	t_sa->criterion = 1e-4;

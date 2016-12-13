@@ -5,7 +5,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-		<title> Results </title>
+		<title> Results</title>
 		<!-- Bootstrap core CSS -->
 
 		<!-- Custom styles for this template -->
@@ -21,31 +21,33 @@
 
 
 	<ul class="nav nav-tabs text-center">
-		<li id="id_scorehistory" class="active"><a data-toggle="tab" href="#scorehistory">Score evolution</a></li>
+		<li id="id_scorevstime" class="active"><a data-toggle="tab" href="#scorevstime">Score vs Time</a></li>
 	</ul>
 	<div class="tab-content">
-	  <div id="scorehistory" class="tab-pane fade in active">
+	  <div id="scorevstime" class="tab-pane fade in active">
 		  <div class="container">
-			  <canvas id="graph_log">Poil</canvas>
+			  <canvas id="canvas"></canvas>
 		  </div>
 
 	  </div>
+
 	</div>
 
 
 	<script>
 
-		var data_log;
+		var data;
 
-		var config_log =
+		var config =
 		{
 			type: 'bubble',
 			data:
 			{
 				datasets:
 				[{
-					label: 'Score history',
+					label: 'Score vs Time serial',
 					data: [
+
 
 					],
 					backgroundColor:"#7AC142",
@@ -67,19 +69,22 @@
 					xAxes:
 					[{
 						type: 'linear',
+						ticks: {
+							beginAtZero: true,
+						}
 
 					}],
 
 					yAxes:
 					[{
-						type: 'logarithmic',
+						type: 'linear',
 					}],
 
 				}
 			},
 		};
 
-		function readLogFile()
+		function readResultFile()
 		{
 			var textfile;
 			var raw_text = "";
@@ -92,55 +97,58 @@
 			{
 				if (textfile.readyState == 4 && textfile.status == 200)
 				{
-					raw_text_log = textfile.responseText;
-					data_log = parseLogFile(raw_text_log);
-					if ($('#id_scorehistory').hasClass('active'))
+					raw_text = textfile.responseText;
+					data = parseResultFile(raw_text);
+					// Select tab by name
+					if ($('#id_scorevstime').hasClass('active'))
 					{
-						plotLog();
+
+						plotResults();
 					}
 				}
 			}
-			textfile.open("GET", "plsa.log", true);
+			textfile.open("GET", "res", true);
 			textfile.overrideMimeType('text/plain');
 			textfile.send();
 		}
 
-		function parseLogFile(raw_data)
+		function parseResultFile(raw_data)
 		{
-			data_log = [];
+			data = [];
 			var array = new Array();
 			array = raw_data.split('\n');
 			$.each( array, function( id, value )
 			{
-				vals = value.split('\t');
+				vals = value.split(',');
 				i_data = {};
-				i_data['x'] = vals[0];
-				i_data['y'] = vals[3];
-				data_log.push(i_data);
+				i_data['x'] = vals[2]/1000;
+				i_data['y'] = vals[0];
+				data.push(i_data);
 			});
 
-			return data_log;
+			return data;
 
 		}
 
-		function plotLog()
+		function plotResults()
 		{
-			var ctx_log = document.getElementById("graph_log").getContext("2d");
-			ctx_log.canvas.height = ctx_log.canvas.width*0.5;
-			config_log.data.datasets[0].data = data_log;
-			window.myLine_log = new Chart(ctx_log, config_log);
+			var ctx = document.getElementById("canvas").getContext("2d");
+			ctx.canvas.height = ctx.canvas.width*0.5;
+			config.data.datasets[0].data = data;
+			window.myLine = new Chart(ctx, config);
 		}
+
 
 
 		$(window).on('load', function()
 		{
-			readLogFile();
+			readResultFile();
 		});
 
-
-		$('.nav-tabs a[href="#scorehistory"]').on('shown.bs.tab', function(event){
-			plotLog();
+		$('.nav-tabs a[href="#scorevstime"]').on('shown.bs.tab', function(event){
+			plotResults();
 		});
+
 	</script>
 
   </body>

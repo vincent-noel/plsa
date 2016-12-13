@@ -1,11 +1,4 @@
-##Compiling
-	make all
-
-##Running the serial version
-	./run-serial
-
-##Running the parallel version
-	mpirun -np 2 ./run-parallel
+##Building statistics on the library, by doing a lot of optimizations
 
 ##License
 	Copyright (C) 2016 Vincent Noel (vincent.noel@butantan.gov.br)

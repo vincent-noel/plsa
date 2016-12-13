@@ -1,3 +1,12 @@
+##A sigmoid function
+
+This is a model with one variable, and four parameters :
+
+	f(x) = k.x^n/(x^n + theta^n) + basal
+
+This examples fits this model to some data.
+
+
 ##Compiling
 	make all
 

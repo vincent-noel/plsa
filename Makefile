@@ -26,13 +26,6 @@ SOBJ = plsa.o lsa.o moves.o state.o score.o
 POBJ = plsa_p.o lsa_p.o moves_p.o state_p.o score_p.o mixing_p.o tuning_p.o
 
 
-test: examples
-	@time -f "elapsed : %E (%P CPU)" ./run-funnel-serial
-	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-funnel-parallel
-	@time -f "elapsed : %E (%P CPU)" ./run-sigmoid-serial
-	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-sigmoid-parallel
-	make clean_examples
-
 all: libplsa-serial.so libplsa-parallel.so
 
 install: libplsa-serial.so libplsa-parallel.so $(SRCDIR)/config.h $(SRCDIR)/global.h $(SRCDIR)/sa.h
@@ -47,6 +40,13 @@ uninstall:
 
 clean:
 	rm -f *.o *.so
+
+test: examples
+	@time -f "elapsed : %E (%P CPU)" ./run-funnel-serial
+	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-funnel-parallel
+	@time -f "elapsed : %E (%P CPU)" ./run-sigmoid-serial
+	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-sigmoid-parallel
+	make clean_examples
 
 examples: run-funnel-serial run-funnel-parallel run-sigmoid-serial run-sigmoid-parallel
 	rm *.o

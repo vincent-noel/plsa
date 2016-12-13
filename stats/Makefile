@@ -39,8 +39,8 @@ main-parallel.o: main.c
 ../libplsa-parallel.so:
 	make -C .. libplsa-parallel.so
 
-problem.o: problem.h problem.c
-	$(CC) $(FLAGS) -c problem.c
+problem.o: ../examples/sigmoid/problem.h ../examples/sigmoid/problem.c
+	$(CC) $(FLAGS) -c ../examples/sigmoid/problem.c
 
 clean:
 	rm -fr  *.o run-serial run-parallel final_score plsa.log *.state logs/  input output

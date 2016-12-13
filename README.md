@@ -17,6 +17,26 @@ To compile and install it in your /usr/lib and /usr/include
 
 
 
+##Examples
+The library is provided with two simples examples:
+
+	make examples
+
+
+- A funnel : the score function is the euclidian distance to a number.
+
+	./run-funnel-serial
+	mpirun -np 2 ./run-funnel-parallel
+
+
+
+- A sigmoid function : the score function is the distance to data.
+
+	./run-sigmoid-serial
+	mpirun -np 2 ./run-sigmoid-parallel
+
+
+
 ##References
 This library is based on the following publication :
 

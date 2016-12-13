@@ -44,7 +44,7 @@
 #include "../examples/sigmoid/problem.h"
 
 long seed;
-int nb_tests = 100;
+int nb_tests = 1000;
 
 
 //////////////////////////////////////////////////////////////////////////////
