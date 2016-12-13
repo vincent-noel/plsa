@@ -25,15 +25,15 @@ The library is provided with two simples examples:
 
 - A funnel : the score function is the euclidian distance to a number.
 
-	./run-funnel-serial
-	mpirun -np 2 ./run-funnel-parallel
+		./run-funnel-serial
+		mpirun -np 2 ./run-funnel-parallel
 
 
 
 - A sigmoid function : the score function is the distance to data.
 
-	./run-sigmoid-serial
-	mpirun -np 2 ./run-sigmoid-parallel
+		./run-sigmoid-serial
+		mpirun -np 2 ./run-sigmoid-parallel
 
 
 
