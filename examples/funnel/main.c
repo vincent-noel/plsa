@@ -68,7 +68,7 @@ int 	main (int argc, char ** argv)
 #endif	// define the optimization settings
 
 
-	param = 1e-8;
+	// param = 1e-8;
 
 	t_sa->scoreFunction = &score_function;
 	t_sa->printFunction = &print_function;
@@ -77,7 +77,7 @@ int 	main (int argc, char ** argv)
 
 	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(1);
-	params->array[0] = (ParamList) { &param, (Range) {0,1e+16}, "k"};
+	params->array[0] = (ParamList) { &param, 1e-8, (Range) {0,1e+16}, "k"};
 
 
 	// run the optimization

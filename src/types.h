@@ -126,6 +126,7 @@ typedef struct
 typedef struct
 {
 	double    *param;                /* pointers to parameters to be tweaked */
+	double 	   initial_value;
 	Range     param_range;        /* pointers to corresponding range limits */
 	char *	name;
 

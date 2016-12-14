@@ -612,6 +612,12 @@ void StartPLSA()
 	double S_0;
 	double energy;
 
+	// Settings the initial values of the parameters
+	int i;
+	for (i=0; i < plsa_params.size; i++)
+		*plsa_params.array[i].param = plsa_params.array[i].initial_value;
+
+	
 #ifdef MPI
 	if (myid == 0)
 	{
