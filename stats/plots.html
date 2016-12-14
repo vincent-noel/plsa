@@ -21,73 +21,214 @@
 
 
 	<ul class="nav nav-tabs text-center">
-		<li id="id_scorevstime" class="active"><a data-toggle="tab" href="#scorevstime">Score vs Time</a></li>
+		<li id="link_scorevstime" class="active"><a data-toggle="tab" href="#scorevstime">Score vs Time</a></li>
+		<li id="link_times"><a data-toggle="tab" href="#times">Times</a></li>
+		<li id="link_scores"><a data-toggle="tab" href="#scores">Scores</a></li>
 	</ul>
 	<div class="tab-content">
-	  <div id="scorevstime" class="tab-pane fade in active">
-		  <div class="container">
-			  <canvas id="canvas"></canvas>
-		  </div>
+		<div id="scorevstime" class="tab-pane fade in active">
+			<div class="container">
+				<canvas id="canvas_scorevstime_1"></canvas>
+				<canvas id="canvas_scorevstime_2"></canvas>
+				<canvas id="canvas_scorevstime_4"></canvas>
+				<canvas id="canvas_scorevstime_8"></canvas>
+			</div>
+		</div>
 
-	  </div>
+		<div id="times" class="tab-pane fade in ">
+			<div class="container">
+				<canvas id="canvas_times_1"></canvas>
+				<canvas id="canvas_times_2"></canvas>
+				<canvas id="canvas_times_4"></canvas>
+				<canvas id="canvas_times_8"></canvas>
+			</div>
+		</div>
 
+		<div id="scores" class="tab-pane fade in">
+			<div class="container">
+				<canvas id="canvas_scores_1"></canvas>
+				<canvas id="canvas_scores_2"></canvas>
+				<canvas id="canvas_scores_4"></canvas>
+				<canvas id="canvas_scores_8"></canvas>
+			</div>
+		</div>
 	</div>
 
 
 	<script>
 
-		var data;
+		var data = {};
+		var times = {};
+		var max_times = {};
+		var scores = {};
+		var max_scores = {};
 
-		var config =
-		{
+		var config_scorevstime =
+		[{
 			type: 'bubble',
 			data:
 			{
 				datasets:
 				[{
-					label: 'Score vs Time serial',
+					label: 'Score vs Time 1 cores',
 					data: [
 
 
 					],
-					backgroundColor:"#7AC142",
-				},
-				// {
-				// 	label: 'Score vs Time parallel',
-				// 	data: [
-				//
-				// 	],
-				// 	backgroundColor:"#C17A42",
-				]
-			},
-
-
-			options:
+					backgroundColor:"#51812c",
+				}]
+			}
+		},{
+			type: 'bubble',
+			data:
 			{
-				scales:
-				{
-					xAxes:
-					[{
-						type: 'linear',
-						ticks: {
-							beginAtZero: true,
-						}
+				datasets:
+				[{
+					label: 'Score vs Time 2 cores',
+					data: [
 
-					}],
 
-					yAxes:
-					[{
-						type: 'linear',
-					}],
+					],
+					backgroundColor:"#69a639",
+				}]
+			}
+		},{
+			type: 'bubble',
+			data:
+			{
+				datasets:
+				[{
+					label: 'Score vs Time 4 cores',
+					data: [
 
-				}
+
+					],
+					backgroundColor:"#81cc46",
+				}]
+			}
+		},{
+			type: 'bubble',
+			data:
+			{
+				datasets:
+				[{
+					label: 'Score vs Time 8 cores',
+					data: [
+
+
+					],
+					backgroundColor:"#99f253",
+				}]
 			},
-		};
+		}]
 
-		function readResultFile()
+		var config_times =
+		[{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Duration 1 cores',
+					data: [],
+					backgroundColor:"#51812c",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Duration 2 cores',
+					data: [],
+					backgroundColor:"#69a639",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Duration 4 cores',
+					data: [],
+					backgroundColor:"#81cc46",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Duration 8 cores',
+					data: [],
+					backgroundColor:"#99f253",
+				}]
+			},
+		}];
+
+
+		var config_scores =
+		[{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Scores 1 cores',
+					data: [],
+					backgroundColor:"#51812c",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Scores 2 cores',
+					data: [],
+					backgroundColor:"#69a639",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Scores 4 cores',
+					data: [],
+					backgroundColor:"#81cc46",
+				}]
+			},
+		},{
+			type: 'bar',
+			data:
+			{
+				labels : [],
+				datasets:
+				[{
+					label: 'Scores 8 cores',
+					data: [],
+					backgroundColor:"#99f253",
+				}]
+			},
+		}];
+
+
+		function readResFile(cores)
 		{
 			var textfile;
-			var raw_text = "";
 
 			if (window.XMLHttpRequest)
 			{
@@ -97,57 +238,228 @@
 			{
 				if (textfile.readyState == 4 && textfile.status == 200)
 				{
-					raw_text = textfile.responseText;
-					data = parseResultFile(raw_text);
-					// Select tab by name
-					if ($('#id_scorevstime').hasClass('active'))
-					{
-
-						plotResults();
-					}
+					parseResultFile(textfile.responseText, cores);
+					plotRes(cores);
+					plotTimes();
+					plotScores();
 				}
 			}
-			textfile.open("GET", "res", true);
+			textfile.open("GET", "res_" + cores.toString() , true);
 			textfile.overrideMimeType('text/plain');
 			textfile.send();
 		}
 
-		function parseResultFile(raw_data)
+
+		function parseResultFile(raw_data, cores)
 		{
-			data = [];
-			var array = new Array();
+			data[cores] = [];
+			times[cores] = new Array();
+			scores[cores] = [];
 			array = raw_data.split('\n');
+			max_time = 0;
+			max_score = 0;
+
 			$.each( array, function( id, value )
 			{
 				vals = value.split(',');
 				i_data = {};
-				i_data['x'] = vals[2]/1000;
-				i_data['y'] = vals[0];
-				data.push(i_data);
+				i_data['x'] = parseFloat(vals[2])/1000;
+				i_data['y'] = parseFloat(vals[0]);
+				data[cores].push(i_data);
+
+
+				t_time = parseFloat(vals[2])/1000;
+				if (t_time > max_time)
+				{
+					max_time = t_time;
+				}
+				times[cores].push(t_time);
+
+
+				t_score = parseFloat(vals[0]);
+				if (t_score > max_score)
+				{
+					max_score = t_score;
+				}
+				scores[cores].push(t_score);
 			});
 
-			return data;
-
+			max_times[cores] = max_time;
+			max_scores[cores] = max_score;
 		}
 
-		function plotResults()
+		function plotTimes()
 		{
-			var ctx = document.getElementById("canvas").getContext("2d");
-			ctx.canvas.height = ctx.canvas.width*0.5;
-			config.data.datasets[0].data = data;
-			window.myLine = new Chart(ctx, config);
+			// Gettings the bars
+			if (times[1] != undefined && times[2] != undefined && times[4] != undefined && times[8] != undefined)
+			{
+				var nb_bars = 101;
+				var maxs = [200, 100, 50, 25];
+				$.each( [1,2,4,8], function(id, value)
+				{
+
+
+					var max = maxs[id];
+					var step = Math.ceil(max/(nb_bars-1)*100)/100;
+
+					t_labels = [];
+					t_data = [];
+
+					for (i = 0; i < (nb_bars-1); i++)
+					{
+						lb = i*step;
+						ub = (i+1)*step;
+
+						t_labels.push(lb.toString());
+						t_data[i] = 0;
+
+						$.each( times[value], function( id2, value2 )
+						{
+
+							if (value2 >= lb && value2 < ub)
+							{
+								t_data[i] = t_data[i]+1;
+							}
+						});
+					}
+
+					config_times[id].data.labels = t_labels;
+					config_times[id].data.datasets[0].data = t_data;
+
+
+				});
+
+			}
+			var ctx_times = [];
+
+			ctx_times[0] = document.getElementById("canvas_times_1").getContext("2d");
+			ctx_times[0].canvas.height = ctx_times[0].canvas.width*0.5;
+			window.myLine_times_1 = new Chart(ctx_times[0], config_times[0]);
+
+			ctx_times[1] = document.getElementById("canvas_times_2").getContext("2d");
+			ctx_times[1].canvas.height = ctx_times[1].canvas.width*0.5;
+			window.myLine_times_2 = new Chart(ctx_times[1], config_times[1]);
+
+			ctx_times[2] = document.getElementById("canvas_times_4").getContext("2d");
+			ctx_times[2].canvas.height = ctx_times[2].canvas.width*0.5;
+			window.myLine_times_4 = new Chart(ctx_times[2], config_times[2]);
+
+			ctx_times[3] = document.getElementById("canvas_times_8").getContext("2d");
+			ctx_times[3].canvas.height = ctx_times[3].canvas.width*0.5;
+			window.myLine_times_8 = new Chart(ctx_times[3], config_times[3]);
 		}
 
 
+		function plotScores()
+		{
+			// Gettings the bars
+			if (scores[1] != undefined && scores[2] != undefined && scores[4] != undefined && scores[8] != undefined)
+			{
+				var nb_bars = 101;
+
+				$.each( [1,2,4,8], function(id, value)
+				{
+
+
+					var max = max_scores[value];
+					console.log(value.toString() + " cores : max = " + max.toString());
+					var step = Math.ceil(max/(nb_bars-1)*100)/100;
+
+					t_labels = [];
+					t_data = [];
+
+					for (i = 0; i < (nb_bars-1); i++)
+					{
+						lb = i*step;
+						ub = (i+1)*step;
+
+						t_labels.push(lb.toString());
+						t_data[i] = 0;
+
+						$.each( scores[value], function( id2, value2 )
+						{
+
+							if (value2 >= lb && value2 < ub)
+							{
+								t_data[i] = t_data[i]+1;
+							}
+						});
+					}
+
+					config_scores[id].data.labels = t_labels;
+					config_scores[id].data.datasets[0].data = t_data;
+
+
+				});
+
+			}
+			var ctx_scores = [];
+
+			ctx_scores[0] = document.getElementById("canvas_scores_1").getContext("2d");
+			ctx_scores[0].canvas.height = ctx_scores[0].canvas.width*0.5;
+			window.myLine_scores_1 = new Chart(ctx_scores[0], config_scores[0]);
+
+			ctx_scores[1] = document.getElementById("canvas_scores_2").getContext("2d");
+			ctx_scores[1].canvas.height = ctx_scores[1].canvas.width*0.5;
+			window.myLine_scores_2 = new Chart(ctx_scores[1], config_scores[1]);
+
+			ctx_scores[2] = document.getElementById("canvas_scores_4").getContext("2d");
+			ctx_scores[2].canvas.height = ctx_scores[2].canvas.width*0.5;
+			window.myLine_scores_4 = new Chart(ctx_scores[2], config_scores[2]);
+
+			ctx_scores[3] = document.getElementById("canvas_scores_8").getContext("2d");
+			ctx_scores[3].canvas.height = ctx_scores[3].canvas.width*0.5;
+			window.myLine_scores_8 = new Chart(ctx_scores[3], config_scores[3]);
+		}
+
+
+		function plotRes(cores)
+		{
+
+			// Gettings the bars
+			if (data[1] != undefined && data[2] != undefined && data[4] != undefined && data[8] != undefined)
+			{
+				$.each( [1,2,4,8], function(id, value)
+				{
+					// config_scorevstime[id].data.labels = t_labels;
+					config_scorevstime[id].data.datasets[0].data = data[value];
+
+
+				});
+
+
+			}
+
+			var ctx_scorevstime = [];
+
+			ctx_scorevstime[0] = document.getElementById("canvas_scorevstime_1").getContext("2d");
+			ctx_scorevstime[0].canvas.height = ctx_scorevstime[0].canvas.width*0.5;
+			window.myLine_scorevstime_1 = new Chart(ctx_scorevstime[0], config_scorevstime[0]);
+
+			ctx_scorevstime[1] = document.getElementById("canvas_scorevstime_2").getContext("2d");
+			ctx_scorevstime[1].canvas.height = ctx_scorevstime[1].canvas.width*0.5;
+			window.myLine_scorevstime_2 = new Chart(ctx_scorevstime[1], config_scorevstime[1]);
+
+			ctx_scorevstime[2] = document.getElementById("canvas_scorevstime_4").getContext("2d");
+			ctx_scorevstime[2].canvas.height = ctx_scorevstime[2].canvas.width*0.5;
+			window.myLine_scorevstime_4 = new Chart(ctx_scorevstime[2], config_scorevstime[2]);
+
+			ctx_scorevstime[3] = document.getElementById("canvas_scorevstime_8").getContext("2d");
+			ctx_scorevstime[3].canvas.height = ctx_scorevstime[3].canvas.width*0.5;
+			window.myLine_scorevstime_8 = new Chart(ctx_scorevstime[3], config_scorevstime[3]);
+
+
+
+		}
 
 		$(window).on('load', function()
 		{
-			readResultFile();
+			readResFile(1);
+			readResFile(2);
+			readResFile(4);
+			readResFile(8);
 		});
 
-		$('.nav-tabs a[href="#scorevstime"]').on('shown.bs.tab', function(event){
-			plotResults();
-		});
 
 	</script>
 
