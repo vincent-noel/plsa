@@ -617,7 +617,7 @@ void StartPLSA()
 	for (i=0; i < plsa_params.size; i++)
 		*plsa_params.array[i].param = plsa_params.array[i].initial_value;
 
-	
+
 #ifdef MPI
 	if (myid == 0)
 	{
@@ -704,7 +704,8 @@ PLSARes * runPLSA()
 	double *delta;                            /* used to store elapsed times */
 	// double final_score;
 	/* code for timing: wallclock and user times */
-
+	if (plsa_params.size == 0)
+		error("Number of parameters to fit needs to be > 0");
 	// printf("calling initializelogs : %s\n", logs.dir);
 
 	InitializeLogs(&logs);							/* build the log folders */
