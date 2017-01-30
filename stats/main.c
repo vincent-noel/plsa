@@ -101,10 +101,10 @@ int 	main (int argc, char ** argv)
 		t_sa->criterion = 1e-4;
 		// define the optimization parameters
 		PArrPtr * params = InitPLSAParameters(4);
-		params->array[0] = (ParamList) { &k, (Range) {0,1e+16}, "k"};
-		params->array[1] = (ParamList) { &n, (Range) {0,1e+16}, "n"};
-		params->array[2] = (ParamList) { &theta, (Range) {0,1e+16}, "theta"};
-		params->array[3] = (ParamList) { &basal, (Range) {0,1e+16}, "basal"};
+		params->array[0] = (ParamList) { &k, 1.0, (Range) {0,1e+16}, "k"};
+		params->array[1] = (ParamList) { &n, 1.0, (Range) {0,1e+16}, "n"};
+		params->array[2] = (ParamList) { &theta, 1.0, (Range) {0,1e+16}, "theta"};
+		params->array[3] = (ParamList) { &basal, 1.0, (Range) {0,1e+16}, "basal"};
 
 		// run the optimization
 		PLSARes * res = runPLSA();

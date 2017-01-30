@@ -42,7 +42,7 @@ typedef struct
   double start_tempr;          /* the initial equilibration temperature RO */
   double gain;            /* gain for proportional control of move size RO */
   double stop_energy;                /* the final energy of the answer OUT */
-  int    max_count;                      /* total number of iterations OUT */
+  long    max_count;                     /* total number of iterations OUT */
   int    interval;       /* number of sweeps between updating theta_bar RO */
   unsigned long duration;                      /* Duration in milliseconds */
 /*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
