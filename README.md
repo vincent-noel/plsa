@@ -3,21 +3,21 @@ C library for non-linear optimization, using a parallelized Lam-Delosme simulate
 
 
 
-##Dependencies
+## Dependencies
 You will need MPI libraries to execute C code in parallel
 
 	libopenmpi-dev openmpi-bin
 
 
 
-##Installation
+## Installation
 To compile and install it in your /usr/lib and /usr/include
 
 	sudo make install
 
 
 
-##Examples
+## Examples
 The library is provided with two simples examples:
 
 	make examples
@@ -37,7 +37,7 @@ The library is provided with two simples examples:
 
 
 
-##References
+## References
 This library is based on the following publication :
 
 	King-Wai Chu, Yuefan Deng, and John Reinitz. "Parallel simulated annealing by mixing of states.",
@@ -48,7 +48,7 @@ Originally written by Jimmy Lam, Dan Greening, John Reinitz, King-Wai Chu, Johan
 
 
 
-##License
+## License
 	Copyright (C) 2016 Vincent Noel
 
 	plsa is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -61,3 +61,20 @@ Originally written by Jimmy Lam, Dan Greening, John Reinitz, King-Wai Chu, Johan
 
 	You should have received a copy of the GNU General Public License along with plsa.
 	If not, see <http://www.gnu.org/licenses/>.
+
+## Financial support
+
+	This library was developed within the CeTICS project, at the Butantan Institute.
+
+<p align="center">
+	<a href="http://cetics.butantan.gov.br"><img src="docs/logos/cetics.png" align="middle" hspace="50"></a>
+	<a href="http://www.butantan.gov.br"><img src="docs/logos/butantan.png" width="300" align="middle" hspace="50"></a>
+</p>
+
+	The work was supported by grants #13/07467-1, and #13/24212-7
+	of the São Paulo Research Foundation (FAPESP)
+
+
+<p align="center">
+	<a href="http://www.fapesp.br"><img src="docs/logos/FAPESP.jpg" width="300" align="middle"></a>
+</p>
