@@ -77,7 +77,7 @@ int 	main (int argc, char ** argv)
 
 	// define the optimization parameters
 	PArrPtr * params = InitPLSAParameters(1);
-	params->array[0] = (ParamList) { &param, 1e-8, (Range) {0,1e+16}, "k"};
+	params->array[0] = (ParamList) { &param, 1e-8, (Range) {0,1e+16}, 15, "k"};
 
 
 	// run the optimization

@@ -227,6 +227,7 @@ void SetDefaultOptions()
 	state.update_S_skip = 1;
 	state.control = 1;
 	state.criterion = 0.01;
+	state.param_precision = 0.01;
 #ifdef MPI
 	state.mix_interval = 10;
 	state.tuning = 0;

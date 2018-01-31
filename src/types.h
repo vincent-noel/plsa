@@ -38,13 +38,14 @@
 
 typedef struct
 {
-  long   seed;                      /* seed for random number generator RO */
-  double start_tempr;          /* the initial equilibration temperature RO */
-  double gain;            /* gain for proportional control of move size RO */
-  double stop_energy;                /* the final energy of the answer OUT */
-  long    max_count;                     /* total number of iterations OUT */
-  int    interval;       /* number of sweeps between updating theta_bar RO */
-  unsigned long duration;                      /* Duration in milliseconds */
+  long          seed;                      /* seed for random number generator RO */
+  double        start_tempr;          /* the initial equilibration temperature RO */
+  double        gain;            /* gain for proportional control of move size RO */
+  double        stop_energy;                /* the final energy of the answer OUT */
+  long          max_count;                      /* total number of iterations OUT */
+  int           interval;       /* number of sweeps between updating theta_bar RO */
+  unsigned long duration;                             /* Duration in milliseconds */
+  int           param_precision;                           /* Parameter precision */
 /*int    distribution;    1 - uniform; 2 - exp; 3 - normal; 4 - lorentz RO */
   // int    log_params;
 } AParms;
@@ -125,10 +126,11 @@ typedef struct
 
 typedef struct
 {
-	double    *param;                /* pointers to parameters to be tweaked */
-	double 	   initial_value;
-	Range     param_range;        /* pointers to corresponding range limits */
-	char *	name;
+	double  *   param;                /* pointers to parameters to be tweaked */
+	double      initial_value;
+	Range       param_range;        /* pointers to corresponding range limits */
+	int         significant_digits;
+	char    *	name;
 
 } ParamList;
 
@@ -268,6 +270,7 @@ typedef struct
 	int    				update_S_skip;
 	double 				control;
 	double 				criterion;
+	int                 param_precision;
 
 #ifdef MPI
 /* Parallel settings */

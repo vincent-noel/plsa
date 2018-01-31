@@ -134,6 +134,7 @@ double InitMoves(SAType * state, PArrPtr * pl)
 	ap.start_tempr = state->initial_temp;
 	ap.gain = state->gain_for_jump_size_control;
 	ap.interval = state->interval;
+	ap.param_precision = state->param_precision;
 	// ap.log_params = state->log_params;
 
 
@@ -331,9 +332,7 @@ int Move(void)
 
 	if ( !(nsweeps % ap.interval) && !(idx) && (nsweeps) )
 	{
-
 		UpdateControl();                            /* see comments in moves.h */
-
 	}
 
 	tweakee  = *(ptab[idx].param);
@@ -355,6 +354,9 @@ int Move(void)
 	if (isinf(tweakee) || isnan(tweakee))
 		return -1;
 
+    char buff[64];
+    sprintf(buff, "%.*g", ptab[idx].significant_digits, tweakee);
+    tweakee = atof(buff);
 
 	*(ptab[idx].param) = tweakee;   /* original eqparms in score.c tweaked */
 
