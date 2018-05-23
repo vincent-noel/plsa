@@ -16,7 +16,8 @@
 SRCDIR = src
 
 CC = gcc
-MPICC = mpicc
+MPICC = $(shell echo $(shell find /usr -name mpicc) | cut -d' ' -f1)
+MPIRUN = $(shell echo $(shell find /usr -name mpirun) | cut -d' ' -f1)
 
 FLAGS = -Wall -Werror -pedantic -std=gnu99
 LIBS = -lm
@@ -43,9 +44,9 @@ clean:
 
 test: examples
 	@time -f "elapsed : %E (%P CPU)" ./run-funnel-serial
-	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-funnel-parallel
+	@time -f "elapsed : %E (%P CPU)" $(MPIRUN) -np 2 ./run-funnel-parallel
 	@time -f "elapsed : %E (%P CPU)" ./run-sigmoid-serial
-	@time -f "elapsed : %E (%P CPU)" mpirun -np 2 ./run-sigmoid-parallel
+	@time -f "elapsed : %E (%P CPU)" $(MPIRUN) -np 2 ./run-sigmoid-parallel
 	make clean_examples
 
 examples: run-funnel-serial run-funnel-parallel run-sigmoid-serial run-sigmoid-parallel
