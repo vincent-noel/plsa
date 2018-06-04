@@ -276,6 +276,11 @@ void PrintMyPid()
 	fclose(t_file);
 }
 
+void RemoveMyPid()
+{
+	remove("pid");
+}
+
 
 PArrPtr * InitPLSAParameters(int nb_dimensions)
 {
@@ -752,6 +757,10 @@ PLSARes * runPLSA()
 	int ii;
 	for (ii=0; ii < plsa_params.size; ii++)
 		res->params[ii] = *plsa_params.array[ii].param;
+
+	if (logPid() > 0)
+		RemoveMyPid();
+
 
 	res->flag = 0;
 	res->score = results->stop_energy;
