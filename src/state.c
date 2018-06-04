@@ -320,7 +320,7 @@ void StateWrite(char *statefile, double energy)
 	fprintf(outfile, "%.16g\n", lam_state->A);
 	fprintf(outfile, "%.16g\n", lam_state->B);
 
-	fprintf(outfile, "%.ld\n", lam_state->count_tau);
+	fprintf(outfile, "%ld\n", lam_state->count_tau);
 
 	fprintf(outfile, "%d\n", lam_state->proc_init);
 	fprintf(outfile, "%d\n", lam_state->proc_tau);
