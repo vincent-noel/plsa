@@ -211,7 +211,7 @@ void SetDefaultOptions()
 	state.seed = -6.60489e+08;
 
 	state.print_freq      = 1;           /* default freq for writing to log file */
-	state.state_write     = 100;        /* default freq for writing to state file */
+	state.state_write     = 1;        /* default freq for writing to state file */
 	state.time_flag = 0;
 
 	state.initial_temp = 1;
